@@ -1,5 +1,10 @@
 using Games
-using Base.Test
 
-# write your own tests here
-@test 1 == 1
+if VERSION >= v"0.5-"
+    using Base.Test
+else
+    using BaseTestNext
+    const Test = BaseTestNext
+end
+
+include("test_normal_form_game.jl")

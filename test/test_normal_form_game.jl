@@ -1,11 +1,6 @@
-using QuantEcon
-
-if VERSION >= v"0.5-"
-    using Base.Test
-else
-    using BaseTestNext
-    const Test = BaseTestNext
-end
+# ------------------------- #
+# Testing normal form games #
+# ------------------------- #
 
 @testset "Testing game_theory/normal_form_game.jl" begin
 
@@ -90,7 +85,7 @@ end
     @testset "Test NormalFormGame input action sizes" begin
         g = NormalFormGame((2, 3, 4))
 
-        @test g.N == 3
+        @test num_players(g) == 3
         @test g.players[1].payoff_array == zeros((2, 3, 4))
         @test g.players[2].payoff_array == zeros((3, 4, 2))
         @test g.players[3].payoff_array == zeros((4, 2, 3))
@@ -130,7 +125,7 @@ end
     @testset "Test NormalFormGame with 1 player" begin
         data = transpose([0 1 1])
         g = NormalFormGame(data)
-        @test g.N == 1
+        @test num_players(g) == 1
         @test g.players[1].payoff_array == [0, 1, 1]
         @test g[1] == 0
         @test is_nash(g, 2)
@@ -138,7 +133,7 @@ end
         @test is_nash(g, [0, 1/2, 1/2])
 
         g = NormalFormGame((2,))
-        @test g.N == 1
+        @test num_players(g) == 1
         @test g.players[1].payoff_array == zeros(2)
         g[1] = 10
         @test g.players[1].payoff_array == [10, 0]

@@ -36,26 +36,14 @@ function.
 
 - `payoff_array::Array{T<:Real}` : Array representing the player's payoff
 function.
-- `num_actions::Int` : Number of actions available to the player.
-- `num_opponents::Int` : Number of opponent players.
-- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 """
 type Player{N,T<:Real}
     payoff_array::Array{T,N}
-    num_actions::Int
-    num_opponents::Int
-    tol::Float64
-
-    function Player(payoff_array::Array{T,N})
-        num_actions = size(payoff_array)[1]
-        num_opponents = N - 1
-        tol = 1e-8
-        new(payoff_array, num_actions, num_opponents, tol)
-    end
 end
 
-Player{N,T<:Real}(payoff_array::Array{T,N}) = Player{N,T}(payoff_array)
+num_actions(p::Player) = size(p.payoff_array)[1]
+num_opponents{N}(::Player{N}) = N - 1
 
 Base.summary(player::Player) =
     string(Base.dims2string(size(player.payoff_array)),
@@ -84,14 +72,13 @@ each own action, given a tuple of the opponents' actions.
 - `::Vector` : Payoff vector.
 
 """
-function payoff_vector{N,T}(player::Player{N,T},
-                            opponents_actions::ActionProfile)
-    length(opponents_actions) != player.num_opponents &&
+function payoff_vector(player::Player, opponents_actions::ActionProfile)
+    length(opponents_actions) != num_opponents(player) &&
         throw(ArgumentError(
-            "length of opponents_actions must be $(player.num_opponents)"
+            "length of opponents_actions must be $(num_opponents(player))"
         ))
     payoffs = player.payoff_array
-    for i in player.num_opponents:-1:1
+    for i in num_opponents(player):-1:1
         payoffs = _reduce_last_player(payoffs, opponents_actions[i])
     end
     return payoffs
@@ -111,8 +98,7 @@ own action, given the opponent's pure action.
 - `::Vector` : Payoff vector.
 
 """
-function payoff_vector{T}(player::Player{2,T}, opponent_action::PureAction)
-    # player.num_opponents == 1
+function payoff_vector(player::Player{2}, opponent_action::PureAction)
     return player.payoff_array[:, opponent_action]
 end
 
@@ -130,7 +116,7 @@ own action, given the opponent's mixed action.
 - `::Vector` : Payoff vector.
 
 """
-function payoff_vector{T}(player::Player{2,T}, opponent_action::MixedAction)
+function payoff_vector(player::Player{2}, opponent_action::MixedAction)
     # player.num_opponents == 1
     return player.payoff_array * opponent_action
 end
@@ -150,7 +136,7 @@ one for each own action.
 - `::Vector` : Payoff vector.
 
 """
-function payoff_vector{T}(player::Player{1,T}, opponent_action::Void)
+function payoff_vector(player::Player{1}, opponent_action::Void)
     return player.payoff_array
 end
 
@@ -176,6 +162,8 @@ fixing the last player's mixed action to be `action` (vector of reals).
 function _reduce_last_player(payoff_array::Array, action::MixedAction)
     shape = size(payoff_array)
     A = reshape(payoff_array, (prod(shape[1:end-1]), shape[end]))
+
+    # TODO: should we manually check `length(action) == shape[end]`?
     out = A * action
     return reshape(out, shape[1:end-1])
 end
@@ -190,6 +178,7 @@ Return True if `own_action` is a best response to `opponents_actions`.
 - `player::Player` : Player instance.
 - `own_action::PureAction` : Own pure action (integer).
 - $(opponents_actions_docstring)
+- `;tol::Float64` : Tolerance to be used to determine best response actions.
 
 ##### Returns
 
@@ -199,10 +188,11 @@ valse otherwise.
 """
 function is_best_response(player::Player,
                           own_action::PureAction,
-                          opponents_actions::Union{Action,ActionProfile,Void})
+                          opponents_actions::Union{Action,ActionProfile,Void};
+                          tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
-    return payoffs[own_action] >= payoff_max - player.tol
+    return payoffs[own_action] >= payoff_max - tol
 end
 
 """
@@ -213,6 +203,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 - `player::Player` : Player instance.
 - `own_action::MixedAction` : Own mixed action (vector of reals).
 - $(opponents_actions_docstring)
+- `;tol::Float64` : Tolerance to be used to determine best response actions.
 
 ##### Returns
 
@@ -222,10 +213,11 @@ false otherwise.
 """
 function is_best_response(player::Player,
                           own_action::MixedAction,
-                          opponents_actions::Union{Action,ActionProfile,Void})
+                          opponents_actions::Union{Action,ActionProfile,Void};
+                          tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
-    return dot(own_action, payoffs) >= payoff_max - player.tol
+    return dot(own_action, payoffs) >= payoff_max - tol
 end
 
 # best_response
@@ -237,6 +229,7 @@ Return all the best response actions to `opponents_actions`.
 
 - `player::Player` : Player instance.
 - $(opponents_actions_docstring)
+- `;tol::Float64` : Tolerance to be used to determine best response actions.
 
 ##### Returns
 
@@ -245,10 +238,11 @@ actions.
 
 """
 function best_responses(player::Player,
-                        opponents_actions::Union{Action,ActionProfile,Void})
+                        opponents_actions::Union{Action,ActionProfile,Void};
+                        tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
-    best_responses = find(x -> x >= payoff_max - player.tol, payoffs)
+    best_responses = find(x -> x >= payoff_max - tol, payoffs)
     return best_responses
 end
 
@@ -261,6 +255,7 @@ Return a best response action to `opponents_actions`.
 - $(opponents_actions_docstring)
 - `tie_breaking::AbstractString("smallest")` : Control how to break a tie (see
 Returns for details).
+- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 ##### Returns
 
@@ -271,12 +266,13 @@ from the best response actions.
 """
 function best_response(player::Player,
                        opponents_actions::Union{Action,ActionProfile,Void};
-                       tie_breaking::AbstractString="smallest")
+                       tie_breaking::AbstractString="smallest",
+                       tol::Float64=1e-8)
     if tie_breaking == "smallest"
         payoffs = payoff_vector(player, opponents_actions)
         return indmax(payoffs)
     elseif tie_breaking == "random"
-        brs = best_responses(player, opponents_actions)
+        brs = best_responses(player, opponents_actions; tol=tol)
         return rand(brs)
     else
         throw(ArgumentError(
@@ -305,9 +301,9 @@ payoffs in determining the best response.
 function best_response(player::Player,
                        opponents_actions::Union{Action,ActionProfile,Void},
                        payoff_perturbation::Vector{Float64})
-    length(payoff_perturbation) != player.num_actions &&
+    length(payoff_perturbation) != num_actions(player) &&
         throw(ArgumentError(
-            "length of payoff_perturbation must be $player.num_actions"
+            "length of payoff_perturbation must be $(num_actions(player))"
         ))
 
     payoffs = payoff_vector(player, opponents_actions) + payoff_perturbation
@@ -330,9 +326,10 @@ player.
 """
 type NormalFormGame{N,T<:Real}
     players::NTuple{N,Player{N,T}}
-    N::Int
     nums_actions::NTuple{N,Int}
 end
+
+num_players{N}(::NormalFormGame{N}) = N
 
 function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
     throw(ArgumentError("input tuple must not be empty"))
@@ -348,11 +345,12 @@ Constructor of an N-player NormalFormGame, consisting of payoffs all 0.
 
 """
 function NormalFormGame{N}(T::Type, nums_actions::NTuple{N,Int})
+    # TODO: can we still get inference to work but avoid the `::NTuple` below?
     players::NTuple{N,Player{N,T}} =
         ntuple(i -> Player(zeros(tuple(nums_actions[i:end]...,
                                        nums_actions[1:i-1]...))),
                N)
-    return NormalFormGame{N,T}(players, N, nums_actions)
+    return NormalFormGame{N,T}(players, nums_actions)
 end
 
 NormalFormGame{N}(nums_actions::NTuple{N,Int}) =
@@ -371,16 +369,14 @@ function NormalFormGame{N,T}(players::NTuple{N,Player{N,T}})
     shape_1 = size(players[1].payoff_array)
     for i in 2:N
         shape = size(players[i].payoff_array)
-        if !(length(shape) == N &&
-             shape == tuple(shape_1[i:end]..., shape_1[1:i-1]...)
-            )
+        if shape != tuple(shape_1[i:end]..., shape_1[1:i-1]...)
             throw(ArgumentError("shapes of payoff arrays must be consistent"))
         end
     end
 
     nums_actions::NTuple{N,Int} =
-        tuple([player.num_actions for player in players]...)
-    return NormalFormGame{N,T}(players, N, nums_actions)
+        tuple([num_actions(player) for player in players]...)
+    return NormalFormGame{N,T}(players, nums_actions)
 end
 
 """
@@ -399,10 +395,31 @@ Constructor of an N-player NormalFormGame.
 
 ##### Arguments
 
+- `players::Player{N,T}...` : N Player instances
+
+##### Examples
+
+```julia
+# p1, p2, and p3 are all of type `Player{3,T}` for some `T`
+NormalFormGame(p1, p2, p3)
+```
+"""
+function NormalFormGame{N,T}(players::Player{N,T}...)
+    length(players) != N && error("Need $N players")
+    NormalFormGame(players)  # use constructor for Tuple of players above
+end
+
+
+"""
+Constructor of an N-player NormalFormGame.
+
+##### Arguments
+
 - `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
 
 """
 @generated function NormalFormGame{T<:Real}(payoffs::Array{T})
+    # TODO: We shouldn't need @generated just to get inference to work
     # `payoffs` must be of shape (n_1, ..., n_N, N),
     # where n_i is the number of actions available to player i,
     # and the last axis contains the payoff profile
@@ -422,7 +439,8 @@ Constructor of an N-player NormalFormGame.
 end
 
 """
-Constructor of a symmetric 2-player NormalFormGame.
+Constructor of a symmetric 2-player NormalFormGame if `size(payoffs, 1) > 1`,
+otherwise construct a 1-player NormalFormGame with one action.
 
 ##### Arguments
 
@@ -436,11 +454,11 @@ function NormalFormGame{T<:Real}(payoffs::Matrix{T})
         n != m && throw(ArgumentError(
             "symmetric two-player game must be represented by a square matrix"
         ))
-        players = (Player(payoffs), Player(payoffs))
-        return NormalFormGame(players)
+        player = Player(payoffs)
+        return NormalFormGame(player, player)
     else  # Trivial game with 1 player
         player = Player(vec(payoffs))
-        return NormalFormGame((player,))
+        return NormalFormGame(player)
     end
 end
 
@@ -449,6 +467,7 @@ Base.summary(g::NormalFormGame) =
            " ",
            split(string(typeof(g)), ".")[end])
 
+# TODO: add printout of payoff arrays
 function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
 end
@@ -496,7 +515,31 @@ end
 
 # is_nash
 
-const is_nash_docsting = """
+function is_nash(g::NormalFormGame, action_profile::ActionProfile)
+    for (i, player) in enumerate(g.players)
+        own_action = action_profile[i]
+        opponents_actions =
+            tuple(action_profile[i+1:end]..., action_profile[1:i-1]...)
+        if !(is_best_response(player, own_action, opponents_actions))
+            return false
+        end
+    end
+    return true
+end
+
+function is_nash(g::NormalFormGame{2}, action_profile::ActionProfile)
+    for (i, player) in enumerate(g.players)
+        own_action, opponent_action =
+            action_profile[i], action_profile[3-i]
+        if !(is_best_response(player, own_action, opponent_action))
+            return false
+        end
+    end
+    return true
+end
+
+# attach docstring for N>1 player games
+@doc """
 Return true if `action_profile` is a Nash equilibrium.
 
 ##### Arguments
@@ -509,34 +552,7 @@ be an integer (pure action) or a vector of reals (mixed action).
 
 - `::Bool`
 
-"""
-
-"$(is_nash_docsting)"
-function is_nash{N,T}(g::NormalFormGame{N,T},
-                      action_profile::ActionProfile)
-    for (i, player) in enumerate(g.players)
-        own_action = action_profile[i]
-        opponents_actions =
-            tuple(action_profile[i+1:end]..., action_profile[1:i-1]...)
-        if !(is_best_response(player, own_action, opponents_actions))
-            return false
-        end
-    end
-    return true
-end
-
-"$(is_nash_docsting)"
-function is_nash{T}(g::NormalFormGame{2,T},
-                    action_profile::ActionProfile)
-    for (i, player) in enumerate(g.players)
-        own_action, opponent_action =
-            action_profile[i], action_profile[3-i]
-        if !(is_best_response(player, own_action, opponent_action))
-            return false
-        end
-    end
-    return true
-end
+""" is_nash
 
 # Trivial game with 1 player
 """
@@ -552,9 +568,8 @@ Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 - `::Bool`
 
 """
-is_nash{T}(g::NormalFormGame{1,T}, action::Action) =
+is_nash(g::NormalFormGame{1}, action::Action) =
     is_best_response(g.players[1], action, nothing)
-
 
 # Utility functions
 
