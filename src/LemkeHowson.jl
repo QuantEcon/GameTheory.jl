@@ -33,8 +33,8 @@ function LemkeHowson(game::NormalFormGame, k0::Int=1, max_pivots::Int=500000)
 
 	# Row Labels
 	row_labels = []
-	row_lab_1 = [m+1:m+n]
-	row_lab_2 = [1:m]
+	row_lab_1 = [(m+1):(m+n);]
+	row_lab_2 = [1:m;]
 	push!(row_labels, row_lab_1, row_lab_2)
 
 	# Complimentary pivoting
@@ -47,7 +47,7 @@ function LemkeHowson(game::NormalFormGame, k0::Int=1, max_pivots::Int=500000)
 
 	# Pivoting Loop
 	num_piv = 0
-	while num_piv < max_piv
+	while num_piv < max_pivots
 		num_piv += 1
 
 		# Pick tableau
@@ -83,7 +83,7 @@ function LemkeHowson(game::NormalFormGame, k0::Int=1, max_pivots::Int=500000)
 		# Alternate players
 		player = 3 - player
 
-		# Return error if max_pivot iterations are reached
+		# Return error if max_pivots iterations are reached
 		if num_piv == max_pivots
 			throw(ErrorException("Max number of iterations reached."))
 		end
@@ -93,7 +93,7 @@ function LemkeHowson(game::NormalFormGame, k0::Int=1, max_pivots::Int=500000)
 	# Calculating Nash
 	NashEquil = []
 
-	for pl = [1:2]
+	for pl = 1:2
 		x = zeros(size(A)[pl], 1)
 		rows = row_labels[pl]
 		tableau = tableaus[pl]
@@ -121,8 +121,6 @@ function pivot(tableau, r::Int, s::Int)
 	for i = 1:m
 		if i != r
 			M[i, :] = tableau[i,:] - tableau[i,s]/tableau[r,s]*tableau[r,:]
-		else
-			continue
 		end
 	end
 
