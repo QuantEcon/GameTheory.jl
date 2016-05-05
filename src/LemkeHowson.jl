@@ -58,7 +58,7 @@ function LemkeHowson(game::NormalFormGame, k0::Int=1, max_pivots::Int=500000)
 		max_ = 0 
 		ind = -1
 
-		for i = 1:m
+		for i = 1:m_
 			ratio = tableau[i,k]/tableau[i, m+n+1]
 			if ratio > max_
 				ind = i
