@@ -594,3 +594,4 @@ function pure2mixed(num_actions::Integer, action::PureAction)
     mixed_action[action] = 1
     return mixed_action
 end
+
