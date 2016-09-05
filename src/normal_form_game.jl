@@ -214,7 +214,7 @@ valse otherwise.
 """
 function is_best_response(player::Player,
                           own_action::PureAction,
-                          opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
+                          opponents_actions::Union{Action,ActionProfile,Void};
                           tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -239,7 +239,7 @@ false otherwise.
 """
 function is_best_response(player::Player,
                           own_action::MixedAction,
-                          opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
+                          opponents_actions::Union{Action,ActionProfile,Void};
                           tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -264,7 +264,7 @@ actions.
 
 """
 function best_responses(player::Player,
-                        opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
+                        opponents_actions::Union{Action,ActionProfile,Void};
                         tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -291,7 +291,7 @@ from the best response actions.
 
 """
 function best_response(player::Player,
-                       opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
+                       opponents_actions::Union{Action,ActionProfile,Void};
                        tie_breaking::AbstractString="smallest",
                        tol::Float64=1e-8)
     if tie_breaking == "smallest"
@@ -325,7 +325,7 @@ payoffs in determining the best response.
 
 """
 function best_response(player::Player,
-                       opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void},
+                       opponents_actions::Union{Action,ActionProfile,Void},
                        payoff_perturbation::Vector{Float64})
     length(payoff_perturbation) != num_actions(player) &&
         throw(ArgumentError(
