@@ -40,9 +40,10 @@
         @test @inferred(payoff_vector(player, (1, 2))) == [6, 0]
         @test !(@inferred(is_best_response(player, 1, (2, 1))))
         @test @inferred(best_response(player, (2, 2))) == 2
-        @test @inferred(best_response(player, (1, [1/2, 1/2]))) == 1
         @test sort(@inferred(best_responses(player, ([3/7, 4/7], [1/2, 1/2])))) ==
               sort([1, 2])
+
+        @test_throws MethodError best_response(player, (1, [1/2, 1/2]))
     end
 
     @testset "symmetric NormalFormGame with 2 players" begin
