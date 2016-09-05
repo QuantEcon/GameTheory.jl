@@ -10,7 +10,9 @@ Authors: Daisuke Oyama
 typealias PureAction Integer
 typealias MixedAction{T<:Real} Vector{T}
 typealias Action{T<:Real} Union{PureAction,MixedAction{T}}
-typealias ActionProfile{T<:Real,N} NTuple{N,Action{T}}
+typealias PureActionProfile{N} NTuple{N,PureAction}
+typealias MixedActionProfile{T<:Real,N} NTuple{N,MixedAction{T}}
+typealias ActionProfile Union{PureActionProfile,MixedActionProfile}
 
 const opponents_actions_docstring = """
 `opponents_actions::Union{Action,ActionProfile,Void}` : Profile of N-1
@@ -58,30 +60,65 @@ end
 
 # payoff_vector
 
+# To resolve definition ambiguity
+function payoff_vector(player::Player, opponents_actions::Tuple{})
+    throw(ArgumentError("input tuple must not be empty"))
+end
+
 """
 Return a vector of payoff values for a Player in an N>2 player game, one for
-each own action, given a tuple of the opponents' actions.
+each own action, given a tuple of the opponents' pure actions.
 
 ##### Arguments
 
 - `player::Player` : Player instance.
-- `opponents_actions::ActionProfile` : Tuple of N-1 opponents' actions.
+- `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
+actions.
 
 ##### Returns
 
 - `::Vector` : Payoff vector.
 
 """
-function payoff_vector(player::Player, opponents_actions::ActionProfile)
+function payoff_vector(player::Player, opponents_actions::PureActionProfile)
     length(opponents_actions) != num_opponents(player) &&
         throw(ArgumentError(
             "length of opponents_actions must be $(num_opponents(player))"
         ))
     payoffs = player.payoff_array
     for i in num_opponents(player):-1:1
-        payoffs = _reduce_last_player(payoffs, opponents_actions[i])
+        payoffs = _reduce_ith_opponent(payoffs, i, opponents_actions[i])
     end
-    return payoffs
+    return vec(payoffs)
+end
+
+"""
+Return a vector of payoff values for a Player in an N>2 player game, one for
+each own action, given a tuple of the opponents' mixed actions.
+
+##### Arguments
+
+- `player::Player` : Player instance.
+- `opponents_actions::MixedActionProfile` : Tuple of N-1 opponents' mixed
+actions.
+
+##### Returns
+
+- `::Vector` : Payoff vector.
+
+"""
+function payoff_vector{N,T1,T2}(player::Player{N,T1},
+                                opponents_actions::MixedActionProfile{T2})
+    length(opponents_actions) != num_opponents(player) &&
+        throw(ArgumentError(
+            "length of opponents_actions must be $(num_opponents(player))"
+        ))
+    S = promote_type(T1, T2)
+    payoffs::Array{S,N} = player.payoff_array
+    for i in num_opponents(player):-1:1
+        payoffs = _reduce_ith_opponent(payoffs, i, opponents_actions[i])
+    end
+    return vec(payoffs)
 end
 
 """
@@ -140,32 +177,21 @@ function payoff_vector(player::Player{1}, opponent_action::Void)
     return player.payoff_array
 end
 
-# _reduce_last_player
+# _reduce_ith_opponent
 
-"""
-Given `payoff_array` with ndims=M, return the payoff array with ndims=M-1
-fixing the last player's pure action to be `action` (integer).
-
-"""
-function _reduce_last_player(payoff_array::Array, action::PureAction)
-    shape = size(payoff_array)
-    A = reshape(payoff_array, (prod(shape[1:end-1]), shape[end]))
-    out = A[:, action]
-    return reshape(out, shape[1:end-1])
-end
-
-"""
-Given `payoff_array` with ndims=M, return the payoff array with ndims=M-1
-fixing the last player's mixed action to be `action` (vector of reals).
-
-"""
-function _reduce_last_player(payoff_array::Array, action::MixedAction)
-    shape = size(payoff_array)
-    A = reshape(payoff_array, (prod(shape[1:end-1]), shape[end]))
-
-    # TODO: should we manually check `length(action) == shape[end]`?
-    out = A * action
-    return reshape(out, shape[1:end-1])
+# Given an N-d array `payoff_array` of shape (n_{1}, ..., n_{i+1}, 1, ..., 1),
+# return the N-d array of payoffs of shape (n_{1}, ..., n_{i}, 1, 1, ..., 1)
+# given by fixing the i-th opponent's pure or mixed action to be `action`.
+for (S, ex_mat_action) in ((PureAction, :(A[:, action])),
+                           (MixedAction, :(A * action)))
+    @eval function _reduce_ith_opponent{N,T}(payoff_array::Array{T,N},
+                                             i::Int, action::$S)
+        shape = size(payoff_array)
+        A = reshape(payoff_array, (prod(shape[1:i]), shape[i+1]))
+        out = $(ex_mat_action)
+        shape_new = tuple(shape[1:i]..., ones(Int, N-i)...)::NTuple{N,Int}
+        return reshape(out, shape_new)
+    end
 end
 
 # is_best_response
@@ -188,7 +214,7 @@ valse otherwise.
 """
 function is_best_response(player::Player,
                           own_action::PureAction,
-                          opponents_actions::Union{Action,ActionProfile,Void};
+                          opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
                           tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -213,7 +239,7 @@ false otherwise.
 """
 function is_best_response(player::Player,
                           own_action::MixedAction,
-                          opponents_actions::Union{Action,ActionProfile,Void};
+                          opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
                           tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -238,7 +264,7 @@ actions.
 
 """
 function best_responses(player::Player,
-                        opponents_actions::Union{Action,ActionProfile,Void};
+                        opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
                         tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -265,7 +291,7 @@ from the best response actions.
 
 """
 function best_response(player::Player,
-                       opponents_actions::Union{Action,ActionProfile,Void};
+                       opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void};
                        tie_breaking::AbstractString="smallest",
                        tol::Float64=1e-8)
     if tie_breaking == "smallest"
@@ -299,7 +325,7 @@ payoffs in determining the best response.
 
 """
 function best_response(player::Player,
-                       opponents_actions::Union{Action,ActionProfile,Void},
+                       opponents_actions::Union{Action,PureActionProfile,MixedActionProfile,Void},
                        payoff_perturbation::Vector{Float64})
     length(payoff_perturbation) != num_actions(player) &&
         throw(ArgumentError(
