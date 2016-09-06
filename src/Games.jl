@@ -24,6 +24,9 @@ export Player, NormalFormGame,  # Types
        is_nash, pure2mixed, pure_strategy_NE,
 
        # General functions
-       num_players, num_actions, num_opponents
+       num_players, num_actions, num_opponents,
+
+       # Nash Equilibrium
+       pure_nash
 
 end # module
