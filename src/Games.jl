@@ -2,9 +2,17 @@ module Games
 
 # Packages
 
+# Type aliases #
+typealias PureAction Integer
+typealias MixedAction{T<:Real} Vector{T}
+typealias Action{T<:Real} Union{PureAction,MixedAction{T}}
+typealias ActionProfile{T<:Real,N} NTuple{N,Action{T}}
+typealias PureActionProfile{N} NTuple{N, PureAction}
+
 # package code goes here
 include("normal_form_game.jl")
 include("nash_equilibrium.jl")
+
 
 export Player, NormalFormGame,  # Types
 
