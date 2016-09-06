@@ -19,9 +19,8 @@ const opponents_actions_docstring = """
 opponents' actions. If N=2, then it must be a vector of reals (in which case
 it is treated as the opponent's mixed action) or a scalar of integer (in which
 case it is treated as the opponent's pure action). If N>2, then it must be a
-tuple of N-1 objects, where each object must be an integer (pure action) or a
-vector of reals (mixed action). (For the degenerate case N=1, it must be
-`nothing`.)"""
+tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions).
+(For the degenerate case N=1, it must be `nothing`.)"""
 
 
 # Player #
@@ -571,8 +570,8 @@ Return true if `action_profile` is a Nash equilibrium.
 ##### Arguments
 
 - `g::NormalFormGame` : Instance of N-player NormalFormGame.
-- `action_profile::ActionProfile` : Tuple of N objects, where each object must
-be an integer (pure action) or a vector of reals (mixed action).
+- `action_profile::ActionProfile` : Tuple of N integers (pure actions) or N
+vectors of reals (mixed actions).
 
 ##### Returns
 
