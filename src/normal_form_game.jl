@@ -43,7 +43,7 @@ type Player{N,T<:Real}
     payoff_array::Array{T,N}
 end
 
-num_actions(p::Player) = size(p.payoff_array)[1]
+num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents{N}(::Player{N}) = N - 1
 
 Base.summary(player::Player) =
