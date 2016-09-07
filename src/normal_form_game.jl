@@ -425,6 +425,22 @@ function NormalFormGame{N,T}(players::Player{N,T}...)
     NormalFormGame(players)  # use constructor for Tuple of players above
 end
 
+# front (introduced in v0.5)
+if VERSION < v"0.5-"
+    # Copy-paste from base/tuple.jl in v0.5
+    function front(t::Tuple)
+        #@_inline_meta
+        _front((), t...)
+    end
+    front(::Tuple{}) = error("Cannot call front on an empty tuple")
+    _front(out, v) = out
+    function _front(out, v, t...)
+        #@_inline_meta
+        _front((out..., v), t...)
+    end
+else
+    const front = Base.front
+end
 
 """
 Constructor of an N-player NormalFormGame.
@@ -434,24 +450,22 @@ Constructor of an N-player NormalFormGame.
 - `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
 
 """
-@generated function NormalFormGame{T<:Real}(payoffs::Array{T})
-    # TODO: We shouldn't need @generated just to get inference to work
-    # `payoffs` must be of shape (n_1, ..., n_N, N),
-    # where n_i is the number of actions available to player i,
-    # and the last axis contains the payoff profile
-    return quote
-        $(N = ndims(payoffs) - 1)
-        size(payoffs)[end] != $N && throw(ArgumentError(
-            "length of the array in the last axis must be equal to
-             the number of players"
-        ))
-        players::NTuple{$N,Player{$N,T}} = ntuple(
-            i -> Player(permutedims(sub(payoffs, ntuple(j -> Colon(), $N)..., i),
-                                    tuple(i:$N..., 1:i-1...))),
-            $N
-        )
-        return NormalFormGame(players)
-    end
+function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
+    N = M - 1
+    size(payoffs)[end] != N && throw(ArgumentError(
+        "length of the array in the last axis must be equal to
+         the number of players"
+    ))
+
+    dims = front(size(payoffs))
+    colons = front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
+    players = [
+        Player(permutedims(sub(payoffs, colons..., i),
+                           (i:N..., 1:i-1...)::typeof(dims))
+        ) for i in 1:N
+    ]
+    # Call NormalFormGame{N,T}(players::Vector{Player{N,T}})
+    NormalFormGame(players)
 end
 
 """
