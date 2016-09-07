@@ -460,7 +460,7 @@ function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
     dims = front(size(payoffs))
     colons = front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
     players = [
-        Player(permutedims(sub(payoffs, colons..., i),
+        Player(permutedims(view(payoffs, colons..., i),
                            (i:N..., 1:i-1...)::typeof(dims))
         ) for i in 1:N
     ]

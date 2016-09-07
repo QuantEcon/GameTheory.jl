@@ -2,6 +2,9 @@ module Games
 
 # Packages
 
+# 0.5 compatibility
+import Compat.view
+
 # Type aliases #
 typealias PureAction Integer
 typealias MixedAction{T<:Real} Vector{T}
