@@ -1,7 +1,7 @@
 """
-Finds all pure strategy Nash equilibrium for a normal form
-game. It returns an empty array if there are no nash
-equilibrium
+Finds all pure action Nash equilibria for a normal form
+game. It returns an empty array if there is no pure
+action Nash.
 
 Currently uses a brute force algorithm, but that hopefully
 will change in the future.
