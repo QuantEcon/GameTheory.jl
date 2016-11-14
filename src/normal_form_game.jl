@@ -5,13 +5,6 @@ Authors: Daisuke Oyama
 
 =#
 
-# Type aliases #
-
-typealias PureAction Integer
-typealias MixedAction{T<:Real} Vector{T}
-typealias Action{T<:Real} Union{PureAction,MixedAction{T}}
-typealias ActionProfile{T<:Real,N} NTuple{N,Action{T}}
-
 const opponents_actions_docstring = """
 `opponents_actions::Union{Action,ActionProfile,Void}` : Profile of N-1
 opponents' actions. If N=2, then it must be a vector of reals (in which case
