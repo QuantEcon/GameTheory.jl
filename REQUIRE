@@ -1,4 +1,7 @@
-julia 0.4
+julia 0.5
 Clp
 MathProgBase
 QuantEcon
+Polyhedra
+CDDLib
+
