@@ -12,6 +12,8 @@ typealias PureActionProfile{N,T<:PureAction} NTuple{N, T}
 # package code goes here
 include("normal_form_game.jl")
 include("pure_nash.jl")
+include("repeated_game.jl")
+include("repeated_game_util.jl")
 
 
 export Player, NormalFormGame,  # Types
