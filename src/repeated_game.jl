@@ -4,6 +4,10 @@ This file contains code to build and manage repeated games
 It currently only has tools for solving two player repeated
 games, but could be extended to do more with some effort.
 =#
+using Polyhedra
+using CDDLib
+const _polyhedra_lib = CDDLibrary
+
 
 """
 This is a type for a specific type of repeated games
@@ -292,60 +296,13 @@ function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500, nsk
         copy!(C, Cnew)
     end
 
-    #
-    # Can improve this
-    #
-    # Find points that make up our set by intersecting hyperplanes
-    # We will do this by solving a sequence of linear programs
-    #
+    # Given the H-representation `(H, C)` of the computed polytope of
+    # equilibrium payoff profiles, we obtain its V-representation `vertices`.
+    # Here we use CDDLib.jl, a Julia wrapper of cdd, through Polyhedra.jl.
+    hrep = SimpleHRepresentation(H, C)
+    poly = polyhedron(hrep, _polyhedra_lib())
+    vrep = getvrep(poly)
+    vertices = SimpleVRepresentation(vrep).V
 
-    # Create the linear programming matrices for finding vertices
-    # objective functions -- Want to max and min each w
-    c1p = zeros(2 + nH)
-    c1p[1] = 1.0
-    c2p = zeros(2 + nH)
-    c2p[2] = 1.0
-    c1m = -c1p
-    c2m = -c1m
-    # Don't need IC in A and b
-    A_pts = A[1:end-2, 1:end-2]
-    b_pts = copy(C)
-    lb_pts = vcat([-Inf, -Inf], zeros(nH))
-    ub_pts = fill(Inf, nH+2)
-    _w1 = worst_value_1(rpd, H, C)
-    _w2 = worst_value_2(rpd, H, C)
-
-
-    hp_pts = Array(Float64, 2, 4*nH)
-    for ih=1:nH
-        # Want constraint ih to bind so set slack to 0.0
-        A_pts[ih, ih+2] = 0.0
-
-        # Solve 4 linear programs
-        lp1 = linprog(c1p, A_pts, '=', b_pts, lb_pts, ub_pts, ClpSolver())
-        lp2 = linprog(c1m, A_pts, '=', b_pts, lb_pts, ub_pts, ClpSolver())
-        lp3 = linprog(c2p, A_pts, '=', b_pts, lb_pts, ub_pts, ClpSolver())
-        lp4 = linprog(c2m, A_pts, '=', b_pts, lb_pts, ub_pts, ClpSolver())
-
-        lp1_pt = lp1.status == :Optimal ? lp1.sol[1:2] : [_w1, _w2]
-        lp2_pt = lp2.status == :Optimal ? lp2.sol[1:2] : [_w1, _w2]
-        lp3_pt = lp3.status == :Optimal ? lp3.sol[1:2] : [_w1, _w2]
-        lp4_pt = lp4.status == :Optimal ? lp4.sol[1:2] : [_w1, _w2]
-
-        # Reset the constraint to have a slack variable (we only want one at a time)
-        A_pts[ih, ih+2] = 1.0
-
-        # Add these 4 points to hp_pts
-        hp_pts[:, 4*(ih-1) + 1] = lp1_pt
-        hp_pts[:, 4*(ih-1) + 2] = lp2_pt
-        hp_pts[:, 4*(ih-1) + 3] = lp3_pt
-        hp_pts[:, 4*(ih-1) + 4] = lp4_pt
-    end
-
-    # Lots or repeated points, so round to 4 decimal places for now until
-    # we find a better way to do this.
-    hp_pts = unique(round(hp_pts, 4), 2)
-
-    return hp_pts
+    return vertices
 end
-
