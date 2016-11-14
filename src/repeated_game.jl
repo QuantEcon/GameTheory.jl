@@ -13,8 +13,11 @@ and all agents discount future at rate δ
 """
 immutable RepeatedGame{N, T<:Real}
     sg::NormalFormGame{N, T}
-    δ::Float64
+    delta::Float64
 end
+
+# Type alias for 2 player game
+typealias RepGame2 RepeatedGame{2}
 
 #
 # Helper Functions (for 2 players)
@@ -23,28 +26,35 @@ end
 """
 Helper constructor that builds game from players
 """
-RepeatedGame(p1::Player, p2::Player, δ::Float64) =
-    RepeatedGame(NormalFormGame((p1, p2)), δ)
+RepeatedGame(p1::Player, p2::Player, delta::Float64) =
+    RepeatedGame(NormalFormGame((p1, p2)), delta)
 
 """
 Unpacks the elements of a repeated game
 """
-unpack(rpd::RepeatedGame) = (rpd.sg, rpd.δ)
+unpack(rpd::RepeatedGame) = (rpd.sg, rpd.delta)
 
 # Flow utility in terms of the players actions
-flow_u_1(rpd, a1::Int, a2::Int) = (1-rpd.δ)*rpd.sg.players[1].payoff_array[a1, a2]
-flow_u_2(rpd, a1::Int, a2::Int) = (1-rpd.δ)*rpd.sg.players[2].payoff_array[a2, a1]
-flow_u(rpd, a1::Int, a2::Int) = [flow_u_1(rpd, a1, a2), flow_u_2(rpd, a1, a2)]
+flow_u_1(rpd::RepGame2, a1::Int, a2::Int) =
+    rpd.sg.players[1].payoff_array[a1, a2]
+flow_u_2(rpd::RepGame2, a1::Int, a2::Int) =
+    rpd.sg.players[2].payoff_array[a2, a1]
+flow_u(rpd::RepGame2, a1::Int, a2::Int) =
+    [flow_u_1(rpd, a1, a2), flow_u_2(rpd, a1, a2)]
 
 # Computes each players best deviation given an opponent's action
-best_dev_i(rpd, i::Int, aj::Int) = indmax(rpd.sg.players[i].payoff_array[:, aj])
-best_dev_1(rpd, a2::Int) = best_dev_i(rpd, 1, a2)
-best_dev_2(rpd, a1::Int) = best_dev_i(rpd, 2, a1)
+best_dev_i(rpd::RepGame2, i::Int, aj::Int) =
+    indmax(rpd.sg.players[i].payoff_array[:, aj])
+best_dev_1(rpd::RepGame2, a2::Int) = best_dev_i(rpd, 1, a2)
+best_dev_2(rpd::RepGame2, a1::Int) = best_dev_i(rpd, 2, a1)
 
 # Computes the payoff of the best deviation
-best_dev_payoff_i(rpd, i::Int, aj::Int) = (1-rpd.δ)*maximum(rpd.sg.players[i].payoff_array[:, aj])
-best_dev_payoff_1(rpd, a2::Int) = (1-rpd.δ)*maximum(rpd.sg.players[1].payoff_array[:, a2])
-best_dev_payoff_2(rpd, a1::Int) = (1-rpd.δ)*maximum(rpd.sg.players[2].payoff_array[:, a1])
+best_dev_payoff_i(rpd::RepGame2, i::Int, aj::Int) =
+    maximum(rpd.sg.players[i].payoff_array[:, aj])
+best_dev_payoff_1(rpd::RepGame2, a2::Int) =
+    maximum(rpd.sg.players[1].payoff_array[:, a2])
+best_dev_payoff_2(rpd::RepGame2, a1::Int) =
+    maximum(rpd.sg.players[2].payoff_array[:, a1])
 
 """
 Creates the unit circle of continuation value points starting at origin `o`
@@ -114,7 +124,7 @@ compatibility constraints ensure the agents won't deviate.
 
 The `b` vector is associated with the `A` matrix and gives the value for constraint.
 """
-function initialize_LP_matrices(rpd, H)
+function initialize_LP_matrices(rpd::RepGame2, H)
     # Need slack variable for every subgradient and additional 2 incentive constraint
     nH = size(H, 1)
     nslack = nH + 2
@@ -126,9 +136,9 @@ function initialize_LP_matrices(rpd, H)
     A_H = hcat(H, eye(nH, nslack))
     A_IC_1 = zeros(1, nslack+2)
     A_IC_2 = zeros(1, nslack+2)
-    A_IC_1[1] = -rpd.δ
+    A_IC_1[1] = -rpd.delta
     A_IC_1[end-1] = 1.0
-    A_IC_2[2] = -rpd.δ
+    A_IC_2[2] = -rpd.delta
     A_IC_2[end] = 1.0
     A = vcat(A_H, A_IC_1, A_IC_2)
 
@@ -144,7 +154,7 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i
 The output of this function is used to create the values associated with
 incentive compatibility constraints
 """
-function worst_value_i(rpd::RepeatedGame, H::Array{Float64, 2}, C::Array{Float64, 1}, i::Int)
+function worst_value_i(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}, i::Int)
     # Objective depends on which player we are minimizing
     c = zeros(2)
     c[i] = 1.0
@@ -163,11 +173,11 @@ function worst_value_i(rpd::RepeatedGame, H::Array{Float64, 2}, C::Array{Float64
     return out
 end
 
-worst_value_1(rpd::RepeatedGame, H::Array{Float64, 2}, C::Array{Float64, 1}) =
+worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
     worst_value_i(rpd, H, C, 1)
-worst_value_2(rpd::RepeatedGame, H::Array{Float64, 2}, C::Array{Float64, 1}) =
+worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
     worst_value_i(rpd, H, C, 2)
-worst_values(rpd::RepeatedGame, H::Array{Float64, 2}, C::Array{Float64, 1}) =
+worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
     (worst_value_1(rpd, H, C), worst_value_2(rpd, H, C))
 
 #
@@ -179,7 +189,7 @@ outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002
 """
 function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500, nskipprint=1)
     # Long unpacking of stuff
-    sg, δ = unpack(rpd)
+    sg, delta = unpack(rpd)
     p1, p2 = sg.players
     po_1, po_2 = p1.payoff_array, p2.payoff_array
     p1_minpayoff, p1_maxpayoff = extrema(po_1)
@@ -234,15 +244,17 @@ function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500, nsk
                 a1, a2 = AS[ia, :]
 
                 # Update incentive constraints
-                b[nH+1] = flow_u_1(rpd, a1, a2) - best_dev_payoff_1(rpd, a2) - δ*_w1
-                b[nH+2] = flow_u_2(rpd, a1, a2) - best_dev_payoff_2(rpd, a1) - δ*_w2
+                b[nH+1] = (1-delta)*flow_u_1(rpd, a1, a2) -
+                          (1-delta)*best_dev_payoff_1(rpd, a2) - delta*_w1
+                b[nH+2] = (1-delta)*flow_u_2(rpd, a1, a2) -
+                          (1-delta)*best_dev_payoff_2(rpd, a1) - delta*_w2
 
                 # Solve corresponding linear program
                 lpout = linprog(c, A, '=', b, lb, ub, ClpSolver())
                 if lpout.status == :Optimal
                     # Pull out optimal value and compute
                     w_sol = lpout.sol[1:2]
-                    value = flow_u(rpd, a1, a2) + δ*w_sol
+                    value = (1-delta)*flow_u(rpd, a1, a2) + delta*w_sol
 
                     # Save hyperplane level and continuation promises
                     Cia[ia] = h1*value[1] + h2*value[2]
@@ -268,7 +280,7 @@ function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500, nsk
             end
 
             # Update the points
-            Z[:, ih] = flow_u(rpd, a1star, a2star) + δ*[Wstar[1], Wstar[2]]
+            Z[:, ih] = (1-delta)*flow_u(rpd, a1star, a2star) + delta*[Wstar[1], Wstar[2]]
         end
 
         # Update distance and iteration counter
