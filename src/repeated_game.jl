@@ -191,7 +191,8 @@ worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
 Approximates the set of equilibrium value set for a repeated game with the
 outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002
 """
-function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500, nskipprint=1)
+function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500,
+                            verbose=true, nskipprint=50)
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -290,7 +291,9 @@ function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500, nsk
         # Update distance and iteration counter
         dist = maxabs(C - Cnew)
         iter += 1
-        mod(iter, nskipprint) == 0 ? println("$iter\t$dist\t($_w1, $_w2)") : nothing
+        if verbose && mod(iter, nskipprint) == 0
+            println("$iter\t$dist\t($_w1, $_w2)")
+        end
 
         # Update hyperplane levels
         copy!(C, Cnew)
