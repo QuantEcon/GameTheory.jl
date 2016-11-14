@@ -1,6 +1,9 @@
 module Games
 
 # Packages
+using Clp
+using MathProgBase
+using QuantEcon
 
 # Type aliases #
 typealias PureAction Integer
