@@ -452,13 +452,14 @@ Constructor of an N-player NormalFormGame.
 """
 function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
     N = M - 1
+    dims = front(size(payoffs))
+    colons = front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
+
     size(payoffs)[end] != N && throw(ArgumentError(
         "length of the array in the last axis must be equal to
          the number of players"
     ))
 
-    dims = front(size(payoffs))
-    colons = front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
     players = [
         Player(permutedims(view(payoffs, colons..., i),
                            (i:N..., 1:i-1...)::typeof(dims))
