@@ -6,8 +6,9 @@ module Games
 typealias PureAction Integer
 typealias MixedAction{T<:Real} Vector{T}
 typealias Action{T<:Real} Union{PureAction,MixedAction{T}}
-typealias ActionProfile{T<:Real,N} NTuple{N,Action{T}}
 typealias PureActionProfile{N,T<:PureAction} NTuple{N, T}
+typealias MixedActionProfile{T<:Real,N} NTuple{N,MixedAction{T}}
+typealias ActionProfile Union{PureActionProfile,MixedActionProfile}
 
 # package code goes here
 include("normal_form_game.jl")
