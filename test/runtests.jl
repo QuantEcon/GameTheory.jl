@@ -8,3 +8,5 @@ else
 end
 
 include("test_normal_form_game.jl")
+include("test_pure_nash.jl")
+
