@@ -10,9 +10,8 @@ const opponents_actions_docstring = """
 opponents' actions. If N=2, then it must be a vector of reals (in which case
 it is treated as the opponent's mixed action) or a scalar of integer (in which
 case it is treated as the opponent's pure action). If N>2, then it must be a
-tuple of N-1 objects, where each object must be an integer (pure action) or a
-vector of reals (mixed action). (For the degenerate case N=1, it must be
-`nothing`.)"""
+tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions).
+(For the degenerate case N=1, it must be `nothing`.)"""
 
 
 # Player #
@@ -35,7 +34,7 @@ type Player{N,T<:Real}
     payoff_array::Array{T,N}
 end
 
-num_actions(p::Player) = size(p.payoff_array)[1]
+num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents{N}(::Player{N}) = N - 1
 
 Base.summary(player::Player) =
@@ -51,30 +50,65 @@ end
 
 # payoff_vector
 
+# To resolve definition ambiguity
+function payoff_vector(player::Player, opponents_actions::Tuple{})
+    throw(ArgumentError("input tuple must not be empty"))
+end
+
 """
 Return a vector of payoff values for a Player in an N>2 player game, one for
-each own action, given a tuple of the opponents' actions.
+each own action, given a tuple of the opponents' pure actions.
 
 ##### Arguments
 
 - `player::Player` : Player instance.
-- `opponents_actions::ActionProfile` : Tuple of N-1 opponents' actions.
+- `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
+actions.
 
 ##### Returns
 
 - `::Vector` : Payoff vector.
 
 """
-function payoff_vector(player::Player, opponents_actions::ActionProfile)
+function payoff_vector(player::Player, opponents_actions::PureActionProfile)
     length(opponents_actions) != num_opponents(player) &&
         throw(ArgumentError(
             "length of opponents_actions must be $(num_opponents(player))"
         ))
     payoffs = player.payoff_array
     for i in num_opponents(player):-1:1
-        payoffs = _reduce_last_player(payoffs, opponents_actions[i])
+        payoffs = _reduce_ith_opponent(payoffs, i, opponents_actions[i])
     end
-    return payoffs
+    return vec(payoffs)
+end
+
+"""
+Return a vector of payoff values for a Player in an N>2 player game, one for
+each own action, given a tuple of the opponents' mixed actions.
+
+##### Arguments
+
+- `player::Player` : Player instance.
+- `opponents_actions::MixedActionProfile` : Tuple of N-1 opponents' mixed
+actions.
+
+##### Returns
+
+- `::Vector` : Payoff vector.
+
+"""
+function payoff_vector{N,T1,T2}(player::Player{N,T1},
+                                opponents_actions::MixedActionProfile{T2})
+    length(opponents_actions) != num_opponents(player) &&
+        throw(ArgumentError(
+            "length of opponents_actions must be $(num_opponents(player))"
+        ))
+    S = promote_type(T1, T2)
+    payoffs::Array{S,N} = player.payoff_array
+    for i in num_opponents(player):-1:1
+        payoffs = _reduce_ith_opponent(payoffs, i, opponents_actions[i])
+    end
+    return vec(payoffs)
 end
 
 """
@@ -133,32 +167,21 @@ function payoff_vector(player::Player{1}, opponent_action::Void)
     return player.payoff_array
 end
 
-# _reduce_last_player
+# _reduce_ith_opponent
 
-"""
-Given `payoff_array` with ndims=M, return the payoff array with ndims=M-1
-fixing the last player's pure action to be `action` (integer).
-
-"""
-function _reduce_last_player(payoff_array::Array, action::PureAction)
-    shape = size(payoff_array)
-    A = reshape(payoff_array, (prod(shape[1:end-1]), shape[end]))
-    out = A[:, action]
-    return reshape(out, shape[1:end-1])
-end
-
-"""
-Given `payoff_array` with ndims=M, return the payoff array with ndims=M-1
-fixing the last player's mixed action to be `action` (vector of reals).
-
-"""
-function _reduce_last_player(payoff_array::Array, action::MixedAction)
-    shape = size(payoff_array)
-    A = reshape(payoff_array, (prod(shape[1:end-1]), shape[end]))
-
-    # TODO: should we manually check `length(action) == shape[end]`?
-    out = A * action
-    return reshape(out, shape[1:end-1])
+# Given an N-d array `payoff_array` of shape (n_{1}, ..., n_{i+1}, 1, ..., 1),
+# return the N-d array of payoffs of shape (n_{1}, ..., n_{i}, 1, 1, ..., 1)
+# given by fixing the i-th opponent's pure or mixed action to be `action`.
+for (S, ex_mat_action) in ((PureAction, :(A[:, action])),
+                           (MixedAction, :(A * action)))
+    @eval function _reduce_ith_opponent{N,T}(payoff_array::Array{T,N},
+                                             i::Int, action::$S)
+        shape = size(payoff_array)
+        A = reshape(payoff_array, (prod(shape[1:i]), shape[i+1]))
+        out = $(ex_mat_action)
+        shape_new = tuple(shape[1:i]..., ones(Int, N-i)...)::NTuple{N,Int}
+        return reshape(out, shape_new)
+    end
 end
 
 # is_best_response
@@ -402,6 +425,22 @@ function NormalFormGame{N,T}(players::Player{N,T}...)
     NormalFormGame(players)  # use constructor for Tuple of players above
 end
 
+# front (introduced in v0.5)
+if VERSION < v"0.5-"
+    # Copy-paste from base/tuple.jl in v0.5
+    function front(t::Tuple)
+        #@_inline_meta
+        _front((), t...)
+    end
+    front(::Tuple{}) = error("Cannot call front on an empty tuple")
+    _front(out, v) = out
+    function _front(out, v, t...)
+        #@_inline_meta
+        _front((out..., v), t...)
+    end
+else
+    const front = Base.front
+end
 
 """
 Constructor of an N-player NormalFormGame.
@@ -411,24 +450,23 @@ Constructor of an N-player NormalFormGame.
 - `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
 
 """
-@generated function NormalFormGame{T<:Real}(payoffs::Array{T})
-    # TODO: We shouldn't need @generated just to get inference to work
-    # `payoffs` must be of shape (n_1, ..., n_N, N),
-    # where n_i is the number of actions available to player i,
-    # and the last axis contains the payoff profile
-    return quote
-        $(N = ndims(payoffs) - 1)
-        size(payoffs)[end] != $N && throw(ArgumentError(
-            "length of the array in the last axis must be equal to
-             the number of players"
-        ))
-        players::NTuple{$N,Player{$N,T}} = ntuple(
-            i -> Player(permutedims(sub(payoffs, ntuple(j -> Colon(), $N)..., i),
-                                    tuple(i:$N..., 1:i-1...))),
-            $N
-        )
-        return NormalFormGame(players)
-    end
+function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
+    N = M - 1
+    dims = front(size(payoffs))
+    colons = front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
+
+    size(payoffs)[end] != N && throw(ArgumentError(
+        "length of the array in the last axis must be equal to
+         the number of players"
+    ))
+
+    players = [
+        Player(permutedims(view(payoffs, colons..., i),
+                           (i:N..., 1:i-1...)::typeof(dims))
+        ) for i in 1:N
+    ]
+    # Call NormalFormGame{N,T}(players::Vector{Player{N,T}})
+    NormalFormGame(players)
 end
 
 """
@@ -538,8 +576,8 @@ Return true if `action_profile` is a Nash equilibrium.
 ##### Arguments
 
 - `g::NormalFormGame` : Instance of N-player NormalFormGame.
-- `action_profile::ActionProfile` : Tuple of N objects, where each object must
-be an integer (pure action) or a vector of reals (mixed action).
+- `action_profile::ActionProfile` : Tuple of N integers (pure actions) or N
+vectors of reals (mixed actions).
 
 ##### Returns
 
@@ -587,4 +625,3 @@ function pure2mixed(num_actions::Integer, action::PureAction)
     mixed_action[action] = 1
     return mixed_action
 end
-
