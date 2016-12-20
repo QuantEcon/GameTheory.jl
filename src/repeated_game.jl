@@ -192,13 +192,21 @@ Approximates the set of equilibrium value set for a repeated game with the
 outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002
 """
 function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500,
-                            verbose=true, nskipprint=50)
+                            verbose=true, nskipprint=50, psne_check=true)
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
     po_1, po_2 = p1.payoff_array, p2.payoff_array
     p1_minpayoff, p1_maxpayoff = extrema(po_1)
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
+
+    # Check to see whether at least one pure strategy NE exists
+    if psne_check
+        no_psne_exists = (length(pure_nash(sg)) == 0)
+        if no_psne_exists
+            error("No pure action Nash equilibrium exists in stage game")
+        end
+    end
 
     # Get number of actions for each player
     nA1, nA2 = num_actions(p1), num_actions(p2)
