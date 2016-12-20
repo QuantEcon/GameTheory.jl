@@ -210,6 +210,11 @@ worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
 Approximates the set of equilibrium value set for a repeated game with the
 outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002
 
+NOTE: If your code fails then it might be the case that the value set is
+      only the value which corresponds to the pure action nash equilibrium
+      or you might just need more points to be precise enough for the
+      Polyhedra library to be able to convert to the vertice representation.
+
 The arguments are
   * rpd: 2 player repeated game
 
@@ -223,7 +228,7 @@ The keyword arguments are
 
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
-                            verbose=true, nskipprint=50, pane_check=true)
+                            verbose=false, nskipprint=50)
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -232,11 +237,15 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
 
     # Check to see whether at least one pure strategy NE exists
-    if pane_check
-        no_pane_exists = (length(pure_nash(sg)) == 0)
-        if no_pane_exists
-            error("No pure action Nash equilibrium exists in stage game")
-        end
+    pane = pure_nash(sg)
+    no_pane_exists = (length(pane) == 0)
+    if no_pane_exists
+        error("No pure action Nash equilibrium exists in stage game")
+    else
+        npane = length(pane)
+        pane_payoffs_1 = [flow_u_1(rpd, pane[i][1], pane[i][2]) for i in npane]
+        pane_payoffs_2 = [flow_u_2(rpd, pane[i][1], pane[i][2]) for i in npane]
+        min_pane_payoffs = [minimum(pane_payoffs_1), minimum(pane_payoffs_2)]
     end
 
     # Get number of actions for each player and create action space
@@ -295,14 +304,14 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                 lpout = linprog(c, A, '<', b, lb, ub, ClpSolver())
                 if lpout.status == :Optimal
                     # Pull out optimal value and compute
-                    w_sol = lpout.sol[1:2]
+                    w_sol = lpout.sol
                     value = (1-delta)*flow_u(rpd, a1, a2) + delta*w_sol
 
                     # Save hyperplane level and continuation promises
                     Cia[ia] = h1*value[1] + h2*value[2]
                     Wia[:, ia] = value
                 else
-                    @show lpout.status
+                    warn("Came across an infeasible region")
                     Cia[ia] = -Inf
                 end
             end
@@ -317,8 +326,8 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
             if Cstar > -Inf
                 Cnew[ih] = Cstar
             else
-                println("FAIL")
-                Cnew[ih] = h1*p1_minpayoff + h2*p2_minpayoff
+                warn("Failed to find hyperplane level greater than -Inf")
+                Cnew[ih] = h1*min_pane_payoffs[1] + h2*min_pane_payoffs[2]
             end
 
             # Update the points
@@ -336,13 +345,20 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
         copy!(C, Cnew)
     end
 
+    # Check whether the set should only contain the pure action nash equilibrium
+
     # Given the H-representation `(H, C)` of the computed polytope of
     # equilibrium payoff profiles, we obtain its V-representation `vertices`.
     # Here we use CDDLib.jl, a Julia wrapper of cdd, through Polyhedra.jl.
-    hrep = SimpleHRepresentation(H, C)
-    poly = polyhedron(hrep, _polyhedra_lib())
-    vrep = getvrep(poly)
-    vertices = SimpleVRepresentation(vrep).V
+    hh = SimpleHRepresentation(H, C)
+    vertices = SimpleVRepresentation(polyhedron(hh, _polyhedra_lib())).V
+
+    # Reduce the number of vertices by rounding points to the tolerance
+    tol_int = round(Int, abs(log10(tol))) - 1
+
+    # Find vertices that are unique within tolerance level
+    vertices = unique(round.(vertices, tol_int), 1)
 
     return vertices
 end
+
