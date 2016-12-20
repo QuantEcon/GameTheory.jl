@@ -5,6 +5,11 @@ using Clp
 using MathProgBase
 using QuantEcon
 
+# Geometry packages
+using Polyhedra
+using CDDLib
+const _polyhedra_lib = CDDLibrary
+
 # 0.5 compatibility
 import Compat.view
 

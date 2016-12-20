@@ -4,10 +4,6 @@ This file contains code to build and manage repeated games
 It currently only has tools for solving two player repeated
 games, but could be extended to do more with some effort.
 =#
-using Polyhedra
-using CDDLib
-const _polyhedra_lib = CDDLibrary
-
 
 """
 This is a type for a specific type of repeated games
@@ -61,27 +57,33 @@ best_dev_payoff_2(rpd::RepGame2, a1::Int) =
     maximum(rpd.sg.players[2].payoff_array[:, a1])
 
 """
-Creates the unit circle of continuation value points starting at origin `o`
-with radius `r`. Additionally, this function crops any points that go
-beyond the bounds permitted by the game -- For example, if the max payoff
-for player 1 is 5 then any point that awards player 1 higher than 5
-continuation utility is cropped to 5.
+Initializes the following things for a 2 player repeated game.
+  * subgradients
+  * extreme points of the convex set for values
+  * hyper plane levels
+
+These are determined in the following way
+  * Subgradients are simply chosen from the unit circle.
+  * The values for the extremum of the value set are just given by
+    choosing points along a circle with specified origin and radius
+  * Hyperplane levels are determined by computing the hyperplane
+    level such that the extreme points from the circle are
+    generated
+
+The arguments are
 """
-function create_unitcircle_points{T<:Real}(rpd::RepeatedGame{2, T}, nH::Int,
-                                           o::Vector{Float64}, r::Float64)
+function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     # First create unit circle
     H = unitcircle(nH)
     HT = H'
 
     # Choose origin and radius for big approximation
-    p1_min, p1_max = extrema(rpd.sg.players[1].payoff_array)
-    p2_min, p2_max = extrema(rpd.sg.players[2].payoff_array)
     Z = Array(Float64, 2, nH)
     for i=1:nH
         # We know that players can ever get worse than their
         # lowest punishment, so ignore anything below that
-        Z[1, i] = min(max(o[1] + r*HT[1, i], p1_min), p1_max)
-        Z[2, i] = min(max(o[2] + r*HT[2, i], p2_min), p2_max)
+        Z[1, i] = o[1] + r*HT[1, i]
+        Z[2, i] = o[2] + r*HT[2, i]
     end
 
     # Corresponding hyperplane levels
@@ -90,7 +92,14 @@ function create_unitcircle_points{T<:Real}(rpd::RepeatedGame{2, T}, nH::Int,
     return C, H, Z
 end
 
-function create_unitcircle_points(rpd::RepeatedGame, nH::Int)
+"""
+This is a function that initializes the subgradients, hyperplane levels,
+and extreme points of the value set by choosing an appropriate
+origin and radius.
+
+See `initialize_sg_hpl` for more documentation
+"""
+function initialize_sg_hpl(rpd::RepeatedGame, nH::Int)
 
     # Choose the origin to be mean of max and min payoffs
     p1_min, p1_max = extrema(rpd.sg.players[1].payoff_array)
@@ -101,7 +110,7 @@ function create_unitcircle_points(rpd::RepeatedGame, nH::Int)
     r2 = max((p2_max - o[2])^2, (o[2] - p2_min)^2)
     r = sqrt(r1 + r2)
 
-    return create_unitcircle_points(rpd, nH, o, r)
+    return initialize_sg_hpl(nH, o, r)
 end
 
 #
@@ -116,7 +125,7 @@ We add nH slack variables (which will be constrained to be positive) to
 deal with inequalities associated with Ax \leq b.
 
 min c ⋅ x
-    Ax = b
+    Ax < b
 
 In this case, the `c` vector will be determined by which subgradient is being
 used, so this function only allocates space for it.
@@ -127,27 +136,28 @@ solutions that are in the current set of continuation values while the incentive
 compatibility constraints ensure the agents won't deviate.
 
 The `b` vector is associated with the `A` matrix and gives the value for constraint.
+
+The arguments for this function are
+  * rpd: Two player repeated game
+  * H: The subgradients used to approximate the value set
 """
 function initialize_LP_matrices(rpd::RepGame2, H)
-    # Need slack variable for every subgradient and additional 2 incentive constraint
+    # Need total number of subgradients
     nH = size(H, 1)
-    nslack = nH + 2
 
     # Create the c vector (objective)
-    c = zeros(nslack+2)
+    c = zeros(2)
 
     # Create the A matrix (constraints)
-    A_H = hcat(H, eye(nH, nslack))
-    A_IC_1 = zeros(1, nslack+2)
-    A_IC_2 = zeros(1, nslack+2)
-    A_IC_1[1] = -rpd.delta
-    A_IC_1[end-1] = 1.0
-    A_IC_2[2] = -rpd.delta
-    A_IC_2[end] = 1.0
+    A_H = H
+    A_IC_1 = zeros(1, 2)
+    A_IC_2 = zeros(1, 2)
+    A_IC_1[1, 1] = -rpd.delta
+    A_IC_2[1, 2] = -rpd.delta
     A = vcat(A_H, A_IC_1, A_IC_2)
 
     # Create the b vector (constraints)
-    b = Array(Float64, nslack)
+    b = Array(Float64, nH + 2)
 
     return c, A, b
 end
@@ -157,6 +167,12 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i
 
 The output of this function is used to create the values associated with
 incentive compatibility constraints
+
+The arguments for this function are
+  * rpd: Two player repeated game
+  * H: Subgradients used to approximate value set
+  * C: Hyperplane levels for value set approximation
+  * i: Which player want worst value for
 """
 function worst_value_i(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}, i::Int)
     # Objective depends on which player we are minimizing
@@ -177,10 +193,13 @@ function worst_value_i(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}
     return out
 end
 
+"See worst_value_i for documentation"
 worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
     worst_value_i(rpd, H, C, 1)
+"See worst_value_i for documentation"
 worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
     worst_value_i(rpd, H, C, 2)
+"See worst_value_i for documentation"
 worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
     (worst_value_1(rpd, H, C), worst_value_2(rpd, H, C))
 
@@ -190,9 +209,21 @@ worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
 """
 Approximates the set of equilibrium value set for a repeated game with the
 outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002
+
+The arguments are
+  * rpd: 2 player repeated game
+
+The keyword arguments are
+  * nH: Number of subgradients used in approximation
+  * tol: Tolerance in differences of set
+  * maxiter: Maximum number of iterations
+  * verbose: Whether to display updates about iterations and distance
+  * nskipprint: Number of iterations between printing information (verbose=true)
+  * pane_check: Whether to perform a check about whether a pure action ne exists
+
 """
-function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500,
-                            verbose=true, nskipprint=50, psne_check=true)
+function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
+                            verbose=true, nskipprint=50, pane_check=true)
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -201,30 +232,28 @@ function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500,
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
 
     # Check to see whether at least one pure strategy NE exists
-    if psne_check
-        no_psne_exists = (length(pure_nash(sg)) == 0)
-        if no_psne_exists
+    if pane_check
+        no_pane_exists = (length(pure_nash(sg)) == 0)
+        if no_pane_exists
             error("No pure action Nash equilibrium exists in stage game")
         end
     end
 
-    # Get number of actions for each player
+    # Get number of actions for each player and create action space
     nA1, nA2 = num_actions(p1), num_actions(p2)
     nAS = nA1 * nA2
-
-    # Create action space
     AS = QuantEcon.gridmake(1:nA1, 1:nA2)
 
     # Create the unit circle, points, and hyperplane levels
-    C, H, Z = create_unitcircle_points(rpd, nH)
+    C, H, Z = initialize_sg_hpl(rpd, nH)
     Cnew = copy(C)
 
     # Create matrices for linear programming
     c, A, b = initialize_LP_matrices(rpd, H)
 
     # bounds on w are [-Inf, Inf] while bounds on slack are [0, Inf]
-    lb = vcat([-Inf, -Inf], zeros(nH+2))
-    ub = fill(Inf, nH+4)
+    lb = [-Inf, -Inf]
+    ub = [Inf, Inf]
 
     # Set iterative parameters and iterate until converged
     iter, dist = 0, 10.0
@@ -233,8 +262,8 @@ function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500,
         _w1 = worst_value_1(rpd, H, C)
         _w2 = worst_value_2(rpd, H, C)
 
-        # Update all set constraints
-        copy!(b, 1, C)
+        # Update all set constraints -- Copies elements 1:nH of C into b
+        copy!(b, 1, C, 1, nH)
 
         # Iterate over all subgradients
         for ih=1:nH
@@ -263,7 +292,7 @@ function outerapproximation(rpd::RepeatedGame; nH=32, tol=1e-8, maxiter=500,
                           (1-delta)*best_dev_payoff_2(rpd, a1) - delta*_w2
 
                 # Solve corresponding linear program
-                lpout = linprog(c, A, '=', b, lb, ub, ClpSolver())
+                lpout = linprog(c, A, '<', b, lb, ub, ClpSolver())
                 if lpout.status == :Optimal
                     # Pull out optimal value and compute
                     w_sol = lpout.sol[1:2]
