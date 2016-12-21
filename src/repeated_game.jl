@@ -266,7 +266,7 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
 
     # Set iterative parameters and iterate until converged
     iter, dist = 0, 10.0
-    while (iter < maxiter) && (dist > tol)
+    while (iter < maxiter) & (dist > tol)
         # Compute the current worst values for each agent
         _w1 = worst_value_1(rpd, H, C)
         _w2 = worst_value_2(rpd, H, C)
@@ -311,11 +311,11 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                     Cia[ia] = h1*value[1] + h2*value[2]
                     Wia[:, ia] = value
                 else
-                    warn("Came across an infeasible region")
                     Cia[ia] = -Inf
                 end
             end
 
+            any(Cia .> -1e12) ? nothing : warn("All actions result in infeasiblility")
             # Action which pushes furthest in direction h_i
             astar = indmax(Cia)
             a1star, a2star = AS[astar, :]
@@ -337,15 +337,19 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
         # Update distance and iteration counter
         dist = maxabs(C - Cnew)
         iter += 1
+
         if verbose && mod(iter, nskipprint) == 0
             println("$iter\t$dist\t($_w1, $_w2)")
+        end
+
+        if iter >= maxiter
+            warn("Maximum Iteration Reached")
         end
 
         # Update hyperplane levels
         copy!(C, Cnew)
     end
 
-    # Check whether the set should only contain the pure action nash equilibrium
 
     # Given the H-representation `(H, C)` of the computed polytope of
     # equilibrium payoff profiles, we obtain its V-representation `vertices`.
