@@ -228,7 +228,7 @@ The keyword arguments are
 
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
-                            verbose=false, nskipprint=50)
+                            check_pane=true, verbose=false, nskipprint=50)
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -237,15 +237,9 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
 
     # Check to see whether at least one pure strategy NE exists
-    pane = pure_nash(sg)
-    no_pane_exists = (length(pane) == 0)
-    if no_pane_exists
+    pane_exists = check_pane ? length(pure_nash(sg)) >= 1 : true
+    if !pane_exists
         error("No pure action Nash equilibrium exists in stage game")
-    else
-        npane = length(pane)
-        pane_payoffs_1 = [flow_u_1(rpd, pane[i][1], pane[i][2]) for i in npane]
-        pane_payoffs_2 = [flow_u_2(rpd, pane[i][1], pane[i][2]) for i in npane]
-        min_pane_payoffs = [minimum(pane_payoffs_1), minimum(pane_payoffs_2)]
     end
 
     # Get number of actions for each player and create action space
