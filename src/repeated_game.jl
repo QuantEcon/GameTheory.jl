@@ -326,8 +326,7 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
             if Cstar > -Inf
                 Cnew[ih] = Cstar
             else
-                warn("Failed to find hyperplane level greater than -Inf")
-                Cnew[ih] = h1*min_pane_payoffs[1] + h2*min_pane_payoffs[2]
+                error("Failed to find feasible action/continuation pair")
             end
 
             # Update the points
