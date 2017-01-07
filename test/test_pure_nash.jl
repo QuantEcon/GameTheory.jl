@@ -36,6 +36,16 @@ using Combinatorics
         @test sort(ne) == sort([(1,1); (2,2)])
     end
 
+    @testset "Coordination game with 2 Pure Action Nash equilibria but only find 1" begin
+        Coo = [4.0 0.0
+               3.0 2.0]
+
+        g_Coo = NormalFormGame(Coo)
+        ne = pure_nash(g_Coo; ntofind=1)
+
+        @test length(ne) == 1
+    end
+
     @testset "Unanimity Game with more than two players" begin
         N = 4
         a, b = 1, 2
