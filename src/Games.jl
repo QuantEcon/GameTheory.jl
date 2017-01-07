@@ -7,8 +7,7 @@ using QuantEcon
 
 # Geometry packages
 using Polyhedra
-using CDDLib
-const _polyhedra_lib = CDDLibrary
+getlibraryfor(2, AbstractFloat)
 
 # 0.5 compatibility
 import Compat.view
@@ -24,8 +23,8 @@ typealias ActionProfile Union{PureActionProfile,MixedActionProfile}
 # package code goes here
 include("normal_form_game.jl")
 include("pure_nash.jl")
-include("repeated_game.jl")
 include("repeated_game_util.jl")
+include("repeated_game.jl")
 
 
 export Player, NormalFormGame,  # Types

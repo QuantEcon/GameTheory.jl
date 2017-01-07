@@ -228,7 +228,8 @@ The keyword arguments are
 
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
-                            check_pane=true, verbose=false, nskipprint=50)
+                            check_pane=true, verbose=false, nskipprint=50,
+                             plib=getlibraryfor(2, AbstractFloat))
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -237,7 +238,7 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
 
     # Check to see whether at least one pure strategy NE exists
-    pane_exists = check_pane ? length(pure_nash(sg)) >= 1 : true
+    pane_exists = check_pane ? length(pure_nash(sg; ntofind=1)) > 0 : true
     if !pane_exists
         error("No pure action Nash equilibrium exists in stage game")
     end
@@ -309,7 +310,6 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                 end
             end
 
-            any(Cia .> -1e12) ? nothing : warn("All actions result in infeasiblility")
             # Action which pushes furthest in direction h_i
             astar = indmax(Cia)
             a1star, a2star = AS[astar, :]
@@ -317,7 +317,7 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
             # Get hyperplane level and continuation value
             Cstar = Cia[astar]
             Wstar = Wia[:, astar]
-            if Cstar > -Inf
+            if Cstar > -1e15
                 Cnew[ih] = Cstar
             else
                 error("Failed to find feasible action/continuation pair")
@@ -347,14 +347,14 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     # Given the H-representation `(H, C)` of the computed polytope of
     # equilibrium payoff profiles, we obtain its V-representation `vertices`.
     # Here we use CDDLib.jl, a Julia wrapper of cdd, through Polyhedra.jl.
-    hh = SimpleHRepresentation(H, C)
-    vertices = SimpleVRepresentation(polyhedron(hh, _polyhedra_lib())).V
+    p = polyhedron(SimpleHRepresentation(H, C), plib)
+    vertices = SimpleVRepresentation(p).V
 
     # Reduce the number of vertices by rounding points to the tolerance
-    tol_int = round(Int, abs(log10(tol))) - 1
+    # tol_int = round(Int, abs(log10(tol))) - 1
 
     # Find vertices that are unique within tolerance level
-    vertices = unique(round.(vertices, tol_int), 1)
+    # vertices = unique(round.(vertices, tol_int), 1)
 
     return vertices
 end
