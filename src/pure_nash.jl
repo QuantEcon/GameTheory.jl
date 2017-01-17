@@ -6,7 +6,7 @@ action Nash.
 Currently uses a brute force algorithm, but that hopefully
 will change in the future.
 """
-function pure_nash(nfg::NormalFormGame)
+function pure_nash(nfg::NormalFormGame; ntofind=Inf)
     # Get number of players and their actions
     np = num_players(nfg)
     na = nfg.nums_actions
@@ -16,9 +16,20 @@ function pure_nash(nfg::NormalFormGame)
 
     # For each action profile check whether it is NE
     as = CartesianRange(na)
-    for a in as
+
+    # Create counter for how many to find and iterator for actions
+    nfound = 0
+    state = start(as)
+
+    while (nfound < ntofind) & !done(as, state)
+        # Get next action pair
+        a, state = next(as, state)
         _a = a.I
-        is_nash(nfg, _a) ? push!(ne, _a) : nothing
+
+        if is_nash(nfg, _a)
+            push!(ne, _a)
+            nfound = nfound + 1
+        end
     end
 
     return ne
