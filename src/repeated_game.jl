@@ -224,11 +224,13 @@ The keyword arguments are
   * maxiter: Maximum number of iterations
   * verbose: Whether to display updates about iterations and distance
   * nskipprint: Number of iterations between printing information (verbose=true)
-  * pane_check: Whether to perform a check about whether a pure action ne exists
+  * check_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists
+  * plib: Allows users to choose a particular package for the geometry computations (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
+          docs for more info). By default, it chooses to use [CDDLib.jl](https://github.com/JuliaPolyhedra/CDDLib.jl)
 
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
-                            check_pane=true, verbose=false, nskipprint=50,
+                            check_pure_nash=true, verbose=false, nskipprint=50,
                              plib=getlibraryfor(2, AbstractFloat))
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
@@ -238,7 +240,7 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
 
     # Check to see whether at least one pure strategy NE exists
-    pane_exists = check_pane ? length(pure_nash(sg; ntofind=1)) > 0 : true
+    pane_exists = check_pure_nash ? length(pure_nash(sg; ntofind=1)) > 0 : true
     if !pane_exists
         error("No pure action Nash equilibrium exists in stage game")
     end
@@ -345,16 +347,16 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
 
 
     # Given the H-representation `(H, C)` of the computed polytope of
-    # equilibrium payoff profiles, we obtain its V-representation `vertices`.
-    # Here we use CDDLib.jl, a Julia wrapper of cdd, through Polyhedra.jl.
+    # equilibrium payoff profiles, we obtain its V-representation `vertices`
+    # using Polyhedra.jl (it uses `plib` which was chosen for computations)
     p = polyhedron(SimpleHRepresentation(H, C), plib)
     vertices = SimpleVRepresentation(p).V
 
     # Reduce the number of vertices by rounding points to the tolerance
-    # tol_int = round(Int, abs(log10(tol))) - 1
+    tol_int = round(Int, abs(log10(tol))) - 1
 
     # Find vertices that are unique within tolerance level
-    # vertices = unique(round.(vertices, tol_int), 1)
+    vertices = unique(round.(vertices, tol_int), 1)
 
     return vertices
 end
