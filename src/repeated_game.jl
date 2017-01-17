@@ -240,8 +240,8 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
 
     # Check to see whether at least one pure strategy NE exists
-    pane_exists = check_pure_nash ? length(pure_nash(sg; ntofind=1)) > 0 : true
-    if !pane_exists
+    pure_nash_exists = check_pure_nash ? length(pure_nash(sg; ntofind=1)) > 0 : true
+    if !pure_nash_exists
         error("No pure action Nash equilibrium exists in stage game")
     end
 
