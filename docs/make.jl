@@ -13,7 +13,7 @@ deploydocs(
     repo = "github.com/QuantEcon/Games.jl.git",
     branch = "gh-pages",
     target = "build",
-    osname = "osx",
+    osname = "linux",
     julia  = "0.5",
     deps = nothing,
     make = nothing,
