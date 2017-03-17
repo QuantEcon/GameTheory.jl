@@ -29,7 +29,7 @@ minus 1 such pairs. This should thus be used only for small games.
 """
 function support_enumeration(g::NormalFormGame)
 
-    task = support_enumeration_gen(g)
+    task = support_enumeration_task(g)
 
     NEs = Tuple{Vector{Float64},Vector{Float64}}[NE for NE in task]
 
@@ -38,9 +38,9 @@ function support_enumeration(g::NormalFormGame)
 end
 
 """
-    support_enumeration_gen(g::NormalFormGame)
+    support_enumeration_task(g::NormalFormGame)
 
-Generator version of `support_enumeration`.
+Task version of `support_enumeration`.
 
 # Arguments
 * `g::NormalFormGame`: NormalFormGame instance.
@@ -48,24 +48,24 @@ Generator version of `support_enumeration`.
 # Returns
 * `::Task`: runnable task for generating Nash equilibria.
 """
-function support_enumeration_gen(g::NormalFormGame)
+function support_enumeration_task(g::NormalFormGame)
 
     N = length(g.nums_actions)
     if N != 2
         throw(ArgumentError("Implemented only for 2-player games"))
     end
 
-    task = Task(() -> _support_enumeration_gen(g.players[1].payoff_array,
-                                               g.players[2].payoff_array))
+    task = Task(() -> _support_enumeration_task(g.players[1].payoff_array,
+                                                g.players[2].payoff_array))
 
     return task
 end
 
 """
-    _support_enumeration_gen{T<:Real}(payoff_matrix1::Matrix{T},
-                                      payoff_matrix2::Matrix{T})
+    _support_enumeration_task{T<:Real}(payoff_matrix1::Matrix{T},
+                                       payoff_matrix2::Matrix{T})
 
-Main body of `support_enumeration_gen`.
+Main body of `support_enumeration_task`.
 
 # Arguments
 * `payoff_matrix1::Matrix{T}`: Payoff matrix of player 1.
@@ -75,8 +75,8 @@ Main body of `support_enumeration_gen`.
 * `Tuple{Vector{Float64},Vector{Float64}}`: Tuple of Nash equilibrium
     mixed actions.
 """
-function _support_enumeration_gen{T<:Real}(payoff_matrix1::Matrix{T},
-                                           payoff_matrix2::Matrix{T})
+function _support_enumeration_task{T<:Real}(payoff_matrix1::Matrix{T},
+                                            payoff_matrix2::Matrix{T})
 
     nums_actions = size(payoff_matrix1, 1), size(payoff_matrix2, 1)
     n_min = min(nums_actions...)

@@ -52,6 +52,6 @@ export
     random_game, covariance_game,
 
     # Support Enumeration
-    support_enumeration, support_enumeration_gen
+    support_enumeration, support_enumeration_task
 
 end # module
