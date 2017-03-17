@@ -20,8 +20,8 @@ end
 # create PAGES for makedocs()
 PAGES = ["Home" => "index.md",
          "Library" => push!(
-                        Any["lib/$file.md" for file in files],
-                            "lib/index.md"
+                        ["lib/$file.md" for file in files],
+                         "lib/index.md"
                         )
          ]
 
