@@ -1,5 +1,7 @@
 #=
 Generate random NormalFormGame instances.
+
+Authors: Daisuke Oyama, Zejin Shi
 =#
 
 #
@@ -8,15 +10,18 @@ Generate random NormalFormGame instances.
 """
     random_game{N}(nums_actions::NTuple{N,Int})
 
-Return a random NormalFormGame instance where the payoffs are drawn
-independently from the uniform distribution on [0, 1).
+Return a random N-player NormalFormGame instance where the
+payoffs are drawn independently from the uniform distribution
+on [0, 1).
 
 # Arguements
+
 * `nums_actions::NTuple{N,Int}`: Tuple of the numbers of actions,
-    one for each player.
+  one for each player.
 
 # Returns
-* `::NormalFormGame`: The generated N-players random NormalFormGame.
+
+* `::NormalFormGame`: The generated random N-player NormalFormGame.
 """
 function random_game{N}(nums_actions::NTuple{N,Int})
     if N == 0
@@ -35,28 +40,31 @@ end
 # Covariance Games Generating
 #
 """
-    covariance_game{N, T<:Real}(nums_actions::NTuple{N,Int}, rho::T)
+    covariance_game{N}(nums_actions::NTuple{N,Int}, rho::Real)
 
-Return a random NormalFormGame instance where the payoff profiles
-are drawn independently from the standard multi-normal with the
-covariance of any pair of payoffs equal to `rho`, as studied in
-[1]_.
+Return a random N-player NormalFormGame instance with N>=2 where
+the payoff profiles are drawn independently from the standard
+multi-normal with the covariance of any pair of payoffs equal to
+`rho`, as studied in Rinott and Scarsini (2000).
 
 # Arguements
+
 * `nums_actions::NTuple{N,Int}`: Tuple of the numbers of actions, 
-    one for each　player.
+  one for each　player.
 * `rho::T`: Covariance of a pair of payoff values. Must be in
-    [-1/(N-1), 1], where N is the number of players. T<:Real.
+  [-1/(N-1), 1], where N is the number of players.
 
 # Returns
-* `::NormalFormGame`: The generated random NormalFormGame.
+
+* `::NormalFormGame`: The generated random N-player NormalFormGame.
 
 # References
-1. Y. Rinott and M. Scarsini, "On the Number of Pure Strategy
-   Nash Equilibria in Random Games," Games and Economic Behavior
-   (2000), 274-293.
+
+* Y. Rinott and M. Scarsini, "On the Number of Pure Strategy
+  Nash Equilibria in Random Games," Games and Economic Behavior
+  (2000), 274-293.
 """
-function covariance_game{N, T<:Real}(nums_actions::NTuple{N,Int}, rho::T)
+function covariance_game{N}(nums_actions::NTuple{N,Int}, rho::Real)
     if N <= 1
         throw(ArgumentError("length of nums_actions must be at least 2"))
     end
