@@ -2,6 +2,10 @@
 Compute all mixed Nash equilibria of a 2-player (non-degenerate) normal
 form game by support enumeration.
 
+Julia version of QuantEcon.py/support_enumeration.py
+
+Authors: Daisuke Oyama, Zejin Shi
+
 References
 ----------
 B. von Stengel, "Equilibrium Computation for Two-Player Games in
@@ -10,7 +14,7 @@ Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 =#
 
 """
-    support_enumeration(g::NormalFormGame)
+    support_enumeration(g::NormalFormGame{2})
 
 Compute mixed-action Nash equilibria with equal support size for a
 2-player normal form game by support enumeration. For a
@@ -21,16 +25,17 @@ players have the same number n of actions, there are 2n choose n
 minus 1 such pairs. This should thus be used only for small games.
 
 # Arguments
-* `g::NormalFormGame`: NormalFormGame instance.
+
+* `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
 
 # Returns
+
 * `::Vector{Tuple{Vector{Float64},Vector{Float64}}}`: Mixed-action
-    Nash equilibria that are found.
+  Nash equilibria that are found.
 """
-function support_enumeration(g::NormalFormGame)
+function support_enumeration(g::NormalFormGame{2})
 
     task = support_enumeration_task(g)
-
     NEs = Tuple{Vector{Float64},Vector{Float64}}[NE for NE in task]
 
     return NEs
@@ -38,45 +43,46 @@ function support_enumeration(g::NormalFormGame)
 end
 
 """
-    support_enumeration_task(g::NormalFormGame)
+    support_enumeration_task(g::NormalFormGame{2})
 
 Task version of `support_enumeration`.
 
 # Arguments
-* `g::NormalFormGame`: NormalFormGame instance.
+
+* `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
 
 # Returns
-* `::Task`: runnable task for generating Nash equilibria.
+
+* `::Task`: Runnable task for generating Nash equilibria.
 """
-function support_enumeration_task(g::NormalFormGame)
+function support_enumeration_task(g::NormalFormGame{2})
 
-    N = length(g.nums_actions)
-    if N != 2
-        throw(ArgumentError("Implemented only for 2-player games"))
-    end
-
-    task = Task(() -> _support_enumeration_task(g.players[1].payoff_array,
-                                                g.players[2].payoff_array))
+    task = Task(
+        () -> _support_enumeration_producer(g.players[1].payoff_array,
+                                            g.players[2].payoff_array)
+    )
 
     return task
 end
 
 """
-    _support_enumeration_task{T<:Real}(payoff_matrix1::Matrix{T},
-                                       payoff_matrix2::Matrix{T})
+    _support_enumeration_producer{T<:Real}(payoff_matrix1::Matrix{T},
+                                           payoff_matrix2::Matrix{T})
 
 Main body of `support_enumeration_task`.
 
 # Arguments
+
 * `payoff_matrix1::Matrix{T}`: Payoff matrix of player 1.
 * `payoff_matrix2::Matrix{T}`: Payoff matrix of player 2.
 
 # Produces
+
 * `Tuple{Vector{Float64},Vector{Float64}}`: Tuple of Nash equilibrium
-    mixed actions.
+  mixed actions.
 """
-function _support_enumeration_task{T<:Real}(payoff_matrix1::Matrix{T},
-                                            payoff_matrix2::Matrix{T})
+function _support_enumeration_producer{T<:Real}(payoff_matrix1::Matrix{T},
+                                                payoff_matrix2::Matrix{T})
 
     nums_actions = size(payoff_matrix1, 1), size(payoff_matrix2, 1)
     n_min = min(nums_actions...)
@@ -132,15 +138,17 @@ best responses to it, in which case the outcome is stored in `out`;
 steps.
 
 # Arguments
+
 * `A::Matrix{T}`: Matrix used in intermediate steps.
 * `out::Vector{Float64}`: Vector to store the nonzero values of the 
-    desired mixed action.
+  desired mixed action.
 * `b::Vector{T}`: Vector used in intermediate steps.
 * `payoff_matrix::Matrix{T}`: The player's payoff matrix.
 * `own_supp::Vector{Int}`: Vector containing the player's action indices.
 * `opp_supp::Vector{Int}`: Vector containing the opponent's action indices.
 
 # Returns
+
 * `::Bool`: `true` if a desired mixed action exists and `false` otherwise.
 """
 function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, out::Vector{Float64},
@@ -197,9 +205,11 @@ representation with the k set bits, by "Gosper's hack".
 Copy-paste from en.wikipedia.org/wiki/Combinatorial_number_system
 
 # Arguments
+
 * `x::Int`: Integer with k set bits.
 
 # Returns
+
 * `::Int`: Smallest integer > x with k set bits.
 """
 function _next_k_combination(x::Int)
@@ -218,10 +228,35 @@ next k-array in lexicographic ordering of the descending sequences
 of the elements. `a` is modified in place.
 
 # Arguments
+
 * `a::Vector{Int}`: Array of length k.
 
 # Returns
-* `:::Vector{Int}`: View of `a`.
+
+* `:::Vector{Int}`: Next k-array of `a`.
+
+# Examples
+
+```julia
+julia> n, k = 4, 2
+(4,2)
+
+julia> a = collect(1:k)
+2-element Array{Int64,1}:
+ 1
+ 2
+
+julia> while a[end] < n + 1
+           @show a
+           _next_k_array!(a)
+       end
+a = [1,2]
+a = [1,3]
+a = [2,3]
+a = [1,4]
+a = [2,4]
+a = [3,4]
+```
 """
 function _next_k_array!(a::Vector{Int})
 
