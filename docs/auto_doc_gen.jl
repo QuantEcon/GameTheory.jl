@@ -6,10 +6,34 @@ docs using `Documenter.jl`.
 
 =#
 
+path = Pkg.dir("Games")
+
+# read the basic structures
+order = SubString{String}[]
+sections_names = SubString{String}[]
+sections = Dict{SubString{String}, Vector{SubString{String}}}()
+re = r"(.*): (.*)\n"
+open(joinpath(path, "docs/Structure")) do f
+    for match in eachmatch(re, readstring(f))
+        list = map(i -> strip(i), split(match.captures[2], ","))
+        if list ==[""]
+            continue
+        end
+
+        if match.captures[1] == "Order"
+            order = list
+            global order
+        else
+            section_name = match.captures[1]
+            push!(sections_names, section_name)
+            sections[section_name] = list
+        end
+    end
+end
+
 # find all files used in Games.jl
 re = r"include\(\"(.*)\.jl\"\)"
 files = String[]
-path = Pkg.dir("Games")
 
 open(joinpath(path, "src/Games.jl")) do f
     for match in eachmatch(re, readstring(f))
@@ -17,47 +41,30 @@ open(joinpath(path, "src/Games.jl")) do f
     end
 end
 
-# create PAGES for makedocs()
-PAGES = ["Home" => "index.md",
-         "Library" => push!(
-                        ["lib/$file.md" for file in files],
-                         "lib/index.md"
-                        )
-         ]
+files_names = Dict{String, String}(
+                file => replace(join(map(ucfirst, split(file, "_")), " "),
+                                "Util",
+                                "Utilities")
+                for file in files
+                )
 
 # generate paths
 if !ispath(joinpath(path, "docs/src/lib"))
     mkpath(joinpath(path, "docs/src/lib"))
 end
 
-# write index.md as Homepage
-home_page = """
-# Games.jl
-
-"""
-
-open(joinpath(path, "docs/src/index.md"), "w") do f
-    write(f, home_page)
-    for file in files
-        file_name = 
-            replace(join(map(ucfirst, split(file, "_")), " "),
-                    "Util",
-                    "Utilities"
-                )
-        write(f, "* [$file_name](@ref)\n")
-    end
-end
-
-# write .md for each file in Library
+# write .md for files not in section
 for file in files
-    file_name = 
-            replace(join(map(ucfirst, split(file, "_")), " "),
-                    "Util",
-                    "Utilities"
-                )
+    if file in vcat(values(sections)...)
+        continue
+    end
 
+    if !(file in order)
+        push!(order, file)
+    end
+    file_name = files_names[file]
     file_page = """
-# $file_name
+# [$file_name](@id $file)
 
 This is documentation for `$file.jl`.
 
@@ -82,6 +89,48 @@ Public = false
     end
 end
 
+# write .md for sections
+for section_name in sections_names
+    if !(section_name in order)
+        push!(order, section_name)
+    end
+
+    section_files = sections[section_name]
+    section_name_lower = replace(lowercase(section_name), " ", "_")
+    section_page = """
+# $section_name
+
+This is documentation for $section_name.
+"""
+    open(joinpath(path, "docs/src/lib/$section_name_lower.md"), "w") do f
+        write(f, section_page)
+        for file in section_files
+            file_name = files_names[file]
+            section_file_page = """
+
+## [$file_name](@id $file)
+
+Documentation for `$file.jl`.
+
+### Exported
+```@autodocs
+Modules = [Games]
+Pages   = ["$file.jl"]
+Private = false
+```
+
+### Internal
+```@autodocs
+Modules = [Games]
+Pages   = ["$file.jl"]
+Public = false
+```
+"""
+            write(f, section_file_page)
+        end
+    end
+end
+
 # write index page for Liabrary
 index = """
 # Index
@@ -94,3 +143,38 @@ modules = [Games]
 open(joinpath(path, "docs/src/lib/index.md"), "w") do f
     write(f, index)
 end
+
+# write index.md as Homepage
+home_page = """
+# Games.jl
+
+"""
+
+open(joinpath(path, "docs/src/index.md"), "w") do f
+    write(f, home_page)
+    for page in order
+        if page in keys(sections)
+            write(f, "$page\n")
+            for file in sections[page]
+                file_name = files_names[file]
+                write(f, "* [$file_name](@ref $file)\n")
+            end
+            write(f, "\n")
+        else
+            file = page
+            file_name = files_names[file]
+            write(f, "[$file_name](@ref $file)\n\n")
+        end
+    end
+end
+
+pages_names = map(i -> replace(lowercase(i), " ", "_"), order)
+
+PAGES = ["Home" => "index.md",
+         "Library" => push!(
+                        ["lib/$page_name.md" 
+                         for page_name in pages_names
+                        ],
+                         "lib/index.md"
+                    )
+    ]
