@@ -443,12 +443,15 @@ else
 end
 
 """
-Constructor of an N-player NormalFormGame.
+    NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
 
-##### Arguments
+Construct an N-player NormalFormGame for N>=2 with an array `payoffs` of M=N+1
+dimensions, where `payoffs[a_1, a_2, ..., a_N, :]` contains a profile of N
+payoff values.
 
-- `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
+# Arguments
 
+* `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
 """
 function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
     N = M - 1
