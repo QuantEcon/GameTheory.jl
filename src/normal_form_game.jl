@@ -470,27 +470,22 @@ function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
 end
 
 """
-Constructor of a symmetric 2-player NormalFormGame if `size(payoffs, 1) > 1`,
-otherwise construct a 1-player NormalFormGame with one action.
+    NormalFormGame{T<:Real}(payoffs::Matrix{T})
 
-##### Arguments
+Construct a symmetric 2-player NormalFormGame with a square matrix.
 
-- `payoffs::Matrix{T<:Real}` : Square matrix representing each player's payoff
-matrix.
+# Arguments
 
+* `payoffs::Matrix{T<:Real}` : Square matrix representing each player's payoff
+  matrix.
 """
 function NormalFormGame{T<:Real}(payoffs::Matrix{T})
     n, m = size(payoffs)
-    if m >= 2  # Two-player symmetric game
-        n != m && throw(ArgumentError(
-            "symmetric two-player game must be represented by a square matrix"
-        ))
-        player = Player(payoffs)
-        return NormalFormGame(player, player)
-    else  # Trivial game with 1 player
-        player = Player(vec(payoffs))
-        return NormalFormGame(player)
-    end
+    n != m && throw(ArgumentError(
+        "symmetric two-player game must be represented by a square matrix"
+    ))
+    player = Player(payoffs)
+    return NormalFormGame(player, player)
 end
 
 Base.summary(g::NormalFormGame) =
