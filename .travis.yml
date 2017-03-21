@@ -6,6 +6,9 @@ os:
 julia:
   - release
   - nightly
+addons:
+  apt_packages:
+    - libgmp-dev
 notifications:
   email: false
 # uncomment the following lines to override the default test script
