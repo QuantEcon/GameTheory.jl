@@ -4,6 +4,7 @@ module Games
 using Clp
 using MathProgBase
 using QuantEcon
+using Distributions
 
 # Geometry packages
 using Polyhedra
@@ -22,6 +23,7 @@ include("normal_form_game.jl")
 include("pure_nash.jl")
 include("repeated_game_util.jl")
 include("repeated_game.jl")
+include("random.jl")
 
 
 export
@@ -45,6 +47,9 @@ export
     RepeatedGame, unpack, flow_u_1, flow_u_2, flow_u, best_dev_i,
     best_dev_1, best_dev_2, best_dev_payoff_i, best_dev_payoff_1,
     best_dev_payoff_2, worst_value_i, worst_value_1, worst_value_2,
-    worst_values, outerapproximation
+    worst_values, outerapproximation,
+
+    # Random Games
+    random_game, covariance_game
 
 end # module
