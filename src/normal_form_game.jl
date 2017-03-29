@@ -425,23 +425,6 @@ function NormalFormGame{N,T}(players::Player{N,T}...)
     NormalFormGame(players)  # use constructor for Tuple of players above
 end
 
-# front (introduced in v0.5)
-if VERSION < v"0.5-"
-    # Copy-paste from base/tuple.jl in v0.5
-    function front(t::Tuple)
-        #@_inline_meta
-        _front((), t...)
-    end
-    front(::Tuple{}) = error("Cannot call front on an empty tuple")
-    _front(out, v) = out
-    function _front(out, v, t...)
-        #@_inline_meta
-        _front((out..., v), t...)
-    end
-else
-    const front = Base.front
-end
-
 """
     NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
 
@@ -455,8 +438,8 @@ payoff values.
 """
 function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
     N = M - 1
-    dims = front(size(payoffs))
-    colons = front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
+    dims = Base.front(size(payoffs))
+    colons = Base.front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
 
     size(payoffs)[end] != N && throw(ArgumentError(
         "length of the array in the last axis must be equal to
