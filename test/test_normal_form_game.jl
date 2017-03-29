@@ -130,8 +130,8 @@
     end
 
     @testset "NormalFormGame with 1 player" begin
-        data = transpose([0 1 1])
-        g = @inferred NormalFormGame(data)
+        payoffs = [0, 1, 1]
+        g = @inferred NormalFormGame(Player(payoffs))
         @test num_players(g) == 1
         @test g.players[1].payoff_array == [0, 1, 1]
         @test g[1] == 0
@@ -162,6 +162,7 @@
 
     @testset "NormalFormGame invalid nonsquare matrix" begin
         @test_throws ArgumentError g = NormalFormGame(zeros((2, 3)))
+        @test_throws ArgumentError g = NormalFormGame(transpose([0 1 1]))
     end
 
     @testset "NormalFormGame invalid payoff profiles" begin
