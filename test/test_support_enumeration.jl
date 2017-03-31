@@ -1,8 +1,8 @@
 @testset "Testing Support Enumeration" begin
 
     @testset "test 3 by 2 non-degenerate normal form game" begin
-        g = NormalFormGame(Player([3 3; 2 5; 0 6]),
-                           Player([3 2 3; 2 6 1]))
+        g = NormalFormGame(Player([3.0 3.0; 2.0 5.0; 0.0 6.0]),
+                           Player([3.0 2.0 3.0; 2.0 6.0 1.0]))
         NEs = [([1.0, 0.0, 0.0], [1.0, 0.0]),
                ([0.8, 0.2, 0.0], [2/3, 1/3]),
                ([0.0, 1/3, 2/3], [1/3, 2/3])]

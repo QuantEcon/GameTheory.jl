@@ -16,9 +16,9 @@ Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 """
     support_enumeration(g::NormalFormGame{2})
 
-Compute mixed-action Nash equilibria with equal support size for a
-2-player normal form game by support enumeration. For a
-non-degenerate game input, these are all Nash equilibria.
+Compute mixed-action Nash equilibria with equal support size
+for a 2-player normal form game by support enumeration. For a
+non-degenerate game input, these are all the Nash equilibria.
 
 The algorithm checks all the equal-size support pairs; if the
 players have the same number n of actions, there are 2n choose n
@@ -30,13 +30,13 @@ minus 1 such pairs. This should thus be used only for small games.
 
 # Returns
 
-* `::Vector{Tuple{Vector{Float64},Vector{Float64}}}`: Mixed-action
+* `::Vector{Tuple{Vector{Real}, Vector{Real}}}`: Mixed-action
   Nash equilibria that are found.
 """
 function support_enumeration(g::NormalFormGame{2})
 
     task = support_enumeration_task(g)
-    NEs = Tuple{Vector{Float64},Vector{Float64}}[NE for NE in task]
+    NEs = Tuple{Vector{Real}, Vector{Real}}[NE for NE in task]
 
     return NEs
 
@@ -58,53 +58,55 @@ Task version of `support_enumeration`.
 function support_enumeration_task(g::NormalFormGame{2})
 
     task = Task(
-        () -> _support_enumeration_producer(g.players[1].payoff_array,
-                                            g.players[2].payoff_array)
+        () -> _support_enumeration_producer((g.players[1].payoff_array,
+                                             g.players[2].payoff_array))
     )
 
     return task
 end
 
 """
-    _support_enumeration_producer{T<:Real}(payoff_matrix1::Matrix{T},
-                                           payoff_matrix2::Matrix{T})
+    _support_enumeration_producer{T<:Real}(payoff_matrices
+                                           ::NTuple{2,Matrix{T}})
 
 Main body of `support_enumeration_task`.
 
 # Arguments
 
-* `payoff_matrix1::Matrix{T}`: Payoff matrix of player 1.
-* `payoff_matrix2::Matrix{T}`: Payoff matrix of player 2.
+* `payoff_matrices::NTuple{2, Matrix{T}}`: Payoff matrices of player 1 and
+  player 2.
 
 # Produces
 
-* `Tuple{Vector{Float64},Vector{Float64}}`: Tuple of Nash equilibrium
-  mixed actions.
+* `Tuple{Vector{S},Vector{S}}`: Tuple of Nash equilibrium mixed actions.
+  `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
-function _support_enumeration_producer{T<:Real}(payoff_matrix1::Matrix{T},
-                                                payoff_matrix2::Matrix{T})
+function _support_enumeration_producer{T<:Real}(payoff_matrices
+                                                ::NTuple{2,Matrix{T}})
 
-    nums_actions = size(payoff_matrix1, 1), size(payoff_matrix2, 1)
+    nums_actions = size(payoff_matrices[1], 1), size(payoff_matrices[2], 1)
     n_min = min(nums_actions...)
+    S = typeof(zero(T)/one(T))
+    if S != T
+        payoff_matrices = NTuple{2, Matrix{S}}(payoff_matrices)
+    end
 
     for k = 1:n_min
         supps = (collect(1:k), Vector{Int}(k))
-        actions = (Vector{Float64}(k), Vector{Float64}(k))
-        A = Matrix{T}(k+1, k+1)
-        A[1:end-1, end] = -one(T)
-        A[end, 1:end-1] = one(T)
-        A[end, end] = zero(T)
-        b = zeros(T, k+1)
-        b[end] = one(T)
+        actions = (Vector{S}(k), Vector{S}(k))
+        A = Matrix{S}(k+1, k+1)
+        b = Vector{S}(k+1)
         while supps[1][end] < nums_actions[1]+1
             supps[2][:] = collect(1:k)
             while supps[2][end] < nums_actions[2]+1
-                if _indiff_mixed_action!(A, actions[2], b,
-                                         payoff_matrix1, supps[1], supps[2])
-                    if _indiff_mixed_action!(A, actions[1], b, payoff_matrix2,
+                if _indiff_mixed_action!(A, b, actions[2],
+                                         payoff_matrices[1],
+                                         supps[1], supps[2])
+                    if _indiff_mixed_action!(A, b, actions[1],
+                                             payoff_matrices[2],
                                              supps[2], supps[1])
-                        out = (zeros(nums_actions[1]),
-                               zeros(nums_actions[2]))
+                        out = (zeros(S, nums_actions[1]),
+                               zeros(S, nums_actions[2]))
                         for (p, (supp, action)) in enumerate(zip(supps,
                                                                  actions))
                             out[p][supp] = action
@@ -121,8 +123,8 @@ function _support_enumeration_producer{T<:Real}(payoff_matrix1::Matrix{T},
 end
 
 """
-    _indiff_mixed_action!{T<:Real}(A::Matrix{T}, out::Vector{Float64},
-                                   b::Vector{T},
+    _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
+                                   out::Vector{T},
                                    payoff_matrix::Matrix{T},
                                    own_supp::Vector{Int},
                                    opp_supp::Vector{Int})
@@ -140,9 +142,9 @@ steps.
 # Arguments
 
 * `A::Matrix{T}`: Matrix used in intermediate steps.
-* `out::Vector{Float64}`: Vector to store the nonzero values of the 
-  desired mixed action.
 * `b::Vector{T}`: Vector used in intermediate steps.
+* `out::Vector{T}`: Vector to store the nonzero values of the
+  desired mixed action.
 * `payoff_matrix::Matrix{T}`: The player's payoff matrix.
 * `own_supp::Vector{Int}`: Vector containing the player's action indices.
 * `opp_supp::Vector{Int}`: Vector containing the opponent's action indices.
@@ -151,8 +153,8 @@ steps.
 
 * `::Bool`: `true` if a desired mixed action exists and `false` otherwise.
 """
-function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, out::Vector{Float64},
-                                        b::Vector{T},
+function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
+                                        out::Vector{T},
                                         payoff_matrix::Matrix{T},
                                         own_supp::Vector{Int},
                                         opp_supp::Vector{Int})
@@ -161,18 +163,22 @@ function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, out::Vector{Float64},
     k = length(own_supp)
 
     A[1:end-1, 1:end-1] = payoff_matrix[own_supp, :][:, opp_supp]
-    sol = Vector{Float64}(k+1)
+    A[1:end-1, end] = -one(T)
+    A[end, 1:end-1] = one(T)
+    A[end, end] = zero(T)
+    b[1:end-1] = zeros(T, k)
+    b[end] = one(T)
     try
-        sol[:] = A \ b
+        b = A_ldiv_B!(lufact!(A), b)
     catch LinAlg.SingularException
         return false
     end
 
-    if any(sol[1:end-1] .<= 0)
+    if any(b[1:end-1] .<= 0)
         return false
     end
-    out[:] = sol[1:end-1]
-    val = sol[end]
+    out[:] = b[1:end-1]
+    val = b[end]
 
     if k == m
         return true
@@ -183,7 +189,7 @@ function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, out::Vector{Float64},
 
     for i = 1:m
         if !own_supp_flags[i]
-            payoff = 0.
+            payoff = zero(T)
             for j = 1:k
                 payoff += payoff_matrix[i, opp_supp[j]] * out[j]
             end
