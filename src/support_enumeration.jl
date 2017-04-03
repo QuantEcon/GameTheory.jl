@@ -96,9 +96,9 @@ function _support_enumeration_producer{T<:Real}(payoff_matrices
         actions = (Vector{S}(k), Vector{S}(k))
         A = Matrix{S}(k+1, k+1)
         b = Vector{S}(k+1)
-        while supps[1][end] < nums_actions[1]+1
+        while supps[1][end] <= nums_actions[1]
             supps[2][:] = collect(1:k)
-            while supps[2][end] < nums_actions[2]+1
+            while supps[2][end] <= nums_actions[2]
                 if _indiff_mixed_action!(A, b, actions[2],
                                          payoff_matrices[1],
                                          supps[1], supps[2])
@@ -162,11 +162,11 @@ function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
     m = size(payoff_matrix, 1)
     k = length(own_supp)
 
-    A[1:end-1, 1:end-1] = payoff_matrix[own_supp, :][:, opp_supp]
+    A[1:end-1, 1:end-1] = payoff_matrix[own_supp, opp_supp]
     A[1:end-1, end] = -one(T)
     A[end, 1:end-1] = one(T)
     A[end, end] = zero(T)
-    b[1:end-1] = zeros(T, k)
+    b[1:end-1] = zero(T)
     b[end] = one(T)
     try
         b = A_ldiv_B!(lufact!(A), b)
@@ -174,9 +174,10 @@ function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
         return false
     end
 
-    if any(b[1:end-1] .<= 0)
-        return false
+    for i in 1:k
+        b[i] <= zero(T) && return false
     end
+
     out[:] = b[1:end-1]
     val = b[end]
 
