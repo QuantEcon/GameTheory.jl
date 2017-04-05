@@ -50,11 +50,11 @@ After construction of `NormalFormGame`, we can find its Nash Equilibria by using
 pure_nash(g)
 ```
 
-Please see [lectures](@ref lectures) on QuantEcon for more details.
+Please see [notebooks](@ref notebooks) on QuantEcon for more details.
 
-## [Lectures](@id lectures)
+## [Notebooks](@id notebooks)
 
-Some lectures of this package is available on [QuantEcon](https://lectures.quantecon.org):
+Some notebooks of this package is available on [QuantEcon](https://lectures.quantecon.org):
 
 * [Tools for Game Theory](http://nbviewer.jupyter.org/github/QuantEcon/QuantEcon.notebooks/blob/master/game_theory_jl.ipynb)
 
