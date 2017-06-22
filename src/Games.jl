@@ -10,12 +10,12 @@ using Distributions
 using Polyhedra
 
 # Type aliases #
-typealias PureAction Integer
-typealias MixedAction{T<:Real} Vector{T}
-typealias Action{T<:Real} Union{PureAction,MixedAction{T}}
-typealias PureActionProfile{N,T<:PureAction} NTuple{N, T}
-typealias MixedActionProfile{T<:Real,N} NTuple{N,MixedAction{T}}
-typealias ActionProfile Union{PureActionProfile,MixedActionProfile}
+const PureAction = Integer
+MixedAction{T<:Real} = Vector{T}
+Action{T<:Real} = Union{PureAction,MixedAction{T}}
+PureActionProfile{N,T<:PureAction} = NTuple{N,T}
+MixedActionProfile{T<:Real,N} = NTuple{N,MixedAction{T}}
+const ActionProfile = Union{PureActionProfile,MixedActionProfile}
 
 # package code goes here
 include("normal_form_game.jl")

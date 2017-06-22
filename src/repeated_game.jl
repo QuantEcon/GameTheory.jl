@@ -17,7 +17,7 @@ immutable RepeatedGame{N, T<:Real}
 end
 
 # Type alias for 2 player game
-typealias RepGame2 RepeatedGame{2}
+const RepGame2 = RepeatedGame{2}
 
 #
 # Helper Functions (for 2 players)
