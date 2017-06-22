@@ -30,7 +30,7 @@
     end
 
     @testset "Player with 2 opponents" begin
-        payoffs_2opponents = Array(Int64, (2, 2, 2))
+        payoffs_2opponents = Array{Int64}(2, 2, 2)
         payoffs_2opponents[:, 1, 1] = [3, 1]
         payoffs_2opponents[:, 1, 2] = [6, 0]
         payoffs_2opponents[:, 2, 1] = [4, 5]
@@ -60,7 +60,7 @@
     # NormalFormGame #
 
     @testset "asymmetric NormalFormGame with 2 players" begin
-        matching_pennies_bimatrix = Array(Float64, 2, 2, 2)
+        matching_pennies_bimatrix = Array{Float64}(2, 2, 2)
         matching_pennies_bimatrix[:, 1, 1] = [1, -1]
         matching_pennies_bimatrix[:, 1, 2] = [-1, 1]
         matching_pennies_bimatrix[:, 2, 1] = [-1, 1]
@@ -73,7 +73,7 @@
     end
 
     @testset "asymmetric NormalFormGame with 2 players" begin
-        payoffs_2opponents = Array(Int64, (2, 2, 2))
+        payoffs_2opponents = Array{Int64}(2, 2, 2)
         payoffs_2opponents[:, 1, 1] = [3, 1]
         payoffs_2opponents[:, 1, 2] = [6, 0]
         payoffs_2opponents[:, 2, 1] = [4, 5]

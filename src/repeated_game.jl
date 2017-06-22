@@ -78,7 +78,7 @@ function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     HT = H'
 
     # Choose origin and radius for big approximation
-    Z = Array(Float64, 2, nH)
+    Z = Array{Float64}(2, nH)
     for i=1:nH
         # We know that players can ever get worse than their
         # lowest punishment, so ignore anything below that
@@ -157,7 +157,7 @@ function initialize_LP_matrices(rpd::RepGame2, H)
     A = vcat(A_H, A_IC_1, A_IC_2)
 
     # Create the b vector (constraints)
-    b = Array(Float64, nH + 2)
+    b = Array{Float64}(nH + 2)
 
     return c, A, b
 end
@@ -283,8 +283,8 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
             c[2] = -h2
 
             # Allocate space to store all solutions
-            Cia = Array(Float64, nAS)
-            Wia = Array(Float64, 2, nAS)
+            Cia = Array{Float64}(nAS)
+            Wia = Array{Float64}(2, nAS)
             for ia=1:nAS
                 #
                 # Action specific instruction
@@ -330,7 +330,7 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
         end
 
         # Update distance and iteration counter
-        dist = maxabs(C - Cnew)
+        dist = maximum(abs, C - Cnew)
         iter += 1
 
         if verbose && mod(iter, nskipprint) == 0
