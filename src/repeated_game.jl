@@ -11,7 +11,7 @@ This is a type for a specific type of repeated games
 It takes a stage game that is repeated in every period
 and all agents discount future at rate δ
 """
-immutable RepeatedGame{N, T<:Real}
+struct RepeatedGame{N, T<:Real}
     sg::NormalFormGame{N, T}
     delta::Float64
 end

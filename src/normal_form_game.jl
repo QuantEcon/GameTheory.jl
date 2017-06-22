@@ -30,7 +30,7 @@ function.
 function.
 
 """
-type Player{N,T<:Real}
+struct Player{N,T<:Real}
     payoff_array::Array{T,N}
 end
 
@@ -340,7 +340,7 @@ Class representing an N-player normal form game.
 player.
 
 """
-type NormalFormGame{N,T<:Real}
+struct NormalFormGame{N,T<:Real}
     players::NTuple{N,Player{N,T}}
     nums_actions::NTuple{N,Int}
 end
