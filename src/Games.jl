@@ -8,7 +8,6 @@ using Distributions
 
 # Geometry packages
 using Polyhedra
-getlibraryfor(2, AbstractFloat)
 
 # Type aliases #
 typealias PureAction Integer
