@@ -231,7 +231,7 @@ The keyword arguments are
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                             check_pure_nash=true, verbose=false, nskipprint=50,
-                             plib=getlibraryfor(2, AbstractFloat))
+                            plib=getlibraryfor(2, Float64))
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
