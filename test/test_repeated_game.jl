@@ -17,7 +17,7 @@
     @testset "Testing flow utility computations" begin
         @test abs(flow_u_1(rpd, 1, 1) - 9.0) < 1e-14
         @test abs(flow_u_2(rpd, 2, 2) - 3.0) < 1e-14
-        @test maxabs(flow_u(rpd, 2, 2) - [3.0, 3.0]) < 1e-14
+        @test maximum(abs, flow_u(rpd, 2, 2) - [3.0, 3.0]) < 1e-14
     end
 
     @testset "Testing best deviation computations" begin
@@ -31,14 +31,14 @@
                   -1.0 0.0
                   0.0 -1.0]
 
-        @test maxabs(H - points) < 1e-12
+        @test maximum(abs, H - points) < 1e-12
     end
 
     @testset "Testing subgradient and hyperplane level initialize" begin
         C, H, Z = Games.initialize_sg_hpl(4, [0.0, 0.0], 1.0)
 
-        @test maxabs(C - ones(4)) < 1e-12
-        @test maxabs(H - Z') < 1e-12
+        @test maximum(abs, C - ones(4)) < 1e-12
+        @test maximum(abs, H - Z') < 1e-12
     end
 
     @testset "Testing worst value computation" begin

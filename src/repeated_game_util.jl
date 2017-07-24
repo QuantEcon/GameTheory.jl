@@ -17,7 +17,7 @@ function unitcircle(npts::Int)
     degrees = 0.0:incr:2π
 
     # Points on circle
-    pts = Array(Float64, npts, 2)
+    pts = Array{Float64}(npts, 2)
     for i=1:npts
         x = degrees[i]
         pts[i, 1] = cos(x)

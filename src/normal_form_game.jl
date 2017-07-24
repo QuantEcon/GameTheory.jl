@@ -30,7 +30,7 @@ function.
 function.
 
 """
-type Player{N,T<:Real}
+struct Player{N,T<:Real}
     payoff_array::Array{T,N}
 end
 
@@ -340,7 +340,7 @@ Class representing an N-player normal form game.
 player.
 
 """
-type NormalFormGame{N,T<:Real}
+struct NormalFormGame{N,T<:Real}
     players::NTuple{N,Player{N,T}}
     nums_actions::NTuple{N,Int}
 end
@@ -489,7 +489,7 @@ function Base.getindex{N,T}(g::NormalFormGame{N,T},
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
 
-    payoff_profile = Array(T, N)
+    payoff_profile = Array{T}(N)
     for (i, player) in enumerate(g.players)
         payoff_profile[i] =
             player.payoff_array[(index[i:end]..., index[1:i-1]...)...]
