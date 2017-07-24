@@ -41,7 +41,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.NormalFormGame-Tuple{Array{Games.Player{N,T},1}}",
+    "location": "lib/normal_form_game.html#Games.NormalFormGame-Union{Tuple{Array{Games.Player{N,T},1}}, Tuple{N}, Tuple{T}} where T where N",
     "page": "Normal Form Game",
     "title": "Games.NormalFormGame",
     "category": "Method",
@@ -49,7 +49,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.NormalFormGame-Tuple{Array{T<:Real,2}}",
+    "location": "lib/normal_form_game.html#Games.NormalFormGame-Union{Tuple{Array{T,2}}, Tuple{T}} where T<:Real",
     "page": "Normal Form Game",
     "title": "Games.NormalFormGame",
     "category": "Method",
@@ -57,7 +57,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.NormalFormGame-Tuple{Array{T<:Real,M}}",
+    "location": "lib/normal_form_game.html#Games.NormalFormGame-Union{Tuple{Array{T,M}}, Tuple{M}, Tuple{T}} where M where T<:Real",
     "page": "Normal Form Game",
     "title": "Games.NormalFormGame",
     "category": "Method",
@@ -65,7 +65,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.NormalFormGame-Tuple{Tuple{Vararg{Games.Player{N,T},N}}}",
+    "location": "lib/normal_form_game.html#Games.NormalFormGame-Union{Tuple{N}, Tuple{Tuple{Vararg{Games.Player{N,T},N}}}, Tuple{T}} where T where N",
     "page": "Normal Form Game",
     "title": "Games.NormalFormGame",
     "category": "Method",
@@ -73,7 +73,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.NormalFormGame-Tuple{Type,Tuple{Vararg{Int64,N}}}",
+    "location": "lib/normal_form_game.html#Games.NormalFormGame-Union{Tuple{N}, Tuple{Type,Tuple{Vararg{Int64,N}}}} where N",
     "page": "Normal Form Game",
     "title": "Games.NormalFormGame",
     "category": "Method",
@@ -81,7 +81,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.NormalFormGame-Tuple{Vararg{Games.Player{N,T},N}}",
+    "location": "lib/normal_form_game.html#Games.NormalFormGame-Union{Tuple{N}, Tuple{T}, Tuple{Vararg{Games.Player{N,T},N} where N}} where T where N",
     "page": "Normal Form Game",
     "title": "Games.NormalFormGame",
     "category": "Method",
@@ -97,7 +97,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.best_response-Tuple{Games.Player,Union{Tuple{Vararg{Array{T<:Real,1},N}},Tuple{Vararg{T<:Integer,N}},Union{Array{T<:Real,1},Integer},Void},Array{Float64,1}}",
+    "location": "lib/normal_form_game.html#Games.best_response-Tuple{Games.Player,Union{Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Tuple{Vararg{T,N}} where T<:Integer where N, Union{Array{T,1}, Integer} where T<:Real, Void},Array{Float64,1}}",
     "page": "Normal Form Game",
     "title": "Games.best_response",
     "category": "Method",
@@ -105,7 +105,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.best_response-Tuple{Games.Player,Union{Tuple{Vararg{Array{T<:Real,1},N}},Tuple{Vararg{T<:Integer,N}},Union{Array{T<:Real,1},Integer},Void}}",
+    "location": "lib/normal_form_game.html#Games.best_response-Tuple{Games.Player,Union{Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Tuple{Vararg{T,N}} where T<:Integer where N, Union{Array{T,1}, Integer} where T<:Real, Void}}",
     "page": "Normal Form Game",
     "title": "Games.best_response",
     "category": "Method",
@@ -113,7 +113,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.best_responses-Tuple{Games.Player,Union{Tuple{Vararg{Array{T<:Real,1},N}},Tuple{Vararg{T<:Integer,N}},Union{Array{T<:Real,1},Integer},Void}}",
+    "location": "lib/normal_form_game.html#Games.best_responses-Tuple{Games.Player,Union{Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Tuple{Vararg{T,N}} where T<:Integer where N, Union{Array{T,1}, Integer} where T<:Real, Void}}",
     "page": "Normal Form Game",
     "title": "Games.best_responses",
     "category": "Method",
@@ -121,7 +121,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.is_best_response-Tuple{Games.Player,Array{T<:Real,1},Union{Tuple{Vararg{Array{T<:Real,1},N}},Tuple{Vararg{T<:Integer,N}},Union{Array{T<:Real,1},Integer},Void}}",
+    "location": "lib/normal_form_game.html#Games.is_best_response-Tuple{Games.Player,Array{T,1} where T<:Real,Union{Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Tuple{Vararg{T,N}} where T<:Integer where N, Union{Array{T,1}, Integer} where T<:Real, Void}}",
     "page": "Normal Form Game",
     "title": "Games.is_best_response",
     "category": "Method",
@@ -129,7 +129,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.is_best_response-Tuple{Games.Player,Integer,Union{Tuple{Vararg{Array{T<:Real,1},N}},Tuple{Vararg{T<:Integer,N}},Union{Array{T<:Real,1},Integer},Void}}",
+    "location": "lib/normal_form_game.html#Games.is_best_response-Tuple{Games.Player,Integer,Union{Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Tuple{Vararg{T,N}} where T<:Integer where N, Union{Array{T,1}, Integer} where T<:Real, Void}}",
     "page": "Normal Form Game",
     "title": "Games.is_best_response",
     "category": "Method",
@@ -145,7 +145,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.is_nash-Tuple{Games.NormalFormGame{1,T<:Real},Union{Array{T<:Real,1},Integer}}",
+    "location": "lib/normal_form_game.html#Games.is_nash-Tuple{Games.NormalFormGame{1,T} where T<:Real,Union{Array{T,1}, Integer} where T<:Real}",
     "page": "Normal Form Game",
     "title": "Games.is_nash",
     "category": "Method",
@@ -153,7 +153,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player,Tuple{Vararg{T<:Integer,N}}}",
+    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player,Tuple{Vararg{T,N}} where T<:Integer where N}",
     "page": "Normal Form Game",
     "title": "Games.payoff_vector",
     "category": "Method",
@@ -161,7 +161,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player{1,T<:Real},Void}",
+    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player{1,T} where T<:Real,Void}",
     "page": "Normal Form Game",
     "title": "Games.payoff_vector",
     "category": "Method",
@@ -169,7 +169,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player{2,T<:Real},Array{T<:Real,1}}",
+    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player{2,T} where T<:Real,Array{T,1} where T<:Real}",
     "page": "Normal Form Game",
     "title": "Games.payoff_vector",
     "category": "Method",
@@ -177,7 +177,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player{2,T<:Real},Integer}",
+    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player{2,T} where T<:Real,Integer}",
     "page": "Normal Form Game",
     "title": "Games.payoff_vector",
     "category": "Method",
@@ -185,7 +185,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player{N,T1},Tuple{Vararg{Array{T2,1},N}}}",
+    "location": "lib/normal_form_game.html#Games.payoff_vector-Union{Tuple{Games.Player{N,T1},Tuple{Vararg{Array{T2,1},N}} where N}, Tuple{N}, Tuple{T1}, Tuple{T2}} where T2 where T1 where N",
     "page": "Normal Form Game",
     "title": "Games.payoff_vector",
     "category": "Method",
@@ -337,7 +337,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_game.html#Games.outerapproximation-Tuple{Games.RepeatedGame{2,T<:Real}}",
+    "location": "lib/repeated_game.html#Games.outerapproximation-Tuple{Games.RepeatedGame{2,T} where T<:Real}",
     "page": "Repeated Game",
     "title": "Games.outerapproximation",
     "category": "Method",
@@ -353,7 +353,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_game.html#Games.worst_value_1-Tuple{Games.RepeatedGame{2,T<:Real},Array{Float64,2},Array{Float64,1}}",
+    "location": "lib/repeated_game.html#Games.worst_value_1-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1}}",
     "page": "Repeated Game",
     "title": "Games.worst_value_1",
     "category": "Method",
@@ -361,7 +361,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_game.html#Games.worst_value_2-Tuple{Games.RepeatedGame{2,T<:Real},Array{Float64,2},Array{Float64,1}}",
+    "location": "lib/repeated_game.html#Games.worst_value_2-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1}}",
     "page": "Repeated Game",
     "title": "Games.worst_value_2",
     "category": "Method",
@@ -369,7 +369,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_game.html#Games.worst_value_i-Tuple{Games.RepeatedGame{2,T<:Real},Array{Float64,2},Array{Float64,1},Int64}",
+    "location": "lib/repeated_game.html#Games.worst_value_i-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1},Int64}",
     "page": "Repeated Game",
     "title": "Games.worst_value_i",
     "category": "Method",
@@ -377,7 +377,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_game.html#Games.worst_values-Tuple{Games.RepeatedGame{2,T<:Real},Array{Float64,2},Array{Float64,1}}",
+    "location": "lib/repeated_game.html#Games.worst_values-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1}}",
     "page": "Repeated Game",
     "title": "Games.worst_values",
     "category": "Method",
@@ -393,7 +393,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_game.html#Games.initialize_LP_matrices-Tuple{Games.RepeatedGame{2,T<:Real},Any}",
+    "location": "lib/repeated_game.html#Games.initialize_LP_matrices-Tuple{Games.RepeatedGame{2,T} where T<:Real,Any}",
     "page": "Repeated Game",
     "title": "Games.initialize_LP_matrices",
     "category": "Method",
@@ -441,7 +441,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/random.html#Games.covariance_game-Tuple{Tuple{Vararg{Int64,N}},Real}",
+    "location": "lib/random.html#Games.covariance_game-Union{Tuple{N}, Tuple{Tuple{Vararg{Int64,N}},Real}} where N",
     "page": "Random",
     "title": "Games.covariance_game",
     "category": "Method",
@@ -449,7 +449,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/random.html#Games.random_game-Tuple{Tuple{Vararg{Int64,N}}}",
+    "location": "lib/random.html#Games.random_game-Union{Tuple{N}, Tuple{Tuple{Vararg{Int64,N}}}} where N",
     "page": "Random",
     "title": "Games.random_game",
     "category": "Method",
