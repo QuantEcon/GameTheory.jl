@@ -35,8 +35,11 @@ minus 1 such pairs. This should thus be used only for small games.
 """
 function support_enumeration(g::NormalFormGame{2})
 
-    task = support_enumeration_task(g)
-    NEs = Tuple{Vector{Real}, Vector{Real}}[NE for NE in task]
+    c = Channel(0)
+    task = support_enumeration_task(c, g)
+    bind(c, task)
+    schedule(task)
+    NEs = Tuple{Vector{Real}, Vector{Real}}[NE for NE in c]
 
     return NEs
 
@@ -49,16 +52,19 @@ Task version of `support_enumeration`.
 
 # Arguments
 
+* `c::Channel`: Channel to be binded with the support enumeration task.
 * `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
 
 # Returns
 
 * `::Task`: Runnable task for generating Nash equilibria.
 """
-function support_enumeration_task(g::NormalFormGame{2})
+function support_enumeration_task(c::Channel,
+                                  g::NormalFormGame{2})
 
     task = Task(
-        () -> _support_enumeration_producer((g.players[1].payoff_array,
+        () -> _support_enumeration_producer(c,
+                                            (g.players[1].payoff_array,
                                              g.players[2].payoff_array))
     )
 
@@ -73,15 +79,17 @@ Main body of `support_enumeration_task`.
 
 # Arguments
 
+* `c::Channel`: Channel to be binded with the support enumeration task.
 * `payoff_matrices::NTuple{2, Matrix{T}}`: Payoff matrices of player 1 and
   player 2.
 
-# Produces
+# Puts
 
 * `Tuple{Vector{S},Vector{S}}`: Tuple of Nash equilibrium mixed actions.
   `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
-function _support_enumeration_producer{T<:Real}(payoff_matrices
+function _support_enumeration_producer{T<:Real}(c::Channel,
+                                                payoff_matrices
                                                 ::NTuple{2,Matrix{T}})
 
     nums_actions = size(payoff_matrices[1], 1), size(payoff_matrices[2], 1)
@@ -108,7 +116,7 @@ function _support_enumeration_producer{T<:Real}(payoff_matrices
                                                                  actions))
                             out[p][supp] = action
                         end
-                        produce(out)
+                        put!(c, out)
                     end
                 end
                 _next_k_array!(supps[2])
@@ -220,7 +228,7 @@ function _next_k_combination(x::Int)
 
     u = x & -x
     v = u + x
-    return v + (fld((v $ x), u) >> 2)
+    return v + (fld((v ⊻ x), u) >> 2)
 
 end
 
