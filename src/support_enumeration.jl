@@ -87,9 +87,6 @@ function _support_enumeration_producer{T<:Real}(payoff_matrices
     nums_actions = size(payoff_matrices[1], 1), size(payoff_matrices[2], 1)
     n_min = min(nums_actions...)
     S = typeof(zero(T)/one(T))
-    if S != T
-        payoff_matrices = NTuple{2, Matrix{S}}(payoff_matrices)
-    end
 
     for k = 1:n_min
         supps = (collect(1:k), Vector{Int}(k))
@@ -125,7 +122,7 @@ end
 """
     _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
                                    out::Vector{T},
-                                   payoff_matrix::Matrix{T},
+                                   payoff_matrix::Matrix,
                                    own_supp::Vector{Int},
                                    opp_supp::Vector{Int})
 
@@ -155,7 +152,7 @@ steps.
 """
 function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
                                         out::Vector{T},
-                                        payoff_matrix::Matrix{T},
+                                        payoff_matrix::Matrix,
                                         own_supp::Vector{Int},
                                         opp_supp::Vector{Int})
 
