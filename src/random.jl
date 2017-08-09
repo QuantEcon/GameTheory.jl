@@ -82,10 +82,10 @@ function covariance_game{N}(rng::AbstractRNG, nums_actions::NTuple{N,Int},
     end
 
     mu = zeros(N)
-    C = fill(rho, (N, N))
-    C[diagind(C)] = ones(N)
+    Sigma = fill(rho, (N, N))
+    Sigma[diagind(Sigma)] = ones(N)
 
-    d = MVNSampler(mu, C)
+    d = MVNSampler(mu, Sigma)
     x = rand(rng, d, prod(nums_actions))
 
     payoff_profile_array =
