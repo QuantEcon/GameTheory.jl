@@ -9,10 +9,28 @@
 
     @testset "test covariance game" begin
         nums_actions = (2, 3, 4)
+        N = length(nums_actions)
 
         rho = 0.5
         g = covariance_game(nums_actions, rho)
         @test g.nums_actions == nums_actions
+
+        rho = 1
+        g = covariance_game(nums_actions, rho)
+        for a in CartesianRange(nums_actions)
+            payoff_profile = g[a]
+            for i in 1:(N-1)
+                @test payoff_profile[i] ≈ payoff_profile[end]
+            end
+        end
+
+        rho = -1/(N-1)
+        for a in CartesianRange(nums_actions)
+            payoff_profile = g[a]
+            for i in 1:N
+                @test sum(payoff_profile[i]) ≈ 0 atol=1e-10
+            end
+        end
 
     end
 
