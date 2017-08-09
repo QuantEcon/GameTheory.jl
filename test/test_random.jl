@@ -25,6 +25,7 @@
         end
 
         rho = -1/(N-1)
+        g = covariance_game(nums_actions, rho)
         for a in CartesianRange(nums_actions)
             payoff_profile = g[a]
             for i in 1:N
