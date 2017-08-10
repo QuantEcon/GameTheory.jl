@@ -525,6 +525,12 @@ function Base.setindex!{T,S<:Real}(g::NormalFormGame{1,T},
     return payoff
 end
 
+# Indexing with CartesianIndices
+Base.getindex{N}(g::NormalFormGame{N}, ci::CartesianIndex{N}) =
+    g[to_indices(g, (ci,))...]
+Base.setindex!{N}(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) =
+    g[to_indices(g, (ci,))...] = v
+
 # is_nash
 
 function is_nash(g::NormalFormGame, action_profile::ActionProfile)
