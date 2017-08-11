@@ -53,6 +53,7 @@
         # NOTE: getindex(g, 1, 2) is equivalent to `g[1, 2]`. I use the former
         #       so we can test the type stability of the get index function
         @test @inferred(getindex(g, 1, 2)) == [0, 3]
+        @test @inferred(getindex(g, CartesianIndex(1, 2))) == [0, 3]
         @test @inferred is_nash(g, (1, 1))
         @test @inferred is_nash(g, ([2/3, 1/3], [2/3, 1/3]))
     end
@@ -72,7 +73,7 @@
         @test is_nash(g, ([1/2, 1/2], [1/2, 1/2]))
     end
 
-    @testset "asymmetric NormalFormGame with 2 players" begin
+    @testset "asymmetric NormalFormGame with 3 players" begin
         payoffs_2opponents = Array{Int64}(2, 2, 2)
         payoffs_2opponents[:, 1, 1] = [3, 1]
         payoffs_2opponents[:, 1, 2] = [6, 0]
@@ -82,6 +83,7 @@
         g = @inferred NormalFormGame(tuple([player for i in 1:3]...))
 
         @test @inferred(getindex(g, 1, 1, 2)) == [6, 4, 1]
+        @test @inferred(getindex(g, CartesianIndex(1, 1, 2))) == [6, 4, 1]
         @test @inferred is_nash(g, (1, 1, 1))
         @test @inferred !(is_nash(g, (1, 1, 2)))
 
@@ -103,7 +105,7 @@
         g[1, 1] = [0, 10]
         g[1, 2] = [0, 10]
         g[2, 1] = [3, 5]
-        g[2, 2] = [-2, 0]
+        g[CartesianIndex(2, 2)] = [-2, 0]
 
         @test g.players[1].payoff_array == [0 0; 3 -2]
         @test g.players[2].payoff_array == [10 5; 10 0]
