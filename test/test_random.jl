@@ -29,7 +29,6 @@
         for a in CartesianRange(nums_actions)
             payoff_profile = g[a]
             @test sum(payoff_profile) ≈ 0 atol=1e-10
-            end
         end
 
     end
