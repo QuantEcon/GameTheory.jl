@@ -28,8 +28,7 @@
         g = covariance_game(nums_actions, rho)
         for a in CartesianRange(nums_actions)
             payoff_profile = g[a]
-            for i in 1:N
-                @test sum(payoff_profile[i]) ≈ 0 atol=1e-10
+            @test sum(payoff_profile) ≈ 0 atol=1e-10
             end
         end
 
