@@ -441,19 +441,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/random.html#Games.covariance_game-Union{Tuple{N}, Tuple{Tuple{Vararg{Int64,N}},Real}} where N",
+    "location": "lib/random.html#Games.covariance_game-Union{Tuple{AbstractRNG,Tuple{Vararg{Int64,N}},Real}, Tuple{N}} where N",
     "page": "Random",
     "title": "Games.covariance_game",
     "category": "Method",
-    "text": "covariance_game{N}(nums_actions::NTuple{N,Int}, rho::Real)\n\nReturn a random N-player NormalFormGame instance with N>=2 where the payoff profiles are drawn independently from the standard multi-normal with the covariance of any pair of payoffs equal to rho, as studied in Rinott and Scarsini (2000).\n\nArguements\n\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions,  one for each　player.\nrho::T: Covariance of a pair of payoff values. Must be in [-1/(N-1), 1], where N is the number of players.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\nReferences\n\nY. Rinott and M. Scarsini, \"On the Number of Pure Strategy Nash Equilibria in Random Games,\" Games and Economic Behavior (2000), 274-293.\n\n\n\n"
+    "text": "covariance_game{N}([rng::AbstractRNG], nums_actions::NTuple{N,Int}, \n                   rho::Real)\n\nReturn a random N-player NormalFormGame instance with N>=2 where the payoff profiles are drawn independently from the standard multi-normal with the covariance of any pair of payoffs equal to rho, as studied in Rinott and Scarsini (2000).\n\nArguements\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions,  one for each　player.\nrho::T: Covariance of a pair of payoff values. Must be in [-1/(N-1), 1], where N is the number of players.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\nReferences\n\nY. Rinott and M. Scarsini, \"On the Number of Pure Strategy Nash Equilibria in Random Games,\" Games and Economic Behavior (2000), 274-293.\n\n\n\n"
 },
 
 {
-    "location": "lib/random.html#Games.random_game-Union{Tuple{N}, Tuple{Tuple{Vararg{Int64,N}}}} where N",
+    "location": "lib/random.html#Games.random_game-Union{Tuple{AbstractRNG,Tuple{Vararg{Int64,N}}}, Tuple{N}} where N",
     "page": "Random",
     "title": "Games.random_game",
     "category": "Method",
-    "text": "random_game{N}(nums_actions::NTuple{N,Int})\n\nReturn a random N-player NormalFormGame instance where the payoffs are drawn independently from the uniform distribution on [0, 1).\n\nArguements\n\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions, one for each player.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\n\n\n"
+    "text": "random_game{N}([rng::AbstractRNG], nums_actions::NTuple{N,Int})\n\nReturn a random N-player NormalFormGame instance where the payoffs are drawn independently from the uniform distribution on [0, 1).\n\nArguements\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions, one for each player.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\n\n\n"
 },
 
 {
