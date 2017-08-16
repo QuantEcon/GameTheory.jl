@@ -4,7 +4,6 @@ module Games
 using Clp
 using MathProgBase
 using QuantEcon
-using Distributions
 
 # Geometry packages
 using Polyhedra
