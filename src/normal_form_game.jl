@@ -606,3 +606,33 @@ function pure2mixed(num_actions::Integer, action::PureAction)
     mixed_action[action] = 1
     return mixed_action
 end
+
+# is_pareto_efficient
+
+"""
+Return true if `action_profile` is Pareto efficient for game `g`.
+
+##### Arguments
+
+- `g::NormalFormGame` : Instance of N-player NormalFormGame.
+- `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+
+##### Returns
+
+- `::Bool`
+
+"""
+
+function is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)
+    current_payoff = g[CartesianIndex(action_profile)]
+    other_payoffs = []
+    for profile in CartesianRange(g.nums_actions)
+        append!(other_payoffs, [g[profile]])
+    end
+    for payoff in other_payoffs
+        if all(payoff .> current_payoff)
+            return false
+        end
+    end
+    return true
+end
