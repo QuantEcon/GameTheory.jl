@@ -178,4 +178,19 @@
         @test @inferred(pure2mixed(num_actions, pure_action)) == mixed_action
     end
 
+    # Pareto superiority #
+
+    @testset "Pareto superiority with 2 players" begin
+        coordination_game_matrix = [4 0;
+                                    3 2]
+        g = NormalFormGame(coordination_game_matrix)
+        action_profiles = [(1, 1), (1, 2), (2, 1), (2, 2)]
+        expected_output = [true, false, false, false]
+
+        for i = 1:length(action_profiles)
+            @test is_pareto_superior(g, action_profiles[i]) ==
+                  expected_output[i]
+        end
+    end
+
 end
