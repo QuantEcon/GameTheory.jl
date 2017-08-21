@@ -13,7 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Games.jl",
     "category": "section",
-    "text": "Normal Form GameComputing Nash EquilibriaPure NashRepeated GameRepeated Game Utilities\nRepeated GameRandom"
+    "text": "Normal Form GameComputing Nash EquilibriaPure Nash\nSupport EnumerationRepeated GameRepeated Game Utilities\nRepeated GameRandom"
 },
 
 {
@@ -262,6 +262,78 @@ var documenterSearchIndex = {"docs": [
     "title": "Internal",
     "category": "section",
     "text": "Modules = [Games]\nPages   = [\"pure_nash.jl\"]\nPublic = false"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#support_enumeration-1",
+    "page": "Computing Nash Equilibria",
+    "title": "Support Enumeration",
+    "category": "section",
+    "text": "Documentation for support_enumeration.jl."
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Games.support_enumeration-Tuple{Games.NormalFormGame{2,T} where T<:Real}",
+    "page": "Computing Nash Equilibria",
+    "title": "Games.support_enumeration",
+    "category": "Method",
+    "text": "support_enumeration(g::NormalFormGame{2})\n\nCompute mixed-action Nash equilibria with equal support size for a 2-player normal form game by support enumeration. For a non-degenerate game input, these are all the Nash equilibria.\n\nThe algorithm checks all the equal-size support pairs; if the players have the same number n of actions, there are 2n choose n minus 1 such pairs. This should thus be used only for small games.\n\nArguments\n\ng::NormalFormGame{2}: 2-player NormalFormGame instance.\n\nReturns\n\n::Vector{Tuple{Vector{Real}, Vector{Real}}}: Mixed-action Nash equilibria that are found.\n\n\n\n"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Games.support_enumeration_task-Tuple{Channel,Games.NormalFormGame{2,T} where T<:Real}",
+    "page": "Computing Nash Equilibria",
+    "title": "Games.support_enumeration_task",
+    "category": "Method",
+    "text": "support_enumeration_task(g::NormalFormGame{2})\n\nTask version of support_enumeration.\n\nArguments\n\nc::Channel: Channel to be binded with the support enumeration task.\ng::NormalFormGame{2}: 2-player NormalFormGame instance.\n\nReturns\n\n::Task: Runnable task for generating Nash equilibria.\n\n\n\n"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Exported-2",
+    "page": "Computing Nash Equilibria",
+    "title": "Exported",
+    "category": "section",
+    "text": "Modules = [Games]\nPages   = [\"support_enumeration.jl\"]\nPrivate = false"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Games._indiff_mixed_action!-Union{Tuple{Array{T,2},Array{T,1},Array{T,1},Array{T,2} where T,Array{Int64,1},Array{Int64,1}}, Tuple{T}} where T<:Real",
+    "page": "Computing Nash Equilibria",
+    "title": "Games._indiff_mixed_action!",
+    "category": "Method",
+    "text": "_indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},\n                               out::Vector{T},\n                               payoff_matrix::Matrix,\n                               own_supp::Vector{Int},\n                               opp_supp::Vector{Int})\n\nGiven a player's payoff matrix payoff_matrix, an array own_supp of this player's actions, and an array opp_supp of the opponent's actions, each of length k, compute the opponent's mixed action whose support equals opp_supp and for which the player is indifferent among the actions in own_supp, if any such exists. Return true if such a mixed action exists and actions in own_supp are indeed best responses to it, in which case the outcome is stored in out; false otherwise. Arrays A and b are used in intermediate steps.\n\nArguments\n\nA::Matrix{T}: Matrix used in intermediate steps.\nb::Vector{T}: Vector used in intermediate steps.\nout::Vector{T}: Vector to store the nonzero values of the desired mixed action.\npayoff_matrix::Matrix{T}: The player's payoff matrix.\nown_supp::Vector{Int}: Vector containing the player's action indices.\nopp_supp::Vector{Int}: Vector containing the opponent's action indices.\n\nReturns\n\n::Bool: true if a desired mixed action exists and false otherwise.\n\n\n\n"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Games._next_k_array!-Tuple{Array{Int64,1}}",
+    "page": "Computing Nash Equilibria",
+    "title": "Games._next_k_array!",
+    "category": "Method",
+    "text": "_next_k_array!(a::Vector{Int})\n\nGiven an array a of k distinct nonnegative integers, return the next k-array in lexicographic ordering of the descending sequences of the elements. a is modified in place.\n\nArguments\n\na::Vector{Int}: Array of length k.\n\nReturns\n\n:::Vector{Int}: Next k-array of a.\n\nExamples\n\njulia> n, k = 4, 2\n(4,2)\n\njulia> a = collect(1:k)\n2-element Array{Int64,1}:\n 1\n 2\n\njulia> while a[end] < n + 1\n           @show a\n           _next_k_array!(a)\n       end\na = [1,2]\na = [1,3]\na = [2,3]\na = [1,4]\na = [2,4]\na = [3,4]\n\n\n\n"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Games._next_k_combination-Tuple{Int64}",
+    "page": "Computing Nash Equilibria",
+    "title": "Games._next_k_combination",
+    "category": "Method",
+    "text": "_next_k_combination(x::Int)\n\nFind the next k-combination, as described by an integer in binary representation with the k set bits, by \"Gosper's hack\".\n\nCopy-paste from en.wikipedia.org/wiki/Combinatorial_number_system\n\nArguments\n\nx::Int: Integer with k set bits.\n\nReturns\n\n::Int: Smallest integer > x with k set bits.\n\n\n\n"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Games._support_enumeration_producer-Union{Tuple{Channel,Tuple{Array{T,2},Array{T,2}}}, Tuple{T}} where T<:Real",
+    "page": "Computing Nash Equilibria",
+    "title": "Games._support_enumeration_producer",
+    "category": "Method",
+    "text": "_support_enumeration_producer{T<:Real}(payoff_matrices\n                                       ::NTuple{2,Matrix{T}})\n\nMain body of support_enumeration_task.\n\nArguments\n\nc::Channel: Channel to be binded with the support enumeration task.\npayoff_matrices::NTuple{2, Matrix{T}}: Payoff matrices of player 1 and player 2.\n\nPuts\n\nTuple{Vector{S},Vector{S}}: Tuple of Nash equilibrium mixed actions. S is Float if T is Int or Float, and Rational if T is Rational.\n\n\n\n"
+},
+
+{
+    "location": "lib/computing_nash_equilibria.html#Internal-2",
+    "page": "Computing Nash Equilibria",
+    "title": "Internal",
+    "category": "section",
+    "text": "Modules = [Games]\nPages   = [\"support_enumeration.jl\"]\nPublic = false"
 },
 
 {
