@@ -188,8 +188,8 @@
         expected_output = [true, false, false, false]
 
         for i = 1:length(action_profiles)
-            @test is_pareto_efficient(g, action_profiles[i]) ==
-                  expected_output[i]
+            @test @inferred is_pareto_efficient(g, action_profiles[i]) ==
+                            expected_output[i]
         end
     end
 
