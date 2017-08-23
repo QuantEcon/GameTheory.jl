@@ -629,8 +629,8 @@ function is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfil
     for profile in CartesianRange(g.nums_actions)
         append!(other_payoffs, [g[profile]])
     end
-    for payoff in other_payoffs
-        if all(payoff .> current_payoff)
+    for payoff in other_payoffs 
+        if all(payoff .>= current_payoff) && any(payoff .> current_payoff)
             return false
         end
     end
