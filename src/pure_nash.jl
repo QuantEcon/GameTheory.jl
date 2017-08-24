@@ -1,10 +1,22 @@
 """
+    pure_nash(nfg::NormalFormGame; ntofind=Inf)
+
 Finds all pure action Nash equilibria for a normal form
 game. It returns an empty array if there is no pure
 action Nash.
 
 Currently uses a brute force algorithm, but that hopefully
 will change in the future.
+
+# Arguments
+
+* `nfg::NormalFormGame`: Instance of N-player NormalFormGame.
+* `ntofind::Inf`: Maximal number of pure nash action Nash
+  Equilibria to be found; default is `Inf`.
+
+# Returns
+* `ne::Vector{NTuple{na,Int}}`: Vector of pure action Nash
+  Equilibria. `na` is the number of players.
 """
 function pure_nash(nfg::NormalFormGame; ntofind=Inf)
     # Get number of players and their actions
