@@ -607,32 +607,49 @@ function pure2mixed(num_actions::Integer, action::PureAction)
     return mixed_action
 end
 
-# is_pareto_efficient
+# is_pareto_efficient & is_pareto_dominant
 
 """
+    is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)
+
 Return true if `action_profile` is Pareto efficient for game `g`.
 
-##### Arguments
+# Arguments
 
-- `g::NormalFormGame` : Instance of N-player NormalFormGame.
-- `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+* `g::NormalFormGame` : Instance of N-player NormalFormGame.
+* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
 
-##### Returns
+# Returns
 
-- `::Bool`
-
+* `::Bool`
 """
 
-function is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)
-    current_payoff = g[CartesianIndex(action_profile)]
-    other_payoffs = []
-    for profile in CartesianRange(g.nums_actions)
-        append!(other_payoffs, [g[profile]])
-    end
-    for payoff in other_payoffs 
-        if all(payoff .>= current_payoff) && any(payoff .> current_payoff)
-            return false
+"""
+    is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)
+
+Return true if `action_profile` is Pareto dominant for game `g`.
+
+# Arguments
+
+* `g::NormalFormGame` : Instance of N-player NormalFormGame.
+* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+
+# Returns
+
+* `::Bool`
+"""
+
+for args = ((:is_pareto_efficient, &), (:is_pareto_dominant, |))
+    @eval function $(args[1])(g::NormalFormGame,
+                     action_profile::PureActionProfile)
+            payoff_profile0 = g[action_profile...]
+            for action_profiles in CartesianRange(g.nums_actions)
+                if ($args[2](all(g[action_profiles] .>= payoff_profile0),
+                    any(g[action_profiles] .> payoff_profile0))) &&
+                    CartesianIndex(action_profile) != action_profiles
+                    return false
+                end
+            end
+            return true
         end
-    end
-    return true
 end

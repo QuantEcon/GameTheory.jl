@@ -178,19 +178,65 @@
         @test @inferred(pure2mixed(num_actions, pure_action)) == mixed_action
     end
 
-    # Pareto efficiency #
+    # Pareto efficiency # 
 
     @testset "Pareto efficiency with 2 players" begin
         coordination_game_matrix = [4 0;
                                     3 2]
-        g = NormalFormGame(coordination_game_matrix)
-        action_profiles = [(1, 1), (1, 2), (2, 1), (2, 2)]
-        expected_output = [true, false, false, false]
+        equal_payoff_p1_bimatrix = Array{Float64}(2, 2, 2)
+        equal_payoff_p1_bimatrix[1, 1, :] = [1, -1]
+        equal_payoff_p1_bimatrix[1, 2, :] = [1, 1]
+        equal_payoff_p1_bimatrix[2, 1, :] = [1, 1]
+        equal_payoff_p1_bimatrix[2, 2, :] = [1, -1]
+        two_equal_payoffs_bimatrix = [2 0;
+                                      0 2]
+        games_dict = [NormalFormGame(coordination_game_matrix),
+                      NormalFormGame(equal_payoff_p1_bimatrix),
+                      NormalFormGame(two_equal_payoffs_bimatrix)]
 
-        for i = 1:length(action_profiles)
-            @test @inferred is_pareto_efficient(g, action_profiles[i]) ==
-                            expected_output[i]
+        output_dict = [[true, false, false, false], 
+                       [false, true, true, false],
+                       [true, false, false, true]]
+
+        action_profiles = [(1, 1), (1, 2), (2, 1), (2, 2)]
+
+        for i = 1:length(games_dict)
+            for j = 1:length(action_profiles)
+                @test @inferred is_pareto_efficient(games_dict[i],
+                                                    action_profiles[j]) ==
+                                output_dict[i][j]                 
+            end
         end
     end
+
+
+    # Pareto dominance # 
+
+    @testset "Pareto dominance with 2 players" begin
+        coordination_game_matrix = [4 0;
+                                    3 2]
+        matching_pennies_bimatrix = Array{Float64}(2, 2, 2)
+        matching_pennies_bimatrix[1, 1, :] = [1, -1]
+        matching_pennies_bimatrix[1, 2, :] = [-1, 1]
+        matching_pennies_bimatrix[2, 1, :] = [-1, 1]
+        matching_pennies_bimatrix[2, 2, :] = [1, -1]
+
+        games_dict = [NormalFormGame(coordination_game_matrix),
+                      NormalFormGame(matching_pennies_bimatrix)]
+        
+        output_dict = [[true, false, false, false], 
+                       [false, false, false, false]]
+        
+        action_profiles = [(1, 1), (1, 2), (2, 1), (2, 2)]
+
+        for i = 1:length(games_dict)
+            for j = 1:length(action_profiles)
+                @test @inferred is_pareto_dominant(games_dict[i],
+                                                   action_profiles[j]) ==
+                                output_dict[i][j]                 
+            end
+        end
+    end    
+
 
 end
