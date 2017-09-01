@@ -14,7 +14,7 @@ Return a random N-player NormalFormGame instance where the
 payoffs are drawn independently from the uniform distribution
 on [0, 1).
 
-# Arguements
+# Arguments
 
 * `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 * `nums_actions::NTuple{N,Int}`: Tuple of the numbers of actions,
@@ -52,7 +52,7 @@ the payoff profiles are drawn independently from the standard
 multi-normal with the covariance of any pair of payoffs equal to
 `rho`, as studied in Rinott and Scarsini (2000).
 
-# Arguements
+# Arguments
 
 * `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 * `nums_actions::NTuple{N,Int}`: Tuple of the numbers of actions, 
