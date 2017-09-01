@@ -609,34 +609,6 @@ end
 
 # is_pareto_efficient & is_pareto_dominant
 
-"""
-    is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)
-
-Return true if `action_profile` is Pareto efficient for game `g`.
-
-# Arguments
-
-* `g::NormalFormGame` : Instance of N-player NormalFormGame.
-* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
-
-# Returns
-
-* `::Bool`
-
-    is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)
-
-Return true if `action_profile` is Pareto dominant for game `g`.
-
-# Arguments
-
-* `g::NormalFormGame` : Instance of N-player NormalFormGame.
-* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
-
-# Returns
-
-* `::Bool`
-"""
-
 for args = ((:is_pareto_efficient, &), (:is_pareto_dominant, |))
     @eval function $(args[1])(g::NormalFormGame,
                      action_profile::PureActionProfile)
@@ -651,3 +623,33 @@ for args = ((:is_pareto_efficient, &), (:is_pareto_dominant, |))
             return true
         end
 end
+
+@doc """
+    is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)
+
+Return true if `action_profile` is Pareto efficient for game `g`.
+
+# Arguments
+
+* `g::NormalFormGame` : Instance of N-player NormalFormGame.
+* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+
+# Returns
+
+* `::Bool`
+""" is_pareto_efficient
+
+@doc """
+    is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)
+
+Return true if `action_profile` is Pareto dominant for game `g`.
+
+# Arguments
+
+* `g::NormalFormGame` : Instance of N-player NormalFormGame.
+* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+
+# Returns
+
+* `::Bool`
+""" is_pareto_dominant

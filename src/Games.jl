@@ -35,7 +35,7 @@ export
     # Normal form game functions
     best_response, best_responses, is_best_response, payoff_vector,
     is_nash, pure2mixed, pure_strategy_NE, is_pareto_efficient, 
-    is_pareto_dominant
+    is_pareto_dominant,
 
     # General functions
     num_players, num_actions, num_opponents,
