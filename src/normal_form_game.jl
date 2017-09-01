@@ -17,18 +17,19 @@ tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions).
 # Player #
 
 """
+    Player{N,T<:Real}
+
 Type representing a player in an N-player normal form game.
 
-##### Arguments
+# Arguments
 
-- `payoff_array::Array{T<:Real}` : Array representing the player's payoff
+* `payoff_array::Array{T<:Real}` : Array representing the player's payoff
 function.
 
-##### Fields
+# Fields
 
-- `payoff_array::Array{T<:Real}` : Array representing the player's payoff
+* `payoff_array::Array{T<:Real}` : Array representing the player's payoff
 function.
-
 """
 struct Player{N,T<:Real}
     payoff_array::Array{T,N}
@@ -56,18 +57,20 @@ function payoff_vector(player::Player, opponents_actions::Tuple{})
 end
 
 """
+    payoff_vector(player::Player, opponents_actions::PureActionProfile)
+
 Return a vector of payoff values for a Player in an N>2 player game, one for
 each own action, given a tuple of the opponents' pure actions.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
+* `player::Player` : Player instance.
+* `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
 actions.
 
-##### Returns
+# Returns
 
-- `::Vector` : Payoff vector.
+* `::Vector` : Payoff vector.
 
 """
 function payoff_vector(player::Player, opponents_actions::PureActionProfile)
@@ -83,19 +86,20 @@ function payoff_vector(player::Player, opponents_actions::PureActionProfile)
 end
 
 """
+    payoff_vector(player::Player, opponents_actions::MixedActionProfile{T2})
+
 Return a vector of payoff values for a Player in an N>2 player game, one for
 each own action, given a tuple of the opponents' mixed actions.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- `opponents_actions::MixedActionProfile` : Tuple of N-1 opponents' mixed
+* `player::Player` : Player instance.
+* `opponents_actions::MixedActionProfile` : Tuple of N-1 opponents' mixed
 actions.
 
-##### Returns
+# Returns
 
-- `::Vector` : Payoff vector.
-
+* `::Vector` : Payoff vector.
 """
 function payoff_vector{N,T1,T2}(player::Player{N,T1},
                                 opponents_actions::MixedActionProfile{T2})
@@ -112,36 +116,38 @@ function payoff_vector{N,T1,T2}(player::Player{N,T1},
 end
 
 """
+    payoff_vector(player::Player{2}, opponent_action::PureAction)
+
 Return a vector of payoff values for a Player in a 2-player game, one for each
 own action, given the opponent's pure action.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- `opponent_action::PureAction` : Opponent's pure action (integer).
+* `player::Player` : Player instance.
+* `opponent_action::PureAction` : Opponent's pure action (integer).
 
-##### Returns
+# Returns
 
-- `::Vector` : Payoff vector.
-
+* `::Vector` : Payoff vector.
 """
 function payoff_vector(player::Player{2}, opponent_action::PureAction)
     return player.payoff_array[:, opponent_action]
 end
 
 """
+    payoff_vector(player::Player{2}, opponent_action::MixedAction)
+
 Return a vector of payoff values for a Player in a 2-player game, one for each
 own action, given the opponent's mixed action.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- `opponent_action::MixedAction` : Opponent's mixed action (vector of reals).
+* `player::Player` : Player instance.
+* `opponent_action::MixedAction` : Opponent's mixed action (vector of reals).
 
-##### Returns
+# Returns
 
-- `::Vector` : Payoff vector.
-
+* `::Vector` : Payoff vector.
 """
 function payoff_vector(player::Player{2}, opponent_action::MixedAction)
     # player.num_opponents == 1
@@ -150,18 +156,19 @@ end
 
 # Trivial case with player.num_opponents == 0
 """
+    payoff_vector(player::Player{1}, opponent_action::Void)
+
 Return a vector of payoff values for a Player in a trivial game with 1 player,
 one for each own action.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- `opponent_action::Void`
+* `player::Player` : Player instance.
+* `opponent_action::Void`
 
-##### Returns
+# Returns
 
-- `::Vector` : Payoff vector.
-
+* `::Vector` : Payoff vector.
 """
 function payoff_vector(player::Player{1}, opponent_action::Void)
     return player.payoff_array
@@ -187,20 +194,24 @@ end
 # is_best_response
 
 """
+    is_best_response(player::Player, 
+                     own_action::PureAction,
+                     opponents_actions::Union{Action,ActionProfile,Void};
+                     tol::Float64=1e-8)
+
 Return True if `own_action` is a best response to `opponents_actions`.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- `own_action::PureAction` : Own pure action (integer).
-- $(opponents_actions_docstring)
-- `;tol::Float64` : Tolerance to be used to determine best response actions.
+* `player::Player` : Player instance.
+* `own_action::PureAction` : Own pure action (integer).
+* $(opponents_actions_docstring)
+* `;tol::Float64` : Tolerance to be used to determine best response actions.
 
-##### Returns
+# Returns
 
-- `::Bool` : True if `own_action` is a best response to `opponents_actions`;
+* `::Bool` : True if `own_action` is a best response to `opponents_actions`;
 valse otherwise.
-
 """
 function is_best_response(player::Player,
                           own_action::PureAction,
@@ -212,20 +223,24 @@ function is_best_response(player::Player,
 end
 
 """
+    is_best_response(player::Player, 
+                     own_action::MixedAction,
+                     opponents_actions::Union{Action,ActionProfile,Void};
+                     tol::Float64=1e-8)
+
 Return true if `own_action` is a best response to `opponents_actions`.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- `own_action::MixedAction` : Own mixed action (vector of reals).
-- $(opponents_actions_docstring)
-- `;tol::Float64` : Tolerance to be used to determine best response actions.
+* `player::Player` : Player instance.
+* `own_action::MixedAction` : Own mixed action (vector of reals).
+* $(opponents_actions_docstring)
+* `;tol::Float64` : Tolerance to be used to determine best response actions.
 
-##### Returns
+# Returns
 
-- `::Bool` : True if `own_action` is a best response to `opponents_actions`;
+* `::Bool` : True if `own_action` is a best response to `opponents_actions`;
 false otherwise.
-
 """
 function is_best_response(player::Player,
                           own_action::MixedAction,
@@ -239,19 +254,22 @@ end
 # best_response
 
 """
+    best_responses(player::Player,
+                   opponents_actions::Union{Action,ActionProfile,Void};
+                   tol::Float64=1e-8)
+
 Return all the best response actions to `opponents_actions`.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- $(opponents_actions_docstring)
-- `;tol::Float64` : Tolerance to be used to determine best response actions.
+* `player::Player` : Player instance.
+* $(opponents_actions_docstring)
+* `;tol::Float64` : Tolerance to be used to determine best response actions.
 
-##### Returns
+# Returns
 
-- `best_responses::Vector{Int}` : Vector containing all the best response
+* `best_responses::Vector{Int}` : Vector containing all the best response
 actions.
-
 """
 function best_responses(player::Player,
                         opponents_actions::Union{Action,ActionProfile,Void};
@@ -263,22 +281,26 @@ function best_responses(player::Player,
 end
 
 """
+    best_response(player::Player,
+                  opponents_actions::Union{Action,ActionProfile,Void};
+                  tie_breaking::AbstractString="smallest",
+                  tol::Float64=1e-8)
+
 Return a best response action to `opponents_actions`.
 
-##### Arguments
+# Arguments
 
-- `player::Player` : Player instance.
-- $(opponents_actions_docstring)
-- `tie_breaking::AbstractString("smallest")` : Control how to break a tie (see
+* `player::Player` : Player instance.
+* $(opponents_actions_docstring)
+* `tie_breaking::AbstractString("smallest")` : Control how to break a tie (see
 Returns for details).
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+* `tol::Float64` : Tolerance to be used to determine best response actions.
 
-##### Returns
+# Returns
 
-- `::Int` : If tie_breaking="smallest", returns the best response action with
+* `::Int` : If tie_breaking="smallest", returns the best response action with
 the smallest index; if tie_breaking="random", returns an action randomly chosen
 from the best response actions.
-
 """
 function best_response(player::Player,
                        opponents_actions::Union{Action,ActionProfile,Void};
