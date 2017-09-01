@@ -622,9 +622,7 @@ Return true if `action_profile` is Pareto efficient for game `g`.
 # Returns
 
 * `::Bool`
-"""
 
-"""
     is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)
 
 Return true if `action_profile` is Pareto dominant for game `g`.
