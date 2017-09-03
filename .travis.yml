@@ -12,6 +12,7 @@ matrix:
 addons:
   apt_packages:
     - libgmp-dev
+    - libnlopt0
 notifications:
   email: false
 # uncomment the following lines to override the default test script
