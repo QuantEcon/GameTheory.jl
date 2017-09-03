@@ -12,12 +12,14 @@ matrix:
 addons:
   apt_packages:
     - libgmp-dev
+    - libnlopt0
 notifications:
   email: false
 # uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia -e 'Pkg.clone(pwd()); Pkg.build("Games"); Pkg.test("Games"; coverage=true)'
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'Pkg.clone("https://github.com/JuliaOpt/NLopt.jl"); Pkg.build("NLopt")'
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("Games"); Pkg.test("Games"; coverage=true)'
 after_success:
   - julia -e 'Pkg.add("Documenter")'
   - julia -e 'cd(Pkg.dir("Games")); ENV["DOCUMENTER_DEBUG"] = "true"; include(joinpath("docs", "make.jl"))'
