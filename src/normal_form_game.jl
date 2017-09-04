@@ -45,7 +45,7 @@ Base.summary(player::Player) =
 function Base.show(io::IO, player::Player)
     print(io, summary(player))
     println(io, ":")
-    Base.showarray(io, player.payoff_array, header=false)
+    Base.showarray(io, player.payoff_array, false, header=false)
 end
 
 # payoff_vector
