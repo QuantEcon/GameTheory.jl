@@ -352,15 +352,16 @@ end
 # NormalFormGame #
 
 """
+    NormalFormGame{N,T<:Real}
+
 Class representing an N-player normal form game.
 
-##### Fields
+# Fields
 
-- `players::NTuple{N,Player{N,T<:Real}}` : Tuple of Player instances.
-- `N::Int` : The number of players.
-- `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for each
-player.
-
+* `players::NTuple{N,Player{N,T<:Real}}` : Tuple of Player instances.
+* `N::Int` : The number of players.
+* `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for each
+  player.
 """
 struct NormalFormGame{N,T<:Real}
     players::NTuple{N,Player{N,T}}
@@ -374,13 +375,14 @@ function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
 end
 
 """
+    NormalFormGame{N}(T::Type, nums_actions::NTuple{N,Int})
+
 Constructor of an N-player NormalFormGame, consisting of payoffs all 0.
 
-##### Arguments
+# Arguments
 
-- `T::Type` : Type of payoff values; defaults to `Float64` if not specified.
-- `nums_actions::NTuple{N,Int}` : Numbers of actions of the N players.
-
+* `T::Type` : Type of payoff values; defaults to `Float64` if not specified.
+* `nums_actions::NTuple{N,Int}` : Numbers of actions of the N players.
 """
 function NormalFormGame{N}(T::Type, nums_actions::NTuple{N,Int})
     # TODO: can we still get inference to work but avoid the `::NTuple` below?
@@ -395,12 +397,13 @@ NormalFormGame{N}(nums_actions::NTuple{N,Int}) =
     NormalFormGame(Float64, nums_actions)
 
 """
+    NormalFormGame{N,T}(players::NTuple{N,Player{N,T}})
+
 Constructor of an N-player NormalFormGame.
 
-##### Arguments
+# Arguments
 
-- `players::NTuple{N,Player}` : Tuple of Player instances.
-
+* `players::NTuple{N,Player}` : Tuple of Player instances.
 """
 function NormalFormGame{N,T}(players::NTuple{N,Player{N,T}})
     # Check that the shapes of the payoff arrays are consistent
@@ -418,24 +421,28 @@ function NormalFormGame{N,T}(players::NTuple{N,Player{N,T}})
 end
 
 """
+    NormalFormGame{N,T}(players::Vector{Player{N,T}}) =
+        NormalFormGame(tuple(players...)::NTuple{N,Player{N,T}})
+
 Constructor of an N-player NormalFormGame.
 
-##### Arguments
+# Arguments
 
-- `players::Vector{Player}` : Vector of Player instances.
-
+* `players::Vector{Player}` : Vector of Player instances.
 """
 NormalFormGame{N,T}(players::Vector{Player{N,T}}) =
     NormalFormGame(tuple(players...)::NTuple{N,Player{N,T}})
 
 """
+    NormalFormGame{N,T}(players::Player{N,T}...)
+
 Constructor of an N-player NormalFormGame.
 
-##### Arguments
+# Arguments
 
-- `players::Player{N,T}...` : N Player instances
+* `players::Player{N,T}...` : N Player instances
 
-##### Examples
+# Examples
 
 ```julia
 # p1, p2, and p3 are all of type `Player{3,T}` for some `T`
@@ -580,33 +587,36 @@ end
 
 # attach docstring for N>1 player games
 @doc """
+    is_nash(g::NormalFormGame, action_profile::ActionProfile)
+
 Return true if `action_profile` is a Nash equilibrium.
 
-##### Arguments
+# Arguments
 
-- `g::NormalFormGame` : Instance of N-player NormalFormGame.
-- `action_profile::ActionProfile` : Tuple of N integers (pure actions) or N
-vectors of reals (mixed actions).
+* `g::NormalFormGame` : Instance of N-player NormalFormGame.
+* `action_profile::ActionProfile` : Tuple of N integers (pure actions) or N
+  vectors of reals (mixed actions).
 
-##### Returns
+# Returns
 
-- `::Bool`
-
+* `::Bool`
 """ is_nash
 
 # Trivial game with 1 player
 """
+    is_nash(g::NormalFormGame{1}, action::Action) =
+        is_best_response(g.players[1], action, nothing)
+
 Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 
-##### Arguments
+# Arguments
 
-- `g::NormalFormGame` : Instance of 1-player NormalFormGame.
-- `action::Action` : Integer (pure action) or vector of reals (mixed action).
+* `g::NormalFormGame` : Instance of 1-player NormalFormGame.
+* `action::Action` : Integer (pure action) or vector of reals (mixed action).
 
-##### Returns
+# Returns
 
-- `::Bool`
-
+* `::Bool`
 """
 is_nash(g::NormalFormGame{1}, action::Action) =
     is_best_response(g.players[1], action, nothing)
@@ -614,20 +624,21 @@ is_nash(g::NormalFormGame{1}, action::Action) =
 # Utility functions
 
 """
+    pure2mixed(num_actions::Integer, action::PureAction)
+
 Convert a pure action to the corresponding mixed action.
 
-##### Arguments
+# Arguments
 
-- `num_actions::Integer` : The number of the pure actions (= the length of a
-mixed action).
-- `action::PureAction` : The pure action to convert to the corresponding mixed
-action.
+* `num_actions::Integer` : The number of the pure actions (= the length of a
+  mixed action).
+* `action::PureAction` : The pure action to convert to the corresponding mixed
+  action.
 
-##### Returns
+# Returns
 
-- `mixed_action::Vector{Float64}` : The mixed action representation of the
-given pure action.
-
+* `mixed_action::Vector{Float64}` : The mixed action representation of the
+  given pure action.
 """
 function pure2mixed(num_actions::Integer, action::PureAction)
     mixed_action = zeros(num_actions)
