@@ -45,7 +45,7 @@ Base.summary(player::Player) =
 function Base.show(io::IO, player::Player)
     print(io, summary(player))
     println(io, ":")
-    Base.showarray(io, player.payoff_array, header=false)
+    Base.showarray(io, player.payoff_array, false, header=false)
 end
 
 # payoff_vector
@@ -524,6 +524,12 @@ function Base.setindex!{T,S<:Real}(g::NormalFormGame{1,T},
     g.players[1].payoff_array[index] = payoff
     return payoff
 end
+
+# Indexing with CartesianIndices
+Base.getindex{N}(g::NormalFormGame{N}, ci::CartesianIndex{N}) =
+    g[to_indices(g, (ci,))...]
+Base.setindex!{N}(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) =
+    g[to_indices(g, (ci,))...] = v
 
 # is_nash
 

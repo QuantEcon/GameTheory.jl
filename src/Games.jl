@@ -4,7 +4,6 @@ module Games
 using Clp
 using MathProgBase
 using QuantEcon
-using Distributions
 
 # Geometry packages
 using Polyhedra
@@ -23,7 +22,7 @@ include("pure_nash.jl")
 include("repeated_game_util.jl")
 include("repeated_game.jl")
 include("random.jl")
-
+include("support_enumeration.jl")
 
 export
     # Types
@@ -50,6 +49,9 @@ export
     worst_values, outerapproximation,
 
     # Random Games
-    random_game, covariance_game
+    random_game, covariance_game,
+
+    # Support Enumeration
+    support_enumeration, support_enumeration_task
 
 end # module
