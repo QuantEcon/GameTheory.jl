@@ -71,6 +71,9 @@ These are determined in the following way
     generated
 
 The arguments are
+  * nH: Number of subgradients used for the approximation
+  * o: Origin for the approximation
+  * r: Radius for the approximation
 """
 function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     # First create unit circle
@@ -100,7 +103,6 @@ origin and radius.
 See `initialize_sg_hpl` for more documentation
 """
 function initialize_sg_hpl(rpd::RepeatedGame, nH::Int)
-
     # Choose the origin to be mean of max and min payoffs
     p1_min, p1_max = extrema(rpd.sg.players[1].payoff_array)
     p2_min, p2_max = extrema(rpd.sg.players[2].payoff_array)
