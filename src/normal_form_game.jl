@@ -615,14 +615,24 @@ end
 
 # is_pareto_efficient & is_pareto_dominant
 
-for args = ((:is_pareto_efficient, &), (:is_pareto_dominant, |))
-    @eval function $(args[1])(g::NormalFormGame,
+function pareto_inferior_to(payoff_profile1, payoff_profile2)
+    all(payoff_profile2 .>= payoff_profile1) &&
+    any(payoff_profile2 .> payoff_profile1)
+end
+
+function not_pareto_superior_to(payoff_profile1, payoff_profile2)
+    any(payoff_profile2 .> payoff_profile1) ||
+    all(payoff_profile2 .== payoff_profile1)
+end
+
+for (f, op) = ((:is_pareto_efficient, pareto_inferior_to), 
+               (:is_pareto_dominant, not_pareto_superior_to))
+    @eval function $(f)(g::NormalFormGame,
                      action_profile::PureActionProfile)
             payoff_profile0 = g[action_profile...]
-            for action_profiles in CartesianRange(g.nums_actions)
-                if ($args[2](all(g[action_profiles] .>= payoff_profile0),
-                    any(g[action_profiles] .> payoff_profile0))) &&
-                    CartesianIndex(action_profile) != action_profiles
+            for profile in CartesianRange(g.nums_actions)
+                if ($(op)(payoff_profile0, g[profile])) &&
+                    CartesianIndex(action_profile) != profile
                     return false
                 end
             end
