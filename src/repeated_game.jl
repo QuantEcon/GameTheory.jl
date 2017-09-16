@@ -9,6 +9,8 @@ It currently only has tools for solving two player repeated
 games, but could be extended to do more with some effort.
 =#
 
+import Polyhedra: removevredundancy
+
 """
     RepeatedGame{N,T}
 
@@ -437,4 +439,119 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     vertices = unique(round.(vertices, tol_int), 1)
 
     return vertices
+end
+
+
+function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
+               plib=getlibraryfor(2, T), tol::Float64=1e-5, u=nothing)
+
+    # Initialize W0 with each entries of payoff bimatrix
+    v_old = _payoff_points(rpd.sg)
+
+    if u == nothing
+        u = [minimum(rpd.sg.players[1].payoff_array),
+             minimum(rpd.sg.players[2].payoff_array)]
+    end
+
+    # create VRepresentation and Polyhedron
+    V = SimpleVRepresentation(v_old)
+    p = polyhedron(V, plib)
+    H = SimpleHRepresentation(p)
+    # get rid of redundant vertices
+    V = removevredundancy(V, H)
+    p = polyhedron(V, plib)
+
+    # calculate the best deviation gains
+    # normalize with (1-delta)/delta
+    best_dev_gains1, best_dev_gains2 = (1-rpd.delta)/rpd.delta .* _best_dev_gains(rpd.sg)
+
+    for iter = 1:max_iter
+
+        v_new = Vector{T}(0) # to store new vertices
+        # step 1
+        for a2 in 1:rpd.sg.nums_actions[2]
+            for a1 in 1:rpd.sg.nums_actions[1]
+                payoff1 = rpd.sg.players[1].payoff_array[a1, a2]
+                payoff2 = rpd.sg.players[2].payoff_array[a2, a1]
+                IC1 = u[1] + best_dev_gains1[a1, a2]
+                IC2 = u[2] + best_dev_gains2[a2, a1]
+
+                # check if the payoff point is interior
+                # first check if it satisifies IC
+                if all([payoff1, payoff2] .> [IC1, IC2])
+                    # then check if it is in the polyhedron
+                    if in([payoff1, payoff2], H)
+                        push!(v_new, payoff1, payoff2)
+                    end
+                end
+
+                # find out the intersections of polyhedron and IC boundaries
+                p_IC = polyhedron(SimpleHRepresentation(-eye(2), -[IC1, IC2]), plib)
+                p_inter = intersect(p_IC, p)
+                V = SimpleVRepresentation(p_inter)
+                for i = 1:nvreps(V)
+                    if V.V[i, 1] ≈ IC1 || V.V[i, 2] ≈ IC2
+                        push!(v_new, (rpd.delta * V.V[i, :] +
+                                      (1 - rpd.delta) * [payoff1, payoff2])...)
+                    end
+                end
+            end
+        end
+
+        v_new = reshape(v_new, 2, :)'
+
+        # get rid of redundant points
+        V = SimpleVRepresentation(v_new)
+        p = polyhedron(V, plib)
+        H = SimpleHRepresentation(p)
+        V = removevredundancy(V, H)
+        p = polyhedron(V, plib)
+
+        # check if it's converged
+        # first check if the numbers of vertices are the same
+        if size(v_new) == size(v_old)
+            # then check the euclidean distance
+            if norm(v_new-v_old) < tol
+                println("converged in $(iter) iterations")
+                break
+            end
+        end
+
+        # check if max_iter is reached
+        if iter >= max_iter
+            warn("Maximum Iteration Reached")
+        end
+
+        v_old = v_new
+
+        # step 2
+        # update u
+        u_ = [minimum(v_new[:, 1]) minimum(v_new[:, 2])]
+        if all(u_ .>= u)
+            u = u_
+        end
+
+    end
+
+    return V.V
+end
+
+function _payoff_points{T}(g::NormalFormGame{2, T})
+
+    nums_action_profiles = prod(g.nums_actions)
+    v = Matrix{T}(nums_action_profiles, 2)
+    v[:, 1] = reshape(g.players[1].payoff_array, nums_action_profiles)
+    v[:, 2] = reshape(g.players[2].payoff_array', nums_action_profiles)
+
+    return v
+end
+
+function _best_dev_gains{T}(g::NormalFormGame{2, T})
+
+    best_dev_gains1 = (maximum(g.players[1].payoff_array, 1)
+                       .- g.players[1].payoff_array)
+    best_dev_gains2 = (maximum(g.players[2].payoff_array, 1)
+                       .- g.players[2].payoff_array)
+
+    return best_dev_gains1, best_dev_gains2
 end
