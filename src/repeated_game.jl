@@ -132,12 +132,13 @@ min c ⋅ x
 In this case, the `c` vector will be determined by which subgradient is being
 used, so this function only allocates space for it.
 
-The `A` matrix will be filled with nH set constraints and 2 incentive compatibility
-constraints. The set constraints restrain the linear programming problem to pick
-solutions that are in the current set of continuation values while the incentive
-compatibility constraints ensure the agents won't deviate.
+The `A` matrix will be filled with nH set constraints and 2 incentive 
+compatibility constraints. The set constraints restrain the linear programming
+problem to pick solutions that are in the current set of continuation values 
+while the incentive compatibility constraints ensure the agents won't deviate.
 
-The `b` vector is associated with the `A` matrix and gives the value for constraint.
+The `b` vector is associated with the `A` matrix and gives the value for 
+constraint.
 
 The arguments for this function are
   * rpd: Two player repeated game
@@ -176,7 +177,8 @@ The arguments for this function are
   * C: Hyperplane levels for value set approximation
   * i: Which player want worst value for
 """
-function worst_value_i(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}, i::Int)
+function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
+                       C::Array{Float64, 1}, i::Int)
     # Objective depends on which player we are minimizing
     c = zeros(2)
     c[i] = 1.0
@@ -226,9 +228,13 @@ The keyword arguments are
   * maxiter: Maximum number of iterations
   * verbose: Whether to display updates about iterations and distance
   * nskipprint: Number of iterations between printing information (verbose=true)
-  * check_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists
-  * plib: Allows users to choose a particular package for the geometry computations (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-          docs for more info). By default, it chooses to use [CDDLib.jl](https://github.com/JuliaPolyhedra/CDDLib.jl)
+  * check_pure_nash: Whether to perform a check about whether a pure Nash
+    equilibrium exists
+  * plib: Allows users to choose a particular package for the geometry 
+          computations 
+          (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
+          docs for more info). By default, it chooses to use 
+          [CDDLib.jl](https://github.com/JuliaPolyhedra/CDDLib.jl)
 
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
@@ -242,7 +248,8 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     p2_minpayoff, p2_maxpayoff = extrema(po_2)
 
     # Check to see whether at least one pure strategy NE exists
-    pure_nash_exists = check_pure_nash ? length(pure_nash(sg; ntofind=1)) > 0 : true
+    pure_nash_exists = check_pure_nash ? length(pure_nash(sg; ntofind=1)) > 0 :
+                       true
     if !pure_nash_exists
         error("No pure action Nash equilibrium exists in stage game")
     end
@@ -328,7 +335,8 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
             end
 
             # Update the points
-            Z[:, ih] = (1-delta)*flow_u(rpd, a1star, a2star) + delta*[Wstar[1], Wstar[2]]
+            Z[:, ih] = (1-delta)*flow_u(rpd, a1star, a2star) + delta*[Wstar[1], 
+                        Wstar[2]]
         end
 
         # Update distance and iteration counter
