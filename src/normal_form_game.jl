@@ -612,3 +612,61 @@ function pure2mixed(num_actions::Integer, action::PureAction)
     mixed_action[action] = 1
     return mixed_action
 end
+
+# is_pareto_efficient & is_pareto_dominant
+
+function pareto_inferior_to(payoff_profile1, payoff_profile2)
+    all(payoff_profile2 .>= payoff_profile1) &&
+    any(payoff_profile2 .> payoff_profile1)
+end
+
+function not_pareto_superior_to(payoff_profile1, payoff_profile2)
+    any(payoff_profile2 .> payoff_profile1) ||
+    all(payoff_profile2 .== payoff_profile1)
+end
+
+for (f, op) = ((:is_pareto_efficient, pareto_inferior_to), 
+               (:is_pareto_dominant, not_pareto_superior_to))
+    @eval function $(f)(g::NormalFormGame,
+                        action_profile::PureActionProfile)
+        payoff_profile0 = g[action_profile...]
+        for profile in CartesianRange(g.nums_actions)
+            if CartesianIndex(action_profile) != profile
+                if ($(op)(payoff_profile0, g[profile]))
+                    return false
+                end
+            end
+        end
+        return true
+    end
+end
+
+@doc """
+    is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)
+
+Return true if `action_profile` is Pareto efficient for game `g`.
+
+# Arguments
+
+* `g::NormalFormGame` : Instance of N-player NormalFormGame.
+* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+
+# Returns
+
+* `::Bool`
+""" is_pareto_efficient
+
+@doc """
+    is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)
+
+Return true if `action_profile` is Pareto dominant for game `g`.
+
+# Arguments
+
+* `g::NormalFormGame` : Instance of N-player NormalFormGame.
+* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+
+# Returns
+
+* `::Bool`
+""" is_pareto_dominant
