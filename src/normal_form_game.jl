@@ -628,16 +628,17 @@ end
 for (f, op) = ((:is_pareto_efficient, pareto_inferior_to), 
                (:is_pareto_dominant, not_pareto_superior_to))
     @eval function $(f)(g::NormalFormGame,
-                     action_profile::PureActionProfile)
-            payoff_profile0 = g[action_profile...]
-            for profile in CartesianRange(g.nums_actions)
-                if ($(op)(payoff_profile0, g[profile])) &&
-                    CartesianIndex(action_profile) != profile
+                        action_profile::PureActionProfile)
+        payoff_profile0 = g[action_profile...]
+        for profile in CartesianRange(g.nums_actions)
+            if CartesianIndex(action_profile) != profile
+                if ($(op)(payoff_profile0, g[profile]))
                     return false
                 end
             end
-            return true
         end
+        return true
+    end
 end
 
 @doc """
