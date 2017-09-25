@@ -14,7 +14,7 @@ Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 =#
 
 """
-    support_enumeration(g::NormalFormGame{2})
+    support_enumeration(g)
 
 Compute mixed-action Nash equilibria with equal support size
 for a 2-player normal form game by support enumeration. For a
@@ -26,11 +26,11 @@ minus 1 such pairs. This should thus be used only for small games.
 
 # Arguments
 
-* `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
+- `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
 
 # Returns
 
-* `::Vector{Tuple{Vector{Real}, Vector{Real}}}`: Mixed-action
+- `::Vector{Tuple{Vector{Real}, Vector{Real}}}`: Mixed-action
   Nash equilibria that are found.
 """
 function support_enumeration(g::NormalFormGame{2})
@@ -46,18 +46,18 @@ function support_enumeration(g::NormalFormGame{2})
 end
 
 """
-    support_enumeration_task(g::NormalFormGame{2})
+    support_enumeration_task(c, g)
 
 Task version of `support_enumeration`.
 
 # Arguments
 
-* `c::Channel`: Channel to be binded with the support enumeration task.
-* `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
+- `c::Channel`: Channel to be binded with the support enumeration task.
+- `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
 
 # Returns
 
-* `::Task`: Runnable task for generating Nash equilibria.
+- `::Task`: Runnable task for generating Nash equilibria.
 """
 function support_enumeration_task(c::Channel,
                                   g::NormalFormGame{2})
@@ -72,20 +72,19 @@ function support_enumeration_task(c::Channel,
 end
 
 """
-    _support_enumeration_producer{T<:Real}(payoff_matrices
-                                           ::NTuple{2,Matrix{T}})
+    _support_enumeration_producer(c, payoff_matrices)
 
 Main body of `support_enumeration_task`.
 
 # Arguments
 
-* `c::Channel`: Channel to be binded with the support enumeration task.
-* `payoff_matrices::NTuple{2, Matrix{T}}`: Payoff matrices of player 1 and
-  player 2.
+- `c::Channel`: Channel to be binded with the support enumeration task.
+- `payoff_matrices::NTuple{2, Matrix{T}}`: Payoff matrices of player 1 and
+  player 2. T<:Real.
 
 # Puts
 
-* `Tuple{Vector{S},Vector{S}}`: Tuple of Nash equilibrium mixed actions.
+- `Tuple{Vector{S},Vector{S}}`: Tuple of Nash equilibrium mixed actions.
   `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
 function _support_enumeration_producer{T<:Real}(c::Channel,
@@ -128,11 +127,8 @@ function _support_enumeration_producer{T<:Real}(c::Channel,
 end
 
 """
-    _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
-                                   out::Vector{T},
-                                   payoff_matrix::Matrix,
-                                   own_supp::Vector{Int},
-                                   opp_supp::Vector{Int})
+    _indiff_mixed_action!(A, b, out, payoff_matrix,
+                          own_supp, opp_supp)
 
 Given a player's payoff matrix `payoff_matrix`, an array `own_supp`
 of this player's actions, and an array `opp_supp` of the opponent's
@@ -146,17 +142,17 @@ steps.
 
 # Arguments
 
-* `A::Matrix{T}`: Matrix used in intermediate steps.
-* `b::Vector{T}`: Vector used in intermediate steps.
-* `out::Vector{T}`: Vector to store the nonzero values of the
-  desired mixed action.
-* `payoff_matrix::Matrix{T}`: The player's payoff matrix.
-* `own_supp::Vector{Int}`: Vector containing the player's action indices.
-* `opp_supp::Vector{Int}`: Vector containing the opponent's action indices.
+- `A::Matrix{T}`: Matrix used in intermediate steps. T<:Real.
+- `b::Vector{T}`: Vector used in intermediate steps. T<:Real.
+- `out::Vector{T}`: Vector to store the nonzero values of the
+  desired mixed action. T<:Real.
+- `payoff_matrix::Matrix`: The player's payoff matrix.
+- `own_supp::Vector{Int}`: Vector containing the player's action indices.
+- `opp_supp::Vector{Int}`: Vector containing the opponent's action indices.
 
 # Returns
 
-* `::Bool`: `true` if a desired mixed action exists and `false` otherwise.
+- `::Bool`: `true` if a desired mixed action exists and `false` otherwise.
 """
 function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
                                         out::Vector{T},
@@ -209,7 +205,7 @@ function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
 end
 
 """
-    _next_k_combination(x::Int)
+    _next_k_combination(x)
 
 Find the next k-combination, as described by an integer in binary
 representation with the k set bits, by "Gosper's hack".
@@ -218,11 +214,11 @@ Copy-paste from en.wikipedia.org/wiki/Combinatorial_number_system
 
 # Arguments
 
-* `x::Int`: Integer with k set bits.
+- `x::Int`: Integer with k set bits.
 
 # Returns
 
-* `::Int`: Smallest integer > x with k set bits.
+- `::Int`: Smallest integer > x with k set bits.
 """
 function _next_k_combination(x::Int)
 
@@ -233,7 +229,7 @@ function _next_k_combination(x::Int)
 end
 
 """
-    _next_k_array!(a::Vector{Int})
+    _next_k_array!(a)
 
 Given an array `a` of k distinct nonnegative integers, return the
 next k-array in lexicographic ordering of the descending sequences
@@ -241,11 +237,11 @@ of the elements. `a` is modified in place.
 
 # Arguments
 
-* `a::Vector{Int}`: Array of length k.
+- `a::Vector{Int}`: Array of length k.
 
 # Returns
 
-* `:::Vector{Int}`: Next k-array of `a`.
+- `:::Vector{Int}`: Next k-array of `a`.
 
 # Examples
 
