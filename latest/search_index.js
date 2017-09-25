@@ -153,6 +153,22 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "lib/normal_form_game.html#Games.is_pareto_dominant",
+    "page": "Normal Form Game",
+    "title": "Games.is_pareto_dominant",
+    "category": "Function",
+    "text": "is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)\n\nReturn true if action_profile is Pareto dominant for game g.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::PureActionProfile : Tuple of N integers (pure actions).\n\nReturns\n\n::Bool\n\n\n\n"
+},
+
+{
+    "location": "lib/normal_form_game.html#Games.is_pareto_efficient",
+    "page": "Normal Form Game",
+    "title": "Games.is_pareto_efficient",
+    "category": "Function",
+    "text": "is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)\n\nReturn true if action_profile is Pareto efficient for game g.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::PureActionProfile : Tuple of N integers (pure actions).\n\nReturns\n\n::Bool\n\n\n\n"
+},
+
+{
     "location": "lib/normal_form_game.html#Games.payoff_vector-Tuple{Games.Player,Tuple{Vararg{T,N}} where T<:Integer where N}",
     "page": "Normal Form Game",
     "title": "Games.payoff_vector",
