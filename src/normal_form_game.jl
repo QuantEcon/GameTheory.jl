@@ -23,12 +23,12 @@ Type representing a player in an N-player normal form game.
 
 # Arguments
 
-* `payoff_array::Array{T<:Real}` : Array representing the player's payoff
+- `payoff_array::Array{T<:Real}` : Array representing the player's payoff
 function.
 
 # Fields
 
-* `payoff_array::Array{T<:Real}` : Array representing the player's payoff
+- `payoff_array::Array{T<:Real}` : Array representing the player's payoff
 function.
 """
 struct Player{N,T<:Real}
@@ -64,14 +64,13 @@ each own action, given a tuple of the opponents' pure actions.
 
 # Arguments
 
-* `player::Player` : Player instance.
-* `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
+- `player::Player` : Player instance.
+- `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
 actions.
 
 # Returns
 
-* `::Vector` : Payoff vector.
-
+- `::Vector` : Payoff vector.
 """
 function payoff_vector(player::Player, opponents_actions::PureActionProfile)
     length(opponents_actions) != num_opponents(player) &&
@@ -93,13 +92,13 @@ each own action, given a tuple of the opponents' mixed actions.
 
 # Arguments
 
-* `player::Player` : Player instance.
-* `opponents_actions::MixedActionProfile` : Tuple of N-1 opponents' mixed
+- `player::Player` : Player instance.
+- `opponents_actions::MixedActionProfile` : Tuple of N-1 opponents' mixed
 actions.
 
 # Returns
 
-* `::Vector` : Payoff vector.
+- `::Vector` : Payoff vector.
 """
 function payoff_vector{N,T1,T2}(player::Player{N,T1},
                                 opponents_actions::MixedActionProfile{T2})
@@ -123,12 +122,12 @@ own action, given the opponent's pure action.
 
 # Arguments
 
-* `player::Player` : Player instance.
-* `opponent_action::PureAction` : Opponent's pure action (integer).
+- `player::Player` : Player instance.
+- `opponent_action::PureAction` : Opponent's pure action (integer).
 
 # Returns
 
-* `::Vector` : Payoff vector.
+- `::Vector` : Payoff vector.
 """
 function payoff_vector(player::Player{2}, opponent_action::PureAction)
     return player.payoff_array[:, opponent_action]
@@ -142,12 +141,12 @@ own action, given the opponent's mixed action.
 
 # Arguments
 
-* `player::Player` : Player instance.
-* `opponent_action::MixedAction` : Opponent's mixed action (vector of reals).
+- `player::Player` : Player instance.
+- `opponent_action::MixedAction` : Opponent's mixed action (vector of reals).
 
 # Returns
 
-* `::Vector` : Payoff vector.
+- `::Vector` : Payoff vector.
 """
 function payoff_vector(player::Player{2}, opponent_action::MixedAction)
     # player.num_opponents == 1
@@ -163,12 +162,12 @@ one for each own action.
 
 # Arguments
 
-* `player::Player` : Player instance.
-* `opponent_action::Void`
+- `player::Player` : Player instance.
+- `opponent_action::Void`
 
 # Returns
 
-* `::Vector` : Payoff vector.
+- `::Vector` : Payoff vector.
 """
 function payoff_vector(player::Player{1}, opponent_action::Void)
     return player.payoff_array
