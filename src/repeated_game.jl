@@ -1,4 +1,8 @@
 #=
+Tools for repeated games
+
+Authors: Chase Coleman
+
 This file contains code to build and manage repeated games
 
 It currently only has tools for solving two player repeated
@@ -6,10 +10,15 @@ games, but could be extended to do more with some effort.
 =#
 
 """
-This is a type for a specific type of repeated games
+    RepeatedGame{N,T}
 
-It takes a stage game that is repeated in every period
-and all agents discount future at rate δ
+Class representing an N-player repeated game.
+
+# Fields
+
+- `sg::NormalFormGame{N, T}` : The stage game used to create the repeated game.
+- `delta::Float64` : The common discount rate at which all players discount the
+  future.
 """
 struct RepeatedGame{N, T<:Real}
     sg::NormalFormGame{N, T}
@@ -24,13 +33,28 @@ const RepGame2 = RepeatedGame{2}
 #
 
 """
-Helper constructor that builds game from players
+    RepeatedGame(p1, p2, delta)
+
+Helper constructor that builds a repeated game for two players.
+
+# Arguments
+
+- `p1::Player` : The first player.
+- `p2::Player` : The second player.
+- `delta::Float64` : The common discount rate at which all players discount the
+  future.
+
+# Returns
+
+- `::RepeatedGame` : The repeated game.
 """
 RepeatedGame(p1::Player, p2::Player, delta::Float64) =
     RepeatedGame(NormalFormGame((p1, p2)), delta)
 
 """
-Unpacks the elements of a repeated game
+    unpack(rpd)
+
+Helper function that unpacks the elements of a repeated game.
 """
 unpack(rpd::RepeatedGame) = (rpd.sg, rpd.delta)
 
@@ -57,23 +81,23 @@ best_dev_payoff_2(rpd::RepGame2, a1::Int) =
     maximum(rpd.sg.players[2].payoff_array[:, a1])
 
 """
-Initializes the following things for a 2 player repeated game.
-  * subgradients
-  * extreme points of the convex set for values
-  * hyper plane levels
+    initialize_sg_hpl(nH, o, r)
 
-These are determined in the following way
-  * Subgradients are simply chosen from the unit circle.
-  * The values for the extremum of the value set are just given by
-    choosing points along a circle with specified origin and radius
-  * Hyperplane levels are determined by computing the hyperplane
-    level such that the extreme points from the circle are
-    generated
+Initializes subgradients, extreme points and hyperplane levels for the 
+approximation of the convex value set of a 2 player repeated game.
 
-The arguments are
-  * nH: Number of subgradients used for the approximation
-  * o: Origin for the approximation
-  * r: Radius for the approximation
+# Arguments
+
+- `nH::Int` : Number of subgradients used for the approximation.
+- `o::Vector{Float64}` : Origin for the approximation.
+- `r::Float64` : Radius for the approximation.
+
+# Returns
+
+- `C::Array{Float64}(nH, 1)` : The array containing the hyperplane levels.
+- `H::Array{Float64}(nH, 2)` : The array containing the subgradients.
+- `Z::Array{Float64}(nH, 2)` : The array containing the extreme points of the 
+  value set.
 """
 function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     # First create unit circle
@@ -96,11 +120,23 @@ function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
 end
 
 """
-This is a function that initializes the subgradients, hyperplane levels,
-and extreme points of the value set by choosing an appropriate
-origin and radius.
+    initialize_sg_hpl(rpd, nH)
 
-See `initialize_sg_hpl` for more documentation
+Initializes subgradients, extreme points and hyperplane levels for the 
+approximation of the convex value set of a 2 player repeated game by choosing
+an appropriate origin and radius.
+
+# Arguments
+
+- `rpd::RepeatedGame` : Two player repeated game.
+- `nH::Int` : Number of subgradients used for the approximation.
+
+# Returns
+
+- `C::Array{Float64}(nH, 1)` : The array containing the hyperplane levels.
+- `H::Array{Float64}(nH, 2)` : The array containing the subgradients.
+- `Z::Array{Float64}(nH, 2)` : The array containing the extreme points of the 
+  value set.
 """
 function initialize_sg_hpl(rpd::RepeatedGame, nH::Int)
     # Choose the origin to be mean of max and min payoffs
@@ -119,30 +155,23 @@ end
 # Linear Programming Functions
 #
 """
-Initialize matrices for the linear programming problems. It sets up the A
-matrix since it never changes, but only allocates space for b and c since
-they will be filled repeatedly on the iterations
+    initialize_LP_matrices(rpd, H)
 
-We add nH slack variables (which will be constrained to be positive) to
-deal with inequalities associated with Ax \leq b.
+Initialize matrices for the linear programming problems. 
 
-min c ⋅ x
-    Ax < b
+# Arguments
 
-In this case, the `c` vector will be determined by which subgradient is being
-used, so this function only allocates space for it.
+- `rpd::RepeatedGame` : Two player repeated game.
+- `H` : The subgradients used to approximate the value set.
 
-The `A` matrix will be filled with nH set constraints and 2 incentive 
-compatibility constraints. The set constraints restrain the linear programming
-problem to pick solutions that are in the current set of continuation values 
-while the incentive compatibility constraints ensure the agents won't deviate.
+# Returns
 
-The `b` vector is associated with the `A` matrix and gives the value for 
-constraint.
-
-The arguments for this function are
-  * rpd: Two player repeated game
-  * H: The subgradients used to approximate the value set
+- `c::Array{Float64}(nH, 1)` : Vector used to determine which subgradient is 
+  being used.
+- `A::Array{Float64}(nH, 2)` : Matrix with nH set constraints and to be filled 
+  with 2 additional incentive compatibility constraints.
+- `b::Array{Float64}(nH, 1)` : Vector to be filled with the values for the 
+  constraints.
 """
 function initialize_LP_matrices(rpd::RepGame2, H)
     # Need total number of subgradients
@@ -166,16 +195,20 @@ function initialize_LP_matrices(rpd::RepGame2, H)
 end
 
 """
-Given a constraint w ∈ W, this finds the worst possible payoff for agent i
+    worst_value_i(rpd, H, C, i)
 
-The output of this function is used to create the values associated with
-incentive compatibility constraints
+Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 
-The arguments for this function are
-  * rpd: Two player repeated game
-  * H: Subgradients used to approximate value set
-  * C: Hyperplane levels for value set approximation
-  * i: Which player want worst value for
+# Arugments 
+
+- `rpd::RepGame2` : Two player repeated game.
+- `H::Array{Float64, 2}` : The subgradients used to approximate the value set.
+- `C::Array{Float64, 1}` : The array containing the hyperplane levels.
+- `i::Int` : The player of interest.
+
+# Returns
+
+- `out::Float64` : Worst possible payoff for player i.
 """
 function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
                        C::Array{Float64, 1}, i::Int)
@@ -211,31 +244,34 @@ worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
 # Outer Hyper Plane Approximation
 #
 """
+    outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,
+                       verbose=false, nskipprint=50, 
+                       plib=getlibraryfor(2, Float64))
+
 Approximates the set of equilibrium value set for a repeated game with the
-outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002
+outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
 
-NOTE: If your code fails then it might be the case that the value set is
-      only the value which corresponds to the pure action nash equilibrium
-      or you might just need more points to be precise enough for the
-      Polyhedra library to be able to convert to the vertice representation.
+# Arguments
 
-The arguments are
-  * rpd: 2 player repeated game
-
-The keyword arguments are
-  * nH: Number of subgradients used in approximation
-  * tol: Tolerance in differences of set
-  * maxiter: Maximum number of iterations
-  * verbose: Whether to display updates about iterations and distance
-  * nskipprint: Number of iterations between printing information (verbose=true)
-  * check_pure_nash: Whether to perform a check about whether a pure Nash
-    equilibrium exists
-  * plib: Allows users to choose a particular package for the geometry 
-          computations 
+  - `rpd::RepGame2` : Two player repeated game.
+  - `nH` : Number of subgradients used for the approximation.
+  - `tol` : Tolerance in differences of set.
+  - `maxiter` : Maximum number of iterations.
+  - `verbose` : Whether to display updates about iterations and distance.
+  - `nskipprint` : Number of iterations between printing information 
+    (assuming verbose=true).
+  - `check_pure_nash`: Whether to perform a check about whether a pure Nash
+    equilibrium exists.
+  - `plib`: Allows users to choose a particular package for the geometry 
+          computations.
           (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
           docs for more info). By default, it chooses to use 
           [CDDLib.jl](https://github.com/JuliaPolyhedra/CDDLib.jl)
 
+# Returns 
+
+  - `vertices::Array{Float64}` : Vertices of the outer approximation of the
+    value set.
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                             check_pure_nash=true, verbose=false, nskipprint=50,
