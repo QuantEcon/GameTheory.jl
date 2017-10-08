@@ -19,7 +19,6 @@ const ActionProfile = Union{PureActionProfile,MixedActionProfile}
 # package code goes here
 include("normal_form_game.jl")
 include("pure_nash.jl")
-include("repeated_game_util.jl")
 include("repeated_game.jl")
 include("random.jl")
 include("support_enumeration.jl")
