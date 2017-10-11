@@ -12,7 +12,10 @@ This module contains functions that generate NormalFormGame instances of the
 
 * Tournament Games (`tournament_game`)
 
-* Unit vector Games (`unit_vector_game`)
+* Unit vector Games (`unit_vector_game`): These games were introduced by R. Savani
+  and B. von Stengel (2015) whose payoffs for the column player are chosen randomly
+  from the range [0, 1], but for the row player each column j contains exactly one
+  1 payoff with the rest being 0.
 
 Large part of the code here is based on the C code available at
 https://github.com/bimatrix-games/bimatrix-generators distributed under BSD
@@ -148,3 +151,113 @@ function sgc_game(k::Integer)
     )
     return g
 end
+
+"""
+    unit_vector_game([rng=GLOBAL_RNG], k; random=true)
+
+Return a NormalFormGame instance of the 2-player game introduced by R. Savani
+and B. von Stengel (2015), which has the payoffs for the column player being
+chosen randomly from the range [0, 1], and for the row player each column j
+contains exactly one 1 payoff with the rest being 0.
+
+# Arguments
+
+- `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
+- `k::Integer` : Positive integer determining the number of actions.
+- `random::Bool=true` : If set `random` to be `false`, then 1 payoffs for
+  the row player will be placed to avoid the existence of pure NE.
+
+# Returns
+
+- `g::NormalFormGame`
+
+# Examples
+
+```julia
+julia> g = unit_vector_game(MersenneTwister(0), 5)
+5×5 NormalFormGame{2,Float64}
+
+julia> g.players[1]
+5×5 Player{2,Float64}:
+ 0.0  1.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  0.0  0.0  1.0  1.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia> g.players[2]
+5×5 Player{2,Float64}:
+ 0.823648  0.203477   0.585812  0.655448  0.469304 
+ 0.910357  0.0423017  0.539289  0.575887  0.0623676
+ 0.164566  0.0682693  0.260036  0.868279  0.353129 
+ 0.177329  0.361828   0.910047  0.9678    0.767602 
+ 0.27888   0.973216   0.167036  0.76769   0.043141 
+
+julia> pure_nash(g)
+2-element Array{Tuple{Int64,Int64},1}:
+ (1, 2)
+ (4, 4)
+
+julia> g = unit_vector_game(MersenneTwister(0), 5, random=false)
+5×5 NormalFormGame{2,Float64}
+
+julia> g.players[1]
+5×5 Player{2,Float64}:
+ 0.0  0.0  1.0  1.0  1.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+
+julia> g.players[2]
+5×5 Player{2,Float64}:
+ 0.823648  0.203477   0.585812  0.655448  0.469304 
+ 0.910357  0.0423017  0.539289  0.575887  0.0623676
+ 0.164566  0.0682693  0.260036  0.868279  0.353129 
+ 0.177329  0.361828   0.910047  0.9678    0.767602 
+ 0.27888   0.973216   0.167036  0.76769   0.043141 
+
+julia> pure_nash(g)
+0-element Array{Tuple{Int64,Int64},1}
+```
+"""
+function unit_vector_game(rng::AbstractRNG, k::Integer; random::Bool=true)
+
+    payoff_arrays = [zeros(Float64, k, k) for i in 1:2]
+
+    if random
+        payoff_arrays[2][:, :] = rand(rng, (k, k))
+        for c in 1:k
+            payoff_arrays[1][rand(rng, 1:k), c] = 1
+        end
+    else
+        while true
+            payoff_arrays[2][:, :] = rand(rng, (k, k))
+            brs = [indmax(payoff_arrays[2][:, r]) for r in 1:k]
+            if length(unique(brs)) == 1
+                continue
+            end
+            pure_nash_rows = [[] for i in 1:k]
+            for (r, c) in enumerate(brs)
+                push!(pure_nash_rows[c], r)
+            end
+            for c in 1:k
+                payoff_arrays[1][rand(rng,
+                                      deleteat!(collect(1:k),
+                                                pure_nash_rows[c])),
+                                 c] = 1
+            end
+            break
+        end
+    end
+
+    g = NormalFormGame(
+        [Player(payoff_array) for payoff_array in payoff_arrays]
+    )
+
+    return g
+
+end
+
+unit_vector_game(k::Integer; random::Bool=true) =
+    unit_vector_game(Base.GLOBAL_RNG, k, random=random)
