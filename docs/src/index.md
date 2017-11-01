@@ -36,7 +36,7 @@ g = NormalFormGame((player1, player2))
 or by passing a payoff matrix directly.
 
 ```@example 1
-payoff_bimatrix = Array(Int, 2, 2, 2)
+payoff_bimatrix = Array{Int}(2, 2, 2)
 payoff_bimatrix[1, 1, :] = [3, 2]
 payoff_bimatrix[1, 2, :] = [1, 1]
 payoff_bimatrix[2, 1, :] = [0, 0]
