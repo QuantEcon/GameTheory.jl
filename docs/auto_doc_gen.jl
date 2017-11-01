@@ -97,37 +97,27 @@ for section_name in sections_names
 
     section_files = sections[section_name]
     section_name_lower = replace(lowercase(section_name), " ", "_")
+    section_file_list = join(map(i -> string("\"", i, ".jl\""),
+                             section_files), ", ")
     section_page = """
-# $section_name
+# [$section_name](@id $section_name_lower)
 
-This is documentation for $section_name.
-"""
-    open(joinpath(path, "docs/src/lib/$section_name_lower.md"), "w") do f
-        write(f, section_page)
-        for file in section_files
-            file_name = files_names[file]
-            section_file_page = """
-
-## [$file_name](@id $file)
-
-Documentation for `$file.jl`.
-
-### Exported
+## Exported
 ```@autodocs
 Modules = [Games]
-Pages   = ["$file.jl"]
+Pages   = [$section_file_list]
 Private = false
 ```
 
-### Internal
+## Internal
 ```@autodocs
 Modules = [Games]
-Pages   = ["$file.jl"]
+Pages   = [$section_file_list]
 Public = false
 ```
 """
-            write(f, section_file_page)
-        end
+    open(joinpath(path, "docs/src/lib/$section_name_lower.md"), "w") do f
+        write(f, section_page)
     end
 end
 
@@ -144,26 +134,16 @@ open(joinpath(path, "docs/src/lib/index.md"), "w") do f
     write(f, index)
 end
 
-# write index.md as Homepage
-home_page = """
-# Games.jl
-
-"""
-
-open(joinpath(path, "docs/src/index.md"), "w") do f
-    write(f, home_page)
+# add Library Outline to Homepage index.md
+open(joinpath(path, "docs/src/index.md"), "a") do f
     for page in order
         if page in keys(sections)
-            write(f, "$page\n")
-            for file in sections[page]
-                file_name = files_names[file]
-                write(f, "* [$file_name](@ref $file)\n")
-            end
-            write(f, "\n")
+            section_name_lower = replace(lowercase(page), " ", "_")
+            write(f, "* [$page](@ref $section_name_lower)\n\n")
         else
             file = page
             file_name = files_names[file]
-            write(f, "[$file_name](@ref $file)\n\n")
+            write(f, "* [$file_name](@ref $file)\n\n")
         end
     end
 end
