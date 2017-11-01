@@ -8,7 +8,7 @@ Authors: Daisuke Oyama, Zejin Shi
 # Random Games Generating
 #
 """
-    random_game{N}([rng=GLOBAL_RNG], nums_actions)
+    random_game([rng=GLOBAL_RNG], nums_actions)
 
 Return a random N-player NormalFormGame instance where the
 payoffs are drawn independently from the uniform distribution
@@ -37,14 +37,14 @@ function random_game{N}(rng::AbstractRNG, nums_actions::NTuple{N,Int})
     return NormalFormGame(players)
 end
 
-random_game{N}(nums_actions::NTuple{N,Int}) = 
+random_game{N}(nums_actions::NTuple{N,Int}) =
     random_game(Base.GLOBAL_RNG, nums_actions)
 
 #
 # Covariance Games Generating
 #
 """
-    covariance_game{N}([rng=GLOBAL_RNG], nums_actions, rho)
+    covariance_game([rng=GLOBAL_RNG], nums_actions, rho)
 
 Return a random N-player NormalFormGame instance with N>=2 where
 the payoff profiles are drawn independently from the standard
@@ -54,9 +54,9 @@ multi-normal with the covariance of any pair of payoffs equal to
 # Arguments
 
 - `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
-- `nums_actions::NTuple{N,Int}`: Tuple of the numbers of actions, 
-  one for each　player.
-- `rho::T`: Covariance of a pair of payoff values. Must be in
+- `nums_actions::NTuple{N,Int}`: Tuple of the numbers of actions,
+  one for each player.
+- `rho::Real`: Covariance of a pair of payoff values. Must be in
   [-1/(N-1), 1], where N is the number of players.
 
 # Returns
