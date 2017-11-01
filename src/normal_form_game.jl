@@ -21,15 +21,10 @@ tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions).
 
 Type representing a player in an N-player normal form game.
 
-# Arguments
-
-- `payoff_array::Array{T<:Real}` : Array representing the player's payoff
-function.
-
 # Fields
 
 - `payoff_array::Array{T<:Real}` : Array representing the player's payoff
-function.
+  function.
 """
 struct Player{N,T<:Real}
     payoff_array::Array{T,N}
@@ -66,7 +61,7 @@ each own action, given a tuple of the opponents' pure actions.
 
 - `player::Player` : Player instance.
 - `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
-actions.
+  actions.
 
 # Returns
 
@@ -94,7 +89,7 @@ each own action, given a tuple of the opponents' mixed actions.
 
 - `player::Player` : Player instance.
 - `opponents_actions::MixedActionProfile` : Tuple of N-1 opponents' mixed
-actions.
+  actions.
 
 # Returns
 
@@ -207,7 +202,7 @@ Return True if `own_action` is a best response to `opponents_actions`.
 # Returns
 
 - `::Bool` : True if `own_action` is a best response to `opponents_actions`;
-valse otherwise.
+  false otherwise.
 """
 function is_best_response(player::Player,
                           own_action::PureAction,
@@ -233,7 +228,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 # Returns
 
 - `::Bool` : True if `own_action` is a best response to `opponents_actions`;
-false otherwise.
+  false otherwise.
 """
 function is_best_response(player::Player,
                           own_action::MixedAction,
@@ -260,7 +255,7 @@ Return all the best response actions to `opponents_actions`.
 # Returns
 
 - `best_responses::Vector{Int}` : Vector containing all the best response
-actions.
+  actions.
 """
 function best_responses(player::Player,
                         opponents_actions::Union{Action,ActionProfile,Void};
@@ -281,14 +276,14 @@ Return a best response action to `opponents_actions`.
 - `player::Player` : Player instance.
 - $(opponents_actions_docstring)
 - `tie_breaking::AbstractString("smallest")` : Control how to break a tie (see
-Returns for details).
+  Returns for details).
 - `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 
 - `::Int` : If tie_breaking="smallest", returns the best response action with
-the smallest index; if tie_breaking="random", returns an action randomly chosen
-from the best response actions.
+  the smallest index; if tie_breaking="random", returns an action randomly
+  chosen from the best response actions.
 """
 function best_response(player::Player,
                        opponents_actions::Union{Action,ActionProfile,Void};
@@ -318,8 +313,8 @@ Return the perturbed best response to `opponents_actions`.
 - `player::Player` : Player instance.
 - $(opponents_actions_docstring)
 - `payoff_perturbation::Vector{Float64}` : Vector of length equal to the number
-of actions of the player containing the values ("noises") to be added to the
-payoffs in determining the best response.
+  of actions of the player containing the values ("noises") to be added to the
+  payoffs in determining the best response.
 
 # Returns
 
@@ -646,7 +641,7 @@ function not_pareto_superior_to(payoff_profile1, payoff_profile2)
     all(payoff_profile2 .== payoff_profile1)
 end
 
-for (f, op) = ((:is_pareto_efficient, pareto_inferior_to), 
+for (f, op) = ((:is_pareto_efficient, pareto_inferior_to),
                (:is_pareto_dominant, not_pareto_superior_to))
     @eval function $(f)(g::NormalFormGame,
                         action_profile::PureActionProfile)
