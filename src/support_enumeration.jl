@@ -87,9 +87,9 @@ Main body of `support_enumeration_task`.
 - `Tuple{Vector{S},Vector{S}}`: Tuple of Nash equilibrium mixed actions.
   `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
-function _support_enumeration_producer{T<:Real}(c::Channel,
-                                                payoff_matrices
-                                                ::NTuple{2,Matrix{T}})
+function _support_enumeration_producer(c::Channel,
+                                       payoff_matrices
+                                       ::NTuple{2,Matrix{T}}) where T<:Real
 
     nums_actions = size(payoff_matrices[1], 1), size(payoff_matrices[2], 1)
     n_min = min(nums_actions...)
@@ -154,11 +154,11 @@ steps.
 
 - `::Bool`: `true` if a desired mixed action exists and `false` otherwise.
 """
-function _indiff_mixed_action!{T<:Real}(A::Matrix{T}, b::Vector{T},
-                                        out::Vector{T},
-                                        payoff_matrix::Matrix,
-                                        own_supp::Vector{Int},
-                                        opp_supp::Vector{Int})
+function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
+                               out::Vector{T},
+                               payoff_matrix::Matrix,
+                               own_supp::Vector{Int},
+                               opp_supp::Vector{Int}) where T<:Real
 
     m = size(payoff_matrix, 1)
     k = length(own_supp)
