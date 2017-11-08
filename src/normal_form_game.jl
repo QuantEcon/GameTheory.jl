@@ -31,7 +31,7 @@ struct Player{N,T<:Real}
 end
 
 num_actions(p::Player) = size(p.payoff_array, 1)
-num_opponents{N}(::Player{N}) = N - 1
+num_opponents(::Player{N}) where {N} = N - 1
 
 Base.summary(player::Player) =
     string(Base.dims2string(size(player.payoff_array)),
@@ -95,8 +95,8 @@ each own action, given a tuple of the opponents' mixed actions.
 
 - `::Vector` : Payoff vector.
 """
-function payoff_vector{N,T1,T2}(player::Player{N,T1},
-                                opponents_actions::MixedActionProfile{T2})
+function payoff_vector(player::Player{N,T1},
+                       opponents_actions::MixedActionProfile{T2}) where {N,T1,T2}
     length(opponents_actions) != num_opponents(player) &&
         throw(ArgumentError(
             "length of opponents_actions must be $(num_opponents(player))"
@@ -175,8 +175,8 @@ end
 # given by fixing the i-th opponent's pure or mixed action to be `action`.
 for (S, ex_mat_action) in ((PureAction, :(A[:, action])),
                            (MixedAction, :(A * action)))
-    @eval function _reduce_ith_opponent{N,T}(payoff_array::Array{T,N},
-                                             i::Int, action::$S)
+    @eval function _reduce_ith_opponent(payoff_array::Array{T,N},
+                                        i::Int, action::$S) where {N,T}
         shape = size(payoff_array)
         A = reshape(payoff_array, (prod(shape[1:i]), shape[i+1]))
         out = $(ex_mat_action)
@@ -352,7 +352,7 @@ struct NormalFormGame{N,T<:Real}
     nums_actions::NTuple{N,Int}
 end
 
-num_players{N}(::NormalFormGame{N}) = N
+num_players(::NormalFormGame{N}) where {N} = N
 
 function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
     throw(ArgumentError("input tuple must not be empty"))
@@ -368,7 +368,7 @@ Constructor of an N-player NormalFormGame, consisting of payoffs all 0.
 - `T::Type` : Type of payoff values; defaults to `Float64` if not specified.
 - `nums_actions::NTuple{N,Int}` : Numbers of actions of the N players.
 """
-function NormalFormGame{N}(T::Type, nums_actions::NTuple{N,Int})
+function NormalFormGame(T::Type, nums_actions::NTuple{N,Int}) where N
     # TODO: can we still get inference to work but avoid the `::NTuple` below?
     players::NTuple{N,Player{N,T}} =
         ntuple(i -> Player(zeros(tuple(nums_actions[i:end]...,
@@ -377,7 +377,7 @@ function NormalFormGame{N}(T::Type, nums_actions::NTuple{N,Int})
     return NormalFormGame{N,T}(players, nums_actions)
 end
 
-NormalFormGame{N}(nums_actions::NTuple{N,Int}) =
+NormalFormGame(nums_actions::NTuple{N,Int}) where {N} =
     NormalFormGame(Float64, nums_actions)
 
 """
@@ -389,7 +389,7 @@ Constructor of an N-player NormalFormGame.
 
 - `players::NTuple{N,Player}` : Tuple of Player instances.
 """
-function NormalFormGame{N,T}(players::NTuple{N,Player{N,T}})
+function NormalFormGame(players::NTuple{N,Player{N,T}}) where {N,T}
     # Check that the shapes of the payoff arrays are consistent
     shape_1 = size(players[1].payoff_array)
     for i in 2:N
@@ -414,7 +414,7 @@ Constructor of an N-player NormalFormGame.
 
 - `players::Vector{Player}` : Vector of Player instances.
 """
-NormalFormGame{N,T}(players::Vector{Player{N,T}}) =
+NormalFormGame(players::Vector{Player{N,T}}) where {N,T} =
     NormalFormGame(tuple(players...)::NTuple{N,Player{N,T}})
 
 """
@@ -433,7 +433,7 @@ Constructor of an N-player NormalFormGame.
 NormalFormGame(p1, p2, p3)
 ```
 """
-function NormalFormGame{N,T}(players::Player{N,T}...)
+function NormalFormGame(players::Player{N,T}...) where {N,T}
     length(players) != N && error("Need $N players")
     NormalFormGame(players)  # use constructor for Tuple of players above
 end
@@ -449,7 +449,7 @@ payoff values.
 
 - `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
 """
-function NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
+function NormalFormGame(payoffs::Array{T,M}) where {T<:Real,M}
     N = M - 1
     dims = Base.front(size(payoffs))
     colons = Base.front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
@@ -478,7 +478,7 @@ Construct a symmetric 2-player NormalFormGame with a square matrix.
 - `payoffs::Matrix{T<:Real}` : Square matrix representing each player's payoff
   matrix.
 """
-function NormalFormGame{T<:Real}(payoffs::Matrix{T})
+function NormalFormGame(payoffs::Matrix{T}) where T<:Real
     n, m = size(payoffs)
     n != m && throw(ArgumentError(
         "symmetric two-player game must be represented by a square matrix"
@@ -497,8 +497,8 @@ function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
 end
 
-function Base.getindex{N,T}(g::NormalFormGame{N,T},
-                            index::Integer...)
+function Base.getindex(g::NormalFormGame{N,T},
+                       index::Integer...) where {N,T}
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
 
@@ -511,13 +511,13 @@ function Base.getindex{N,T}(g::NormalFormGame{N,T},
 end
 
 # Trivial game with 1 player
-function Base.getindex{T}(g::NormalFormGame{1,T}, index::Integer)
+function Base.getindex(g::NormalFormGame{1,T}, index::Integer) where T
     return g.players[1].payoff_array[index]
 end
 
-function Base.setindex!{N,T,S<:Real}(g::NormalFormGame{N,T},
-                                     payoff_profile::Vector{S},
-                                     index::Integer...)
+function Base.setindex!(g::NormalFormGame{N,T},
+                        payoff_profile::Vector{S},
+                        index::Integer...) where {N,T,S<:Real}
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
     length(payoff_profile) != N &&
@@ -531,17 +531,17 @@ function Base.setindex!{N,T,S<:Real}(g::NormalFormGame{N,T},
 end
 
 # Trivial game with 1 player
-function Base.setindex!{T,S<:Real}(g::NormalFormGame{1,T},
-                                   payoff::S,
-                                   index::Integer)
+function Base.setindex!(g::NormalFormGame{1,T},
+                        payoff::S,
+                        index::Integer) where {T,S<:Real}
     g.players[1].payoff_array[index] = payoff
     return payoff
 end
 
 # Indexing with CartesianIndices
-Base.getindex{N}(g::NormalFormGame{N}, ci::CartesianIndex{N}) =
+Base.getindex(g::NormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
     g[to_indices(g, (ci,))...]
-Base.setindex!{N}(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) =
+Base.setindex!(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) where {N} =
     g[to_indices(g, (ci,))...] = v
 
 # is_nash

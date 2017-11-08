@@ -24,7 +24,7 @@ on [0, 1).
 
 - `::NormalFormGame`: The generated random N-player NormalFormGame.
 """
-function random_game{N}(rng::AbstractRNG, nums_actions::NTuple{N,Int})
+function random_game(rng::AbstractRNG, nums_actions::NTuple{N,Int}) where N
     if N == 0
         throw(ArgumentError("nums_actions must be non-empty"))
     end
@@ -37,7 +37,7 @@ function random_game{N}(rng::AbstractRNG, nums_actions::NTuple{N,Int})
     return NormalFormGame(players)
 end
 
-random_game{N}(nums_actions::NTuple{N,Int}) =
+random_game(nums_actions::NTuple{N,Int}) where {N} = 
     random_game(Base.GLOBAL_RNG, nums_actions)
 
 #
@@ -69,8 +69,8 @@ multi-normal with the covariance of any pair of payoffs equal to
   Nash Equilibria in Random Games," Games and Economic Behavior
   (2000), 274-293.
 """
-function covariance_game{N}(rng::AbstractRNG, nums_actions::NTuple{N,Int},
-                            rho::Real)
+function covariance_game(rng::AbstractRNG, nums_actions::NTuple{N,Int},
+                         rho::Real) where N
     if N <= 1
         throw(ArgumentError("length of nums_actions must be at least 2"))
     end
@@ -93,5 +93,5 @@ function covariance_game{N}(rng::AbstractRNG, nums_actions::NTuple{N,Int},
     return NormalFormGame(payoff_profile_array)
 end
 
-covariance_game{N}(nums_actions::NTuple{N,Int}, rho::Real) =
+covariance_game(nums_actions::NTuple{N,Int}, rho::Real) where {N} =
     covariance_game(Base.GLOBAL_RNG, nums_actions, rho)
