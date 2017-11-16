@@ -4,7 +4,10 @@ This module contains functions that generate NormalFormGame instances of the
 
 * Colonel Blotto Games (`blotto_game`)
 
-* Ranking Games (`ranking_game`)
+* Ranking Games (`ranking_game`): These games were introduced by L.A. Goldberg,
+  P.W. Goldberg, P. Krysta, and C. Ventre (2013) because of (i) they are
+  important and well-motivated games by Economics literature and (ii) their
+  computational complexity.
 
 * SGC Games (`sgc_game`): These games were introduced by Sandholm, Gilpin, and
   Conitzer (2005) as a worst case scenario for support enumeration as it has a
@@ -261,3 +264,66 @@ end
 
 unit_vector_game(k::Integer; random::Bool=true) =
     unit_vector_game(Base.GLOBAL_RNG, k, random=random)
+
+"""
+    ranking_game([rng=GLOBAL_RNG], k)
+
+Return a NormalFormGame instance of the 2-player game introduced by L.A.
+Goldberg, P.W. Goldberg, P. Krysta, and C. Ventre (2013) where each player
+chooses an effort level associated with a score and a cost which are both
+increasing functions with randomly generated step sizes.
+
+
+# Arguments
+
+- `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
+- `n::Integer` : Positive integer determining the number of actions, i.e,
+   effort levels.
+- `zero_effort_action::Bool` : Determines whether zero effort is an action for
+   each player
+
+# Returns
+
+- `g::NormalFormGame`
+
+# Examples
+
+```julia
+julia> g = ranking_game(2, false)
+2×2 NormalFormGame{2,Float64}
+
+julia> g.players[1]
+2×2 Player{2,Float64}:
+ -0.0679594  -0.0679594
+  0.70628     0.70628
+
+julia> g.players[2]
+2×2 Player{2,Float64}:
+ 0.722419  -0.277581
+ 0.364598  -0.635402
+```
+"""
+function ranking_game(rng::AbstractRNG, n::Integer, zero_effort_action::Bool)
+    score_p1, score_p2 = cumsum(rand(rng, n)), cumsum(rand(rng, n))
+
+    if zero_effort_action
+        cost_p1 = cumsum([0, rand(rng, n-1)...])/n
+        cost_p2 = cumsum([0, rand(rng, n-1)...])/n
+    else
+        cost_p1, cost_p2 = cumsum(rand(rng, n))/n, cumsum(rand(rng, n))/n
+    end
+
+    tie_matrix = [s1==s2 for s1 in score_p1, s2 in score_p2]
+    win_matrix_p1 = [s1>s2 for s1 in score_p1, s2 in score_p2]
+    payoff_arrays = [win_matrix_p1 - tie_matrix / 2 .- cost_p1,
+                     transpose(.!win_matrix_p1) - tie_matrix / 2 .- cost_p2]
+
+    g = NormalFormGame(
+        [Player(payoff_array) for payoff_array in payoff_arrays]
+    )
+    return g
+end
+
+ranking_game(n::Integer, zero_effort_action::Bool) =
+    ranking_game(Base.GLOBAL_RNG, n::Integer, zero_effort_action::Bool)
+ranking_game(n::Integer) = ranking_game(Base.GLOBAL_RNG, n::Integer, true)
