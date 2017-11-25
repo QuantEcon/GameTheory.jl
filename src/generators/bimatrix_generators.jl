@@ -2,13 +2,13 @@
 This module contains functions that generate NormalFormGame instances of the
 2-player games studied by Fearnley, Igwe, and Savani (2015):
 
-* Colonel Blotto Games (`blotto_game`): These games were introduced by
-  Hortala-Vallve and Llorente-Saguer (2011) as an extension of the Blotto game
-  introduced by Borel (1921) in which opposing parties have asymmetric and
-  heterogeneous battlefield valuations.
+* Colonel Blotto Games (`blotto_game`): A non-zero sum extension of the
+  Blotto game as studied by Hortala-Vallve and Llorente-Saguer (2012),
+  where opposing parties have asymmetric and heterogeneous battlefield
+  valuations.
 
-* Ranking Games (`ranking_game`): These games were introduced by L.A. Goldberg,
-  P.W. Goldberg, P. Krysta, and C. Ventre (2013) because of (i) they are
+* Ranking Games (`ranking_game`): These games were introduced by Goldberg,
+  Goldberg, Krysta, and Ventre (2013) because of (i) they are
   important and well-motivated games by Economics literature and (ii) their
   computational complexity.
 
@@ -32,6 +32,12 @@ References
 * J. Fearnley, T. P. Igwe, R. Savani, "An Empirical Study of Finding
   Approximate Equilibria in Bimatrix Games," International Symposium on
   Experimental Algorithms (SEA), 2015.
+
+* L.A. Goldberg, P.W. Goldberg, P. Krysta, and C. Ventre, "Ranking Games that
+  have Competitiveness-based Strategies", Theoretical Computer Science, 2013
+
+* R. Hortala-Vallve, A. Llorente-Saguer, "Pure strategy Nash equilibria in
+  non-zero sum colonel Blotto games", Int J Game Theory, 2012
 
 * T. Sandholm, A. Gilpin, and V. Conitzer, "Mixed-Integer Programming Methods
   for Finding Nash Equilibria," AAAI, 2005.
@@ -68,24 +74,32 @@ References
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import QuantEcon: MVNSampler, simplex_grid
+
+
+# blotto_game
 """
     blotto_game([rng=GLOBAL_RNG], h, T, rho)
 
-Return a NormalFormGame instance of a non-zero sum version of the Colonel Blotto
-2-player game introduced by E. Borel (1921) where players have an equal number
-of soldiers T that must be assigned simultaneously to n hills. Each player has
-a value for each hill that he receives if he assigns strictly more soldiers to
-the hill than his opponent (ties are broken uniformly at random.) Each player’s
-payoff is the sum of the value of the hills won by that player.
+Return a NormalFormGame instance of a 2-player non-zero sum Colonel Blotto
+game (Hortala-Vallve and Llorente-Saguer, 2012), where the players have an
+equal number `T` of troops to assign to `h` hills (so that the number of
+actions for each player is equal to `(T+h-1)` choose
+`(h-1) = (T+h-1)!/(T!*(h-1)!))`. Each player has a value for each hill that he
+receives if he assigns strictly more troops to the hill than his opponent
+(ties are broken uniformly at random), where the values are drawn from a
+multivariate normal distribution with covariance `rho`. Each player’s payoff
+is the sum of the values of the hills won by that player.
 
 
 # Arguments
 
 - `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 - `h::Integer` : Number of hills.
-- `T::Integer` : Number of troops
+- `t::Integer` : Number of troops.
 - `rho::Real` : Correlation coefficient of the distribution of the value of
-  hills
+   hills.
+- `mu::Real` : Mean of the distribution of the values of each hill.
 
 # Returns
 
@@ -110,50 +124,60 @@ julia> g.players[2]
  0.147396  0.147396  0.147396
 ```
 """
-function blotto_game(rng::AbstractRNG, h::Integer, troops::Integer, rho::Real)
-    mu = zeros(h)
-    sigma = zeros(h, h) + rho + diagm(ones(h)-rho)
-    dist = MVNSampler(mu, sigma)
-    vals = rand(rng, dist, 2)
+function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
+                     mu::Real)
+    d_mean = [mu; mu]
+    d_cov = [1 rho; rho 1]
+    dist = MVNSampler(d_mean, d_cov)
+    values = rand(rng, dist, h)
 
-    action_space = simplex_grid(h, troops)
-    nb_actions = size(action_space)[2]
+    actions = simplex_grid(h, t)
+    n = size(actions)[2]
 
-    win_matrix_p1 = [action_space[:, i] .> action_space[:, j]
-                     for i in 1:nb_actions, j in 1:nb_actions]
-    win_matrix_p2 = [action_space[:, i] .< action_space[:, j]
-                     for i in 1:nb_actions, j in 1:nb_actions]
+    payoff_arrays = Array{Float64}(n, n, 2)
 
-    tie_matrix = [action_space[:, i] .== action_space[:, j]
-                  for i in 1:nb_actions, j in 1:nb_actions]
+    payoffs = Array{Float64}(2)
+    for i=1:n
+        for j=1:n
+            payoffs[:] = 0
+            for k=1:h
+                if actions[k, i] == actions[k, j]
+                    for p=1:2
+                        payoffs[p] += values[p, k] / 2
+                    end
+                else
+                    winner = 1 + round(Int, actions[k, i] < actions[k, j])
+                    payoffs[winner] += values[winner, k]
+                end
+            end
+            payoff_arrays[i, j, 1] = payoffs[1]
+            payoff_arrays[j, i, 2] = payoffs[2]
+        end
+    end
 
-    tie_breaker_p1 = rand(rng, 0:1, h)
-    tie_breaker_p2 = abs.(tie_breaker_p1-1)
-
-    tie_matrix_p1 = [tie.*tie_breaker_p1 for tie in tie_matrix]
-    tie_matrix_p2 = [tie.*tie_breaker_p1 for tie in tie_matrix]
-
-    win_matrix_p1 += tie_matrix_p1
-    win_matrix_p2 += tie_matrix_p2
-
-    payoff_matrix_p1 = [vals[:, 1]'].*(win_matrix_p1)
-    payoff_matrix_p2 = transpose([vals[:, 2]'].*(win_matrix_p2))
-
-    g = NormalFormGame([Player(payoff_matrix_p1), Player(payoff_matrix_p2)])
+    g = NormalFormGame((Player(payoff_arrays[:, :, 1]),
+                        Player(payoff_arrays[:, :, 2])))
 
     return g
 end
 
-blotto_game(h::Integer, T::Integer, rho::Real) =
-    blotto_game(Base.GLOBAL_RNG, h, T, rho)
+blotto_game(rng::AbstractRNG, h::Integer, troops::Integer, rho::Real) =
+    blotto_game(rng, h, troops, rho, 0)
 
+blotto_game(h::Integer, troops::Integer, rho::Real, mu::Real) =
+    blotto_game(Base.GLOBAL_RNG, h, troops, rho, mu)
+
+blotto_game(h::Integer, troops::Integer, rho::Real) =
+    blotto_game(Base.GLOBAL_RNG, h, troops, rho, 0)
+
+# ranking_game
 """
     ranking_game([rng=GLOBAL_RNG], k)
 
-Return a NormalFormGame instance of the 2-player game introduced by L.A.
-Goldberg, P.W. Goldberg, P. Krysta, and C. Ventre (2013) where each player
-chooses an effort level associated with a score and a cost which are both
-increasing functions with randomly generated step sizes.
+Return a NormalFormGame instance of the 2-player game introduced by Goldberg,
+Goldberg, Krysta, and Ventre (2013) where each player chooses an effort level
+associated with a score and a cost which are both increasing functions with
+randomly generated step sizes.
 
 
 # Arguments
@@ -161,8 +185,6 @@ increasing functions with randomly generated step sizes.
 - `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 - `n::Integer` : Positive integer determining the number of actions, i.e,
    effort levels.
-- `zero_effort_action::Bool` : Determines whether zero effort is an action for
-   each player
 
 # Returns
 
@@ -171,34 +193,33 @@ increasing functions with randomly generated step sizes.
 # Examples
 
 ```julia
-julia> g = ranking_game(2, false)
-2×2 NormalFormGame{2,Float64}
+julia> g = ranking_game(3)
+3×3 NormalFormGame{2,Float64}
 
 julia> g.players[1]
 2×2 Player{2,Float64}:
- -0.0679594  -0.0679594
-  0.70628     0.70628
+ 1.0       0.0        0.0
+ 0.9       0.9       -0.6
+ 0.633333  0.633333   0.633333
 
 julia> g.players[2]
 2×2 Player{2,Float64}:
- 0.722419  -0.277581
- 0.364598  -0.635402
+ 0.0        0.0         0.0
+ 0.7       -0.3        -0.3
+ 0.433333  -0.0666667  -0.566667
 ```
 """
-function ranking_game(rng::AbstractRNG, n::Integer, zero_effort_action::Bool)
-    score_p1, score_p2 = cumsum(rand(rng, n)), cumsum(rand(rng, n))
+function ranking_game(rng::AbstractRNG, n::Integer)
+    score_p1, score_p2 = cumsum(rand(rng, 1:10, n)), cumsum(rand(rng, 1:10, n))
 
-    if zero_effort_action
-        cost_p1 = cumsum([0, rand(rng, n-1)...])/n
-        cost_p2 = cumsum([0, rand(rng, n-1)...])/n
-    else
-        cost_p1, cost_p2 = cumsum(rand(rng, n))/n, cumsum(rand(rng, n))/n
-    end
+    cost_p1 = cumsum([0, rand(rng, 1:10, n-1)...])/(10*n)
+    cost_p2 = cumsum([0, rand(rng, 1:10, n-1)...])/(10*n)
 
     tie_matrix = [s1==s2 for s1 in score_p1, s2 in score_p2]
     win_matrix_p1 = [s1>s2 for s1 in score_p1, s2 in score_p2]
-    payoff_arrays = [win_matrix_p1 - tie_matrix / 2 .- cost_p1,
-                     transpose(.!win_matrix_p1) - tie_matrix / 2 .- cost_p2]
+    win_matrix_p2 = transpose(.!win_matrix_p1)
+    payoff_arrays = [(win_matrix_p1+tie_matrix/2).-cost_p1,
+                     (win_matrix_p2-transpose(tie_matrix)/2).-cost_p2]
 
     g = NormalFormGame(
         [Player(payoff_array) for payoff_array in payoff_arrays]
@@ -206,9 +227,7 @@ function ranking_game(rng::AbstractRNG, n::Integer, zero_effort_action::Bool)
     return g
 end
 
-ranking_game(n::Integer, zero_effort_action::Bool) =
-    ranking_game(Base.GLOBAL_RNG, n, zero_effort_action)
-ranking_game(n::Integer) = ranking_game(Base.GLOBAL_RNG, n, true)
+ranking_game(n::Integer) = ranking_game(Base.GLOBAL_RNG, n)
 
 # sgc_game
 """
@@ -300,6 +319,7 @@ function sgc_game(k::Integer)
     return g
 end
 
+# unit_vector_game
 """
     unit_vector_game([rng=GLOBAL_RNG], k; random=true)
 
