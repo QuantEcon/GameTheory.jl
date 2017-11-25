@@ -359,7 +359,7 @@ function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
 end
 
 """
-    NormalFormGame{N}(T, nums_actions)
+    NormalFormGame(T, nums_actions)
 
 Constructor of an N-player NormalFormGame, consisting of payoffs all 0.
 
@@ -381,7 +381,7 @@ NormalFormGame(nums_actions::NTuple{N,Int}) where {N} =
     NormalFormGame(Float64, nums_actions)
 
 """
-    NormalFormGame{N,T}(players::NTuple{N,Player{N,T}})
+    NormalFormGame(players)
 
 Constructor of an N-player NormalFormGame.
 
@@ -405,8 +405,7 @@ function NormalFormGame(players::NTuple{N,Player{N,T}}) where {N,T}
 end
 
 """
-    NormalFormGame{N,T}(players::Vector{Player{N,T}}) =
-        NormalFormGame(tuple(players...)::NTuple{N,Player{N,T}})
+    NormalFormGame(players)
 
 Constructor of an N-player NormalFormGame.
 
@@ -418,7 +417,7 @@ NormalFormGame(players::Vector{Player{N,T}}) where {N,T} =
     NormalFormGame(tuple(players...)::NTuple{N,Player{N,T}})
 
 """
-    NormalFormGame{N,T}(players::Player{N,T}...)
+    NormalFormGame(players...)
 
 Constructor of an N-player NormalFormGame.
 
@@ -439,7 +438,7 @@ function NormalFormGame(players::Player{N,T}...) where {N,T}
 end
 
 """
-    NormalFormGame{T<:Real,M}(payoffs::Array{T,M})
+    NormalFormGame(payoffs)
 
 Construct an N-player NormalFormGame for N>=2 with an array `payoffs` of M=N+1
 dimensions, where `payoffs[a_1, a_2, ..., a_N, :]` contains a profile of N
@@ -469,7 +468,7 @@ function NormalFormGame(payoffs::Array{T,M}) where {T<:Real,M}
 end
 
 """
-    NormalFormGame{T<:Real}(payoffs::Matrix{T})
+    NormalFormGame(payoffs)
 
 Construct a symmetric 2-player NormalFormGame with a square matrix.
 
@@ -588,7 +587,7 @@ Return true if `action_profile` is a Nash equilibrium.
 
 # Trivial game with 1 player
 """
-    is_nash(g, action) = is_best_response(g.players[1], action, nothing)
+    is_nash(g, action)
 
 Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 
@@ -658,7 +657,7 @@ for (f, op) = ((:is_pareto_efficient, pareto_inferior_to),
 end
 
 @doc """
-    is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)
+    is_pareto_efficient(g, action_profile)
 
 Return true if `action_profile` is Pareto efficient for game `g`.
 
@@ -673,7 +672,7 @@ Return true if `action_profile` is Pareto efficient for game `g`.
 """ is_pareto_efficient
 
 @doc """
-    is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)
+    is_pareto_dominant(g, action_profile)
 
 Return true if `action_profile` is Pareto dominant for game `g`.
 
