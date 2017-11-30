@@ -7,11 +7,11 @@ Authors: Daisuke Oyama
 
 const opponents_actions_docstring = """
 `opponents_actions::Union{Action,ActionProfile,Void}` : Profile of N-1
-opponents' actions. If N=2, then it must be a vector of reals (in which case
-it is treated as the opponent's mixed action) or a scalar of integer (in which
-case it is treated as the opponent's pure action). If N>2, then it must be a
-tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions).
-(For the degenerate case N=1, it must be `nothing`.)"""
+  opponents' actions. If N=2, then it must be a vector of reals (in which case
+  it is treated as the opponent's mixed action) or a scalar of integer (in which
+  case it is treated as the opponent's pure action). If N>2, then it must be a
+  tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions).
+  (For the degenerate case N=1, it must be `nothing`.)"""
 
 
 # Player #
