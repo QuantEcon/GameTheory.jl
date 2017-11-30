@@ -237,7 +237,8 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 - `out::Float64` : Worst possible payoff for player i.
 """
 function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
-                       C::Array{Float64, 1}, i::Int, lp_solver=ClpSolver())
+                       C::Array{Float64, 1}, i::Int,
+                       lp_solver::MathProgBase.AbstractMathProgSolver)
     # Objective depends on which player we are minimizing
     c = zeros(2)
     c[i] = 1.0
@@ -256,16 +257,27 @@ function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
     return out
 end
 
+worst_value_i(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
+              i::Int) = worst_value_i(rpd, H, C, i, ClpSolver())
+
 "See worst_value_i for documentation"
 worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
-              lp_solver=ClpSolver()) = worst_value_i(rpd, H, C, 1)
+              lp_solver::MathProgBase.AbstractMathProgSolver) =
+    worst_value_i(rpd, H, C, 1, lp_solver)
+worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
+    worst_value_1(rpd, H, C, ClpSolver())
 "See worst_value_i for documentation"
 worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
-              lp_solver=ClpSolver()) = worst_value_i(rpd, H, C, 2)
+              lp_solver::MathProgBase.AbstractMathProgSolver) =
+    worst_value_i(rpd, H, C, 2, lp_solver)
+worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
+    worst_value_2(rpd, H, C, 2, ClpSolver())
 "See worst_value_i for documentation"
 worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
-             lp_solver=ClpSolver()) = (worst_value_1(rpd, H, C),
-                                       worst_value_2(rpd, H, C))
+             lp_solver::MathProgBase.AbstractMathProgSolver) =
+    (worst_value_1(rpd, H, C, lp_solver), worst_value_2(rpd, H, C, lp_solver))
+worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
+    (worst_value_1(rpd, H, C), worst_value_2(rpd, H, C))
 
 #
 # Outer Hyper Plane Approximation
@@ -307,7 +319,8 @@ outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                             check_pure_nash=true, verbose=false, nskipprint=50,
                             plib=getlibraryfor(2, Float64),
-                            lp_solver=ClpSolver())
+                            lp_solver::MathProgBase.AbstractMathProgSolver=
+                            ClpSolver())
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -438,4 +451,3 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
 
     return vertices
 end
-
