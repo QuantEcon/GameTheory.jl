@@ -1,12 +1,16 @@
 ## Generate docs automatically
 
-To generate documentation for `Games.jl`, run
+To generate documentation for `Games.jl` locally, run
 
 ```
+$cd ~/.julia/v0.6/Games/docs
 $julia make.jl
 ```
 
-The generated docs can be accessed in `docs/build/index.html`.
+Note that we can only generate documentations for the installed package.
+
+The generated docs can be accessed in `docs/build/index.html`, and subpages in
+`docs/build/lib/page_name.html`.
 
 There are three parts to generate the documentation.
 
