@@ -3,8 +3,8 @@
 To generate documentation for `Games.jl` locally, run
 
 ```
-$cd ~/.julia/v0.6/Games/docs
-$julia make.jl
+$ cd ~/.julia/v0.6/Games/docs
+$ julia make.jl
 ```
 
 Note that we can only generate documentations for the installed package.
