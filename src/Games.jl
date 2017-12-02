@@ -9,11 +9,47 @@ using QuantEcon
 using Polyhedra
 
 # Type aliases #
+
+"""
+    PureAction
+
+Alias for `Integer`.
+"""
 const PureAction = Integer
+
+"""
+    MixedAction{T}
+
+Alias for Vector{T} where `T<:Real`.
+"""
 MixedAction{T<:Real} = Vector{T}
+
+"""
+    Action{T}
+
+Alias for `Union{PureAction,MixedAction{T}}` where `T<:Real`.
+"""
 Action{T<:Real} = Union{PureAction,MixedAction{T}}
+
+"""
+    PureActionProfile{N,T}
+
+Alias for `NTuple{N,T}` where `T<:PureAction`.
+"""
 PureActionProfile{N,T<:PureAction} = NTuple{N,T}
+
+"""
+    MixedActionProfile{T,N}
+
+Alias for `NTuple{N,MixedAction{T}}` where `T<:Real`.
+"""
 MixedActionProfile{T<:Real,N} = NTuple{N,MixedAction{T}}
+
+"""
+    ActionProfile
+
+Alias for `Union{PureActionProfile,MixedActionProfile}`.
+"""
 const ActionProfile = Union{PureActionProfile,MixedActionProfile}
 
 # package code goes here
@@ -32,7 +68,7 @@ export
 
     # Normal form game functions
     best_response, best_responses, is_best_response, payoff_vector,
-    is_nash, pure2mixed, pure_strategy_NE, is_pareto_efficient, 
+    is_nash, pure2mixed, pure_strategy_NE, is_pareto_efficient,
     is_pareto_dominant,
 
     # General functions

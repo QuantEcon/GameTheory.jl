@@ -1,4 +1,5 @@
-Order: Base Types and Methods, Computing Nash Equilibria, Repeated Games
-Base Types and Methods: normal_form_game, random
+Order: Base Types and Methods, Game Generators, Computing Nash Equilibria, Repeated Games
+Base Types and Methods: normal_form_game
+Game Generators: random
 Computing Nash Equilibria: pure_nash, support_enumeration
 Repeated Games: repeated_game_util, repeated_game
