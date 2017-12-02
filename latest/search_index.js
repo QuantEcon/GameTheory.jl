@@ -29,7 +29,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Usage",
     "category": "section",
-    "text": "Once installed, the Games package can be used by typingusing GamesThe Base type Player can be created by passing a payoff matrix.player1 = Player([3 1; 0 2])A 2-player NormalFormGame can be created either by passing Player instances,player2 = Player([2 0; 1 3])\ng = NormalFormGame((player1, player2))or by passing a payoff matrix directly.payoff_bimatrix = Array(Int, 2, 2, 2)\npayoff_bimatrix[1, 1, :] = [3, 2]\npayoff_bimatrix[1, 2, :] = [1, 1]\npayoff_bimatrix[2, 1, :] = [0, 0]\npayoff_bimatrix[2, 2, :] = [2, 3]\ng = NormalFormGame(payoff_bimatrix)After constructing a NormalFormGame, we can find its Nash Equilibria by using methods of Games. For example, pure_nash finds all pure action Nash Equilibria by enumeration.pure_nash(g)Please see the notebooks on QuantEcon for more details."
+    "text": "Once installed, the Games package can be used by typingusing GamesThe Base type Player can be created by passing a payoff matrix.player1 = Player([3 1; 0 2])A 2-player NormalFormGame can be created either by passing Player instances,player2 = Player([2 0; 1 3])\ng = NormalFormGame((player1, player2))or by passing a payoff matrix directly.payoff_bimatrix = Array{Int}(2, 2, 2)\npayoff_bimatrix[1, 1, :] = [3, 2]\npayoff_bimatrix[1, 2, :] = [1, 1]\npayoff_bimatrix[2, 1, :] = [0, 0]\npayoff_bimatrix[2, 2, :] = [2, 3]\ng = NormalFormGame(payoff_bimatrix)After constructing a NormalFormGame, we can find its Nash Equilibria by using methods of Games. For example, pure_nash finds all pure action Nash Equilibria by enumeration.pure_nash(g)Please see the notebooks on QuantEcon for more details."
 },
 
 {
@@ -45,7 +45,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Library Outline",
     "category": "section",
-    "text": "Base Types and Methods\nComputing Nash Equilibria\nRepeated Games"
+    "text": "Base Types and Methods\nGame Generators\nComputing Nash Equilibria\nRepeated Games"
 },
 
 {
@@ -77,7 +77,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Method",
-    "text": "NormalFormGame{N,T}(players::Vector{Player{N,T}}) =\n    NormalFormGame(tuple(players...)::NTuple{N,Player{N,T}})\n\nConstructor of an N-player NormalFormGame.\n\nArguments\n\nplayers::Vector{Player} : Vector of Player instances.\n\n\n\n"
+    "text": "NormalFormGame(players)\n\nConstructor of an N-player NormalFormGame.\n\nArguments\n\nplayers::Vector{Player} : Vector of Player instances.\n\n\n\n"
 },
 
 {
@@ -85,7 +85,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Method",
-    "text": "NormalFormGame{T<:Real}(payoffs::Matrix{T})\n\nConstruct a symmetric 2-player NormalFormGame with a square matrix.\n\nArguments\n\npayoffs::Matrix{T<:Real} : Square matrix representing each player's payoff matrix.\n\n\n\n"
+    "text": "NormalFormGame(payoffs)\n\nConstruct a symmetric 2-player NormalFormGame with a square matrix.\n\nArguments\n\npayoffs::Matrix{T<:Real} : Square matrix representing each player's payoff matrix.\n\n\n\n"
 },
 
 {
@@ -93,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Method",
-    "text": "NormalFormGame{T<:Real,M}(payoffs::Array{T,M})\n\nConstruct an N-player NormalFormGame for N>=2 with an array payoffs of M=N+1 dimensions, where payoffs[a_1, a_2, ..., a_N, :] contains a profile of N payoff values.\n\nArguments\n\npayoffs::Array{T<:Real} : Array with ndims=N+1 containing payoff profiles.\n\n\n\n"
+    "text": "NormalFormGame(payoffs)\n\nConstruct an N-player NormalFormGame for N>=2 with an array payoffs of M=N+1 dimensions, where payoffs[a_1, a_2, ..., a_N, :] contains a profile of N payoff values.\n\nArguments\n\npayoffs::Array{T<:Real} : Array with ndims=N+1 containing payoff profiles.\n\n\n\n"
 },
 
 {
@@ -101,7 +101,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Method",
-    "text": "NormalFormGame{N,T}(players::NTuple{N,Player{N,T}})\n\nConstructor of an N-player NormalFormGame.\n\nArguments\n\nplayers::NTuple{N,Player} : Tuple of Player instances.\n\n\n\n"
+    "text": "NormalFormGame(players)\n\nConstructor of an N-player NormalFormGame.\n\nArguments\n\nplayers::NTuple{N,Player} : Tuple of Player instances.\n\n\n\n"
 },
 
 {
@@ -109,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Method",
-    "text": "NormalFormGame{N}(T, nums_actions)\n\nConstructor of an N-player NormalFormGame, consisting of payoffs all 0.\n\nArguments\n\nT::Type : Type of payoff values; defaults to Float64 if not specified.\nnums_actions::NTuple{N,Int} : Numbers of actions of the N players.\n\n\n\n"
+    "text": "NormalFormGame(T, nums_actions)\n\nConstructor of an N-player NormalFormGame, consisting of payoffs all 0.\n\nArguments\n\nT::Type : Type of payoff values; defaults to Float64 if not specified.\nnums_actions::NTuple{N,Int} : Numbers of actions of the N players.\n\n\n\n"
 },
 
 {
@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Method",
-    "text": "NormalFormGame{N,T}(players::Player{N,T}...)\n\nConstructor of an N-player NormalFormGame.\n\nArguments\n\nplayers::Player{N,T}... : N Player instances\n\nExamples\n\n# p1, p2, and p3 are all of type `Player{3,T}` for some `T`\nNormalFormGame(p1, p2, p3)\n\n\n\n"
+    "text": "NormalFormGame(players...)\n\nConstructor of an N-player NormalFormGame.\n\nArguments\n\nplayers::Player{N,T}... : N Player instances\n\nExamples\n\n# p1, p2, and p3 are all of type `Player{3,T}` for some `T`\nNormalFormGame(p1, p2, p3)\n\n\n\n"
 },
 
 {
@@ -125,7 +125,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.Player",
     "category": "Type",
-    "text": "Player{N,T}\n\nType representing a player in an N-player normal form game.\n\nArguments\n\npayoff_array::Array{T<:Real} : Array representing the player's payoff\n\nfunction.\n\nFields\n\npayoff_array::Array{T<:Real} : Array representing the player's payoff\n\nfunction.\n\n\n\n"
+    "text": "Player{N,T}\n\nType representing a player in an N-player normal form game.\n\nFields\n\npayoff_array::Array{T<:Real} : Array representing the player's payoff function.\n\n\n\n"
 },
 
 {
@@ -133,7 +133,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "Method",
-    "text": "best_response(player, opponents_actions, payoff_perturbation)\n\nReturn the perturbed best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1\n\nopponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n\npayoff_perturbation::Vector{Float64} : Vector of length equal to the number\n\nof actions of the player containing the values (\"noises\") to be added to the payoffs in determining the best response.\n\nReturns\n\n::Int : Best response action.\n\n\n\n"
+    "text": "best_response(player, opponents_actions, payoff_perturbation)\n\nReturn the perturbed best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\npayoff_perturbation::Vector{Float64} : Vector of length equal to the number of actions of the player containing the values (\"noises\") to be added to the payoffs in determining the best response.\n\nReturns\n\n::Int : Best response action.\n\n\n\n"
 },
 
 {
@@ -141,7 +141,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "Method",
-    "text": "best_response(player, opponents_actions; tie_breaking=\"smallest\", tol=1e-8)\n\nReturn a best response action to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1\n\nopponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n\ntie_breaking::AbstractString(\"smallest\") : Control how to break a tie (see\n\nReturns for details).\n\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Int : If tie_breaking=\"smallest\", returns the best response action with\n\nthe smallest index; if tie_breaking=\"random\", returns an action randomly chosen from the best response actions.\n\n\n\n"
+    "text": "best_response(player, opponents_actions; tie_breaking=\"smallest\", tol=1e-8)\n\nReturn a best response action to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntie_breaking::AbstractString(\"smallest\") : Control how to break a tie (see Returns for details).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Int : If tie_breaking=\"smallest\", returns the best response action with the smallest index; if tie_breaking=\"random\", returns an action randomly chosen from the best response actions.\n\n\n\n"
 },
 
 {
@@ -149,7 +149,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.best_responses",
     "category": "Method",
-    "text": "best_responses(player, opponents_actions; tol=1e-8)\n\nReturn all the best response actions to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1\n\nopponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nbest_responses::Vector{Int} : Vector containing all the best response\n\nactions.\n\n\n\n"
+    "text": "best_responses(player, opponents_actions; tol=1e-8)\n\nReturn all the best response actions to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nbest_responses::Vector{Int} : Vector containing all the best response actions.\n\n\n\n"
 },
 
 {
@@ -157,7 +157,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "Method",
-    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::MixedAction : Own mixed action (vector of reals).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1\n\nopponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions;\n\nfalse otherwise.\n\n\n\n"
+    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::MixedAction : Own mixed action (vector of reals).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n"
 },
 
 {
@@ -165,7 +165,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "Method",
-    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn True if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1\n\nopponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions;\n\nvalse otherwise.\n\n\n\n"
+    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn True if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n"
 },
 
 {
@@ -181,7 +181,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_nash",
     "category": "Method",
-    "text": "is_nash(g, action) = is_best_response(g.players[1], action, nothing)\n\nReturn true if action is a Nash equilibrium of a trivial game with 1 player.\n\nArguments\n\ng::NormalFormGame : Instance of 1-player NormalFormGame.\naction::Action : Integer (pure action) or vector of reals (mixed action).\n\nReturns\n\n::Bool\n\n\n\n"
+    "text": "is_nash(g, action)\n\nReturn true if action is a Nash equilibrium of a trivial game with 1 player.\n\nArguments\n\ng::NormalFormGame : Instance of 1-player NormalFormGame.\naction::Action : Integer (pure action) or vector of reals (mixed action).\n\nReturns\n\n::Bool\n\n\n\n"
 },
 
 {
@@ -189,7 +189,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_pareto_dominant",
     "category": "Function",
-    "text": "is_pareto_dominant(g::NormalFormGame, action_profile::PureActionProfile)\n\nReturn true if action_profile is Pareto dominant for game g.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::PureActionProfile : Tuple of N integers (pure actions).\n\nReturns\n\n::Bool\n\n\n\n"
+    "text": "is_pareto_dominant(g, action_profile)\n\nReturn true if action_profile is Pareto dominant for game g.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::PureActionProfile : Tuple of N integers (pure actions).\n\nReturns\n\n::Bool\n\n\n\n"
 },
 
 {
@@ -197,7 +197,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_pareto_efficient",
     "category": "Function",
-    "text": "is_pareto_efficient(g::NormalFormGame, action_profile::PureActionProfile)\n\nReturn true if action_profile is Pareto efficient for game g.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::PureActionProfile : Tuple of N integers (pure actions).\n\nReturns\n\n::Bool\n\n\n\n"
+    "text": "is_pareto_efficient(g, action_profile)\n\nReturn true if action_profile is Pareto efficient for game g.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::PureActionProfile : Tuple of N integers (pure actions).\n\nReturns\n\n::Bool\n\n\n\n"
 },
 
 {
@@ -205,7 +205,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "Method",
-    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents' pure actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::PureActionProfile : Tuple of N-1 opponents' pure\n\nactions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
+    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents' pure actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::PureActionProfile : Tuple of N-1 opponents' pure actions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
 },
 
 {
@@ -237,7 +237,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "Method",
-    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents' mixed actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::MixedActionProfile : Tuple of N-1 opponents' mixed\n\nactions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
+    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents' mixed actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::MixedActionProfile : Tuple of N-1 opponents' mixed actions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
 },
 
 {
@@ -249,27 +249,11 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods.html#Games.covariance_game-Union{Tuple{AbstractRNG,Tuple{Vararg{Int64,N}},Real}, Tuple{N}} where N",
-    "page": "Base Types and Methods",
-    "title": "Games.covariance_game",
-    "category": "Method",
-    "text": "covariance_game{N}([rng=GLOBAL_RNG], nums_actions, rho)\n\nReturn a random N-player NormalFormGame instance with N>=2 where the payoff profiles are drawn independently from the standard multi-normal with the covariance of any pair of payoffs equal to rho, as studied in Rinott and Scarsini (2000).\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions,  one for each　player.\nrho::T: Covariance of a pair of payoff values. Must be in [-1/(N-1), 1], where N is the number of players.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\nReferences\n\nY. Rinott and M. Scarsini, \"On the Number of Pure Strategy Nash Equilibria in Random Games,\" Games and Economic Behavior (2000), 274-293.\n\n\n\n"
-},
-
-{
-    "location": "lib/base_types_and_methods.html#Games.random_game-Union{Tuple{AbstractRNG,Tuple{Vararg{Int64,N}}}, Tuple{N}} where N",
-    "page": "Base Types and Methods",
-    "title": "Games.random_game",
-    "category": "Method",
-    "text": "random_game{N}([rng=GLOBAL_RNG], nums_actions)\n\nReturn a random N-player NormalFormGame instance where the payoffs are drawn independently from the uniform distribution on [0, 1).\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions, one for each player.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\n\n\n"
-},
-
-{
     "location": "lib/base_types_and_methods.html#Exported-1",
     "page": "Base Types and Methods",
     "title": "Exported",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"normal_form_game.jl\", \"random.jl\"]\nPrivate = false"
+    "text": "Modules = [Games]\nPages   = [\"normal_form_game.jl\"]\nPrivate = false"
 },
 
 {
@@ -277,7 +261,55 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Internal",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"normal_form_game.jl\", \"random.jl\"]\nPublic = false"
+    "text": "Modules = [Games]\nPages   = [\"normal_form_game.jl\"]\nPublic = false"
+},
+
+{
+    "location": "lib/game_generators.html#",
+    "page": "Game Generators",
+    "title": "Game Generators",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "lib/game_generators.html#game_generators-1",
+    "page": "Game Generators",
+    "title": "Game Generators",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "lib/game_generators.html#Games.covariance_game-Union{Tuple{AbstractRNG,Tuple{Vararg{Int64,N}},Real}, Tuple{N}} where N",
+    "page": "Game Generators",
+    "title": "Games.covariance_game",
+    "category": "Method",
+    "text": "covariance_game([rng=GLOBAL_RNG], nums_actions, rho)\n\nReturn a random N-player NormalFormGame instance with N>=2 where the payoff profiles are drawn independently from the standard multi-normal with the covariance of any pair of payoffs equal to rho, as studied in Rinott and Scarsini (2000).\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions, one for each player.\nrho::Real: Covariance of a pair of payoff values. Must be in [-1/(N-1), 1], where N is the number of players.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\nReferences\n\nY. Rinott and M. Scarsini, \"On the Number of Pure Strategy Nash Equilibria in Random Games,\" Games and Economic Behavior (2000), 274-293.\n\n\n\n"
+},
+
+{
+    "location": "lib/game_generators.html#Games.random_game-Union{Tuple{AbstractRNG,Tuple{Vararg{Int64,N}}}, Tuple{N}} where N",
+    "page": "Game Generators",
+    "title": "Games.random_game",
+    "category": "Method",
+    "text": "random_game([rng=GLOBAL_RNG], nums_actions)\n\nReturn a random N-player NormalFormGame instance where the payoffs are drawn independently from the uniform distribution on [0, 1).\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nnums_actions::NTuple{N,Int}: Tuple of the numbers of actions, one for each player.\n\nReturns\n\n::NormalFormGame: The generated random N-player NormalFormGame.\n\n\n\n"
+},
+
+{
+    "location": "lib/game_generators.html#Exported-1",
+    "page": "Game Generators",
+    "title": "Exported",
+    "category": "section",
+    "text": "Modules = [Games]\nPages   = [\"random.jl\"]\nPrivate = false"
+},
+
+{
+    "location": "lib/game_generators.html#Internal-1",
+    "page": "Game Generators",
+    "title": "Internal",
+    "category": "section",
+    "text": "Modules = [Games]\nPages   = [\"random.jl\"]\nPublic = false"
 },
 
 {
@@ -405,7 +437,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Games.outerapproximation",
     "category": "Method",
-    "text": "outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,\n                   verbose=false, nskipprint=50, \n                   plib=getlibraryfor(2, Float64))\n\nApproximates the set of equilibrium value set for a repeated game with the outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.\n\nArguments\n\nrpd::RepGame2 : Two player repeated game.\nnH : Number of subgradients used for the approximation.\ntol : Tolerance in differences of set.\nmaxiter : Maximum number of iterations.\nverbose : Whether to display updates about iterations and distance.\nnskipprint : Number of iterations between printing information  (assuming verbose=true).\ncheck_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists.\nplib: Allows users to choose a particular package for the geometry        computations.       (See Polyhedra.jl       docs for more info). By default, it chooses to use        CDDLib.jl\n\nReturns\n\nvertices::Array{Float64} : Vertices of the outer approximation of the value set.\n\n\n\n"
+    "text": "outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,\n                   verbose=false, nskipprint=50,\n                   plib=getlibraryfor(2, Float64))\n\nApproximates the set of equilibrium value set for a repeated game with the outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.\n\nArguments\n\nrpd::RepGame2 : Two player repeated game.\nnH : Number of subgradients used for the approximation.\ntol : Tolerance in differences of set.\nmaxiter : Maximum number of iterations.\nverbose : Whether to display updates about iterations and distance.\nnskipprint : Number of iterations between printing information (assuming verbose=true).\ncheck_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists.\nplib: Allows users to choose a particular package for the geometry computations. (See Polyhedra.jl docs for more info). By default, it chooses to use SimplePolyhedraLibrary.\n\nReturns\n\nvertices::Array{Float64} : Vertices of the outer approximation of the value set.\n\n\n\n"
 },
 
 {
@@ -461,7 +493,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Games.initialize_LP_matrices",
     "category": "Method",
-    "text": "initialize_LP_matrices(rpd, H)\n\nInitialize matrices for the linear programming problems. \n\nArguments\n\nrpd::RepeatedGame : Two player repeated game.\nH : The subgradients used to approximate the value set.\n\nReturns\n\nc::Array{Float64}(nH, 1) : Vector used to determine which subgradient is  being used.\nA::Array{Float64}(nH, 2) : Matrix with nH set constraints and to be filled  with 2 additional incentive compatibility constraints.\nb::Array{Float64}(nH, 1) : Vector to be filled with the values for the  constraints.\n\n\n\n"
+    "text": "initialize_LP_matrices(rpd, H)\n\nInitialize matrices for the linear programming problems.\n\nArguments\n\nrpd::RepeatedGame : Two player repeated game.\nH : The subgradients used to approximate the value set.\n\nReturns\n\nc::Array{Float64}(nH, 1) : Vector used to determine which subgradient is being used.\nA::Array{Float64}(nH, 2) : Matrix with nH set constraints and to be filled with 2 additional incentive compatibility constraints.\nb::Array{Float64}(nH, 1) : Vector to be filled with the values for the constraints.\n\n\n\n"
 },
 
 {
@@ -469,7 +501,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Games.initialize_sg_hpl",
     "category": "Method",
-    "text": "initialize_sg_hpl(rpd, nH)\n\nInitializes subgradients, extreme points and hyperplane levels for the  approximation of the convex value set of a 2 player repeated game by choosing an appropriate origin and radius.\n\nArguments\n\nrpd::RepeatedGame : Two player repeated game.\nnH::Int : Number of subgradients used for the approximation.\n\nReturns\n\nC::Array{Float64}(nH, 1) : The array containing the hyperplane levels.\nH::Array{Float64}(nH, 2) : The array containing the subgradients.\nZ::Array{Float64}(nH, 2) : The array containing the extreme points of the  value set.\n\n\n\n"
+    "text": "initialize_sg_hpl(rpd, nH)\n\nInitializes subgradients, extreme points and hyperplane levels for the approximation of the convex value set of a 2 player repeated game by choosing an appropriate origin and radius.\n\nArguments\n\nrpd::RepeatedGame : Two player repeated game.\nnH::Int : Number of subgradients used for the approximation.\n\nReturns\n\nC::Array{Float64}(nH, 1) : The array containing the hyperplane levels.\nH::Array{Float64}(nH, 2) : The array containing the subgradients.\nZ::Array{Float64}(nH, 2) : The array containing the extreme points of the value set.\n\n\n\n"
 },
 
 {
@@ -477,7 +509,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Games.initialize_sg_hpl",
     "category": "Method",
-    "text": "initialize_sg_hpl(nH, o, r)\n\nInitializes subgradients, extreme points and hyperplane levels for the  approximation of the convex value set of a 2 player repeated game.\n\nArguments\n\nnH::Int : Number of subgradients used for the approximation.\no::Vector{Float64} : Origin for the approximation.\nr::Float64 : Radius for the approximation.\n\nReturns\n\nC::Array{Float64}(nH, 1) : The array containing the hyperplane levels.\nH::Array{Float64}(nH, 2) : The array containing the subgradients.\nZ::Array{Float64}(nH, 2) : The array containing the extreme points of the  value set.\n\n\n\n"
+    "text": "initialize_sg_hpl(nH, o, r)\n\nInitializes subgradients, extreme points and hyperplane levels for the approximation of the convex value set of a 2 player repeated game.\n\nArguments\n\nnH::Int : Number of subgradients used for the approximation.\no::Vector{Float64} : Origin for the approximation.\nr::Float64 : Radius for the approximation.\n\nReturns\n\nC::Array{Float64}(nH, 1) : The array containing the hyperplane levels.\nH::Array{Float64}(nH, 2) : The array containing the subgradients.\nZ::Array{Float64}(nH, 2) : The array containing the extreme points of the value set.\n\n\n\n"
 },
 
 {
@@ -485,7 +517,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Games.unitcircle",
     "category": "Method",
-    "text": "unitcircle(npts)\n\nPlaces npts equally spaced points along the 2 dimensional circle and returns  the points with x coordinates in first column and y coordinates in second column.\n\n\n\n"
+    "text": "unitcircle(npts)\n\nPlaces npts equally spaced points along the 2 dimensional circle and returns the points with x coordinates in first column and y coordinates in second column.\n\n\n\n"
 },
 
 {
