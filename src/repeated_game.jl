@@ -12,7 +12,7 @@ games, but could be extended to do more with some effort.
 """
     RepeatedGame{N,T}
 
-Class representing an N-player repeated game.
+Type representing an N-player repeated game.
 
 # Fields
 
@@ -26,6 +26,11 @@ struct RepeatedGame{N, T<:Real}
 end
 
 # Type alias for 2 player game
+"""
+    RepGame2
+
+Type representing a 2-player repeated game; alias for `RepeatedGame{2}`.
+"""
 const RepGame2 = RepeatedGame{2}
 
 #
@@ -224,8 +229,8 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 # Arugments
 
 - `rpd::RepGame2` : Two player repeated game.
-- `H::Array{Float64, 2}` : The subgradients used to approximate the value set.
-- `C::Array{Float64, 1}` : The array containing the hyperplane levels.
+- `H::Matrix{Float64}` : The subgradients used to approximate the value set.
+- `C::Vector{Float64}` : The array containing the hyperplane levels.
 - `i::Int` : The player of interest.
 - `lp_solver` : Allows users to choose a particular solver for linear
    programming problems. Options include ClpSolver(), CbcSolver(),
@@ -293,7 +298,7 @@ outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
 - `plib`: Allows users to choose a particular package for the geometry
   computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
+  docs for more info). By default, it chooses to use `SimplePolyhedraLibrary`.
 - `lp_solver` : Allows users to choose a particular solver for linear
    programming problems. Options include ClpSolver(), CbcSolver(),
    GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().

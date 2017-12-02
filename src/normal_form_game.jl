@@ -338,7 +338,7 @@ end
 """
     NormalFormGame{N,T}
 
-Class representing an N-player normal form game.
+Type representing an N-player normal form game.
 
 # Fields
 
@@ -359,7 +359,7 @@ function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
 end
 
 """
-    NormalFormGame(T, nums_actions)
+    NormalFormGame([T=Float64], nums_actions)
 
 Constructor of an N-player NormalFormGame, consisting of payoffs all 0.
 
@@ -383,7 +383,7 @@ NormalFormGame(nums_actions::NTuple{N,Int}) where {N} =
 """
     NormalFormGame(players)
 
-Constructor of an N-player NormalFormGame.
+Constructor of an N-player NormalFormGame with a tuple of N Player instances.
 
 # Arguments
 
@@ -407,7 +407,7 @@ end
 """
     NormalFormGame(players)
 
-Constructor of an N-player NormalFormGame.
+Constructor of an N-player NormalFormGame with a vector of N Player instances.
 
 # Arguments
 
@@ -419,7 +419,7 @@ NormalFormGame(players::Vector{Player{N,T}}) where {N,T} =
 """
     NormalFormGame(players...)
 
-Constructor of an N-player NormalFormGame.
+Constructor of an N-player NormalFormGame with N Player instances.
 
 # Arguments
 
