@@ -99,6 +99,10 @@ for section_name in sections_names
     section_name_lower = replace(lowercase(section_name), " ", "_")
     section_file_list = join(map(i -> string("\"", i, ".jl\""),
                              section_files), ", ")
+    # include "Games.jl" in "Base Types and Methods"
+    if section_name == "Base Types and Methods"
+        section_file_list = string("\"Games.jl\", ", section_file_list)
+    end
     section_page = """
 # [$section_name](@id $section_name_lower)
 
