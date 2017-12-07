@@ -257,27 +257,14 @@ function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
     return out
 end
 
-worst_value_i(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
-              i::Int) = worst_value_i(rpd, H, C, i, ClpSolver())
-
 "See worst_value_i for documentation"
 worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
               lp_solver::MathProgBase.AbstractMathProgSolver) =
     worst_value_i(rpd, H, C, 1, lp_solver)
-worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
-    worst_value_1(rpd, H, C, ClpSolver())
 "See worst_value_i for documentation"
 worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
               lp_solver::MathProgBase.AbstractMathProgSolver) =
     worst_value_i(rpd, H, C, 2, lp_solver)
-worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
-    worst_value_2(rpd, H, C, 2, ClpSolver())
-"See worst_value_i for documentation"
-worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
-             lp_solver::MathProgBase.AbstractMathProgSolver) =
-    (worst_value_1(rpd, H, C, lp_solver), worst_value_2(rpd, H, C, lp_solver))
-worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
-    (worst_value_1(rpd, H, C), worst_value_2(rpd, H, C))
 
 #
 # Outer Hyper Plane Approximation
