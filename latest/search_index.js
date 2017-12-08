@@ -437,7 +437,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Games.outerapproximation",
     "category": "Method",
-    "text": "outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,\n                   verbose=false, nskipprint=50,\n                   plib=getlibraryfor(2, Float64))\n\nApproximates the set of equilibrium value set for a repeated game with the outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.\n\nArguments\n\nrpd::RepGame2 : Two player repeated game.\nnH : Number of subgradients used for the approximation.\ntol : Tolerance in differences of set.\nmaxiter : Maximum number of iterations.\nverbose : Whether to display updates about iterations and distance.\nnskipprint : Number of iterations between printing information (assuming verbose=true).\ncheck_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists.\nplib: Allows users to choose a particular package for the geometry computations. (See Polyhedra.jl docs for more info). By default, it chooses to use SimplePolyhedraLibrary.\n\nReturns\n\nvertices::Array{Float64} : Vertices of the outer approximation of the value set.\n\n\n\n"
+    "text": "outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,\n                   verbose=false, nskipprint=50,\n                   plib=getlibraryfor(2, Float64),\n                   lp_solver=ClpSolver())\n\nApproximates the set of equilibrium value set for a repeated game with the outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.\n\nArguments\n\nrpd::RepGame2 : Two player repeated game.\nnH : Number of subgradients used for the approximation.\ntol : Tolerance in differences of set.\nmaxiter : Maximum number of iterations.\nverbose : Whether to display updates about iterations and distance.\nnskipprint : Number of iterations between printing information (assuming verbose=true).\ncheck_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists.\nplib: Allows users to choose a particular package for the geometry computations. (See Polyhedra.jl docs for more info). By default, it chooses to use SimplePolyhedraLibrary.\nlp_solver : Allows users to choose a particular solver for linear  programming problems. Options include ClpSolver(), CbcSolver(),  GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().\n\nReturns\n\nvertices::Array{Float64} : Vertices of the outer approximation of the value set.\n\n\n\n"
 },
 
 {
@@ -449,35 +449,27 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games.html#Games.worst_value_1-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1}}",
+    "location": "lib/repeated_games.html#Games.worst_value_1",
     "page": "Repeated Games",
     "title": "Games.worst_value_1",
-    "category": "Method",
+    "category": "Function",
     "text": "See worst_value_i for documentation\n\n\n\n"
 },
 
 {
-    "location": "lib/repeated_games.html#Games.worst_value_2-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1}}",
+    "location": "lib/repeated_games.html#Games.worst_value_2",
     "page": "Repeated Games",
     "title": "Games.worst_value_2",
-    "category": "Method",
+    "category": "Function",
     "text": "See worst_value_i for documentation\n\n\n\n"
 },
 
 {
-    "location": "lib/repeated_games.html#Games.worst_value_i-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1},Int64}",
+    "location": "lib/repeated_games.html#Games.worst_value_i",
     "page": "Repeated Games",
     "title": "Games.worst_value_i",
-    "category": "Method",
-    "text": "worst_value_i(rpd, H, C, i)\n\nGiven a constraint w ∈ W, this finds the worst possible payoff for agent i.\n\nArugments\n\nrpd::RepGame2 : Two player repeated game.\nH::Array{Float64, 2} : The subgradients used to approximate the value set.\nC::Array{Float64, 1} : The array containing the hyperplane levels.\ni::Int : The player of interest.\n\nReturns\n\nout::Float64 : Worst possible payoff for player i.\n\n\n\n"
-},
-
-{
-    "location": "lib/repeated_games.html#Games.worst_values-Tuple{Games.RepeatedGame{2,T} where T<:Real,Array{Float64,2},Array{Float64,1}}",
-    "page": "Repeated Games",
-    "title": "Games.worst_values",
-    "category": "Method",
-    "text": "See worst_value_i for documentation\n\n\n\n"
+    "category": "Function",
+    "text": "worst_value_i(rpd, H, C, i)\n\nGiven a constraint w ∈ W, this finds the worst possible payoff for agent i.\n\nArugments\n\nrpd::RepGame2 : Two player repeated game.\nH::Array{Float64, 2} : The subgradients used to approximate the value set.\nC::Array{Float64, 1} : The array containing the hyperplane levels.\ni::Int : The player of interest.\nlp_solver : Allows users to choose a particular solver for linear  programming problems. Options include ClpSolver(), CbcSolver(),  GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().\n\nReturns\n\nout::Float64 : Worst possible payoff for player i.\n\n\n\n"
 },
 
 {
