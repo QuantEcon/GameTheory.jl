@@ -227,13 +227,19 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 - `H::Array{Float64, 2}` : The subgradients used to approximate the value set.
 - `C::Array{Float64, 1}` : The array containing the hyperplane levels.
 - `i::Int` : The player of interest.
+- `lp_solver` : Allows users to choose a particular solver for linear
+   programming problems. Options include ClpSolver(), CbcSolver(),
+   GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().
+
 
 # Returns
 
 - `out::Float64` : Worst possible payoff for player i.
 """
 function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
-                       C::Array{Float64, 1}, i::Int)
+                       C::Array{Float64, 1}, i::Int,
+                       lp_solver::MathProgBase.AbstractMathProgSolver=
+                       ClpSolver())
     # Objective depends on which player we are minimizing
     c = zeros(2)
     c[i] = 1.0
@@ -242,7 +248,7 @@ function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
     lb = [-Inf, -Inf]
     ub = [Inf, Inf]
 
-    lpout = linprog(c, H, '<', C, lb, ub, ClpSolver())
+    lpout = linprog(c, H, '<', C, lb, ub, lp_solver)
     if lpout.status == :Optimal
         out = lpout.sol[i]
     else
@@ -253,14 +259,13 @@ function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
 end
 
 "See worst_value_i for documentation"
-worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
-    worst_value_i(rpd, H, C, 1)
+worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
+              lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
+    worst_value_i(rpd, H, C, 1, lp_solver)
 "See worst_value_i for documentation"
-worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
-    worst_value_i(rpd, H, C, 2)
-"See worst_value_i for documentation"
-worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
-    (worst_value_1(rpd, H, C), worst_value_2(rpd, H, C))
+worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
+              lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
+    worst_value_i(rpd, H, C, 2, lp_solver)
 
 #
 # Outer Hyper Plane Approximation
@@ -268,7 +273,8 @@ worst_values(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1}) =
 """
     outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,
                        verbose=false, nskipprint=50,
-                       plib=getlibraryfor(2, Float64))
+                       plib=getlibraryfor(2, Float64),
+                       lp_solver=ClpSolver())
 
 Approximates the set of equilibrium value set for a repeated game with the
 outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
@@ -288,15 +294,20 @@ outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
   computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
   docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
+- `lp_solver` : Allows users to choose a particular solver for linear
+   programming problems. Options include ClpSolver(), CbcSolver(),
+   GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().
 
 # Returns
 
-  - `vertices::Array{Float64}` : Vertices of the outer approximation of the
-    value set.
+- `vertices::Array{Float64}` : Vertices of the outer approximation of the
+  value set.
 """
 function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                             check_pure_nash=true, verbose=false, nskipprint=50,
-                            plib=getlibraryfor(2, Float64))
+                            plib=getlibraryfor(2, Float64),
+                            lp_solver::MathProgBase.AbstractMathProgSolver=
+                            ClpSolver())
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -331,8 +342,8 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     iter, dist = 0, 10.0
     while (iter < maxiter) & (dist > tol)
         # Compute the current worst values for each agent
-        _w1 = worst_value_1(rpd, H, C)
-        _w2 = worst_value_2(rpd, H, C)
+        _w1 = worst_value_1(rpd, H, C, lp_solver)
+        _w2 = worst_value_2(rpd, H, C, lp_solver)
 
         # Update all set constraints -- Copies elements 1:nH of C into b
         copy!(b, 1, C, 1, nH)
@@ -364,7 +375,7 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
                           (1-delta)*best_dev_payoff_2(rpd, a1) - delta*_w2
 
                 # Solve corresponding linear program
-                lpout = linprog(c, A, '<', b, lb, ub, ClpSolver())
+                lpout = linprog(c, A, '<', b, lb, ub, lp_solver)
                 if lpout.status == :Optimal
                     # Pull out optimal value and compute
                     w_sol = lpout.sol
@@ -427,4 +438,3 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
 
     return vertices
 end
-
