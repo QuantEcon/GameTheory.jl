@@ -238,7 +238,8 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 """
 function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
                        C::Array{Float64, 1}, i::Int,
-                       lp_solver::MathProgBase.AbstractMathProgSolver)
+                       lp_solver::MathProgBase.AbstractMathProgSolver=
+                       ClpSolver())
     # Objective depends on which player we are minimizing
     c = zeros(2)
     c[i] = 1.0
@@ -259,11 +260,11 @@ end
 
 "See worst_value_i for documentation"
 worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
-              lp_solver::MathProgBase.AbstractMathProgSolver) =
+              lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 1, lp_solver)
 "See worst_value_i for documentation"
 worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
-              lp_solver::MathProgBase.AbstractMathProgSolver) =
+              lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 2, lp_solver)
 
 #
