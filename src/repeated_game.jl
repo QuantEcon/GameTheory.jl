@@ -293,8 +293,7 @@ outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
 - `plib`: Allows users to choose a particular package for the geometry
   computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use
-  [CDDLib.jl](https://github.com/JuliaPolyhedra/CDDLib.jl)
+  docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
 - `lp_solver` : Allows users to choose a particular solver for linear
    programming problems. Options include ClpSolver(), CbcSolver(),
    GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().
