@@ -480,7 +480,7 @@ function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
                 # first check if it satisifies IC
                 if all([payoff1, payoff2] .> [IC1, IC2])
                     # then check if it is in the polyhedron
-                    if in([payoff1, payoff2], H)
+                    if [payoff1, payoff2] in H
                         push!(v_new, payoff1, payoff2)
                     end
                 end
@@ -518,7 +518,7 @@ function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
         end
 
         # check if max_iter is reached
-        if iter >= max_iter
+        if iter == max_iter
             warn("Maximum Iteration Reached")
         end
 
