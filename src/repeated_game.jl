@@ -526,8 +526,9 @@ function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
 
         # step 2
         # update u
-        u_ = [minimum(v_new[:, 1]) minimum(v_new[:, 2])]
-        if all(u_ .>= u)
+        u_ = [minimum(v_new[:, 1]),
+              minimum(v_new[:, 2])]
+        if any(u_ .> u)
             u = u_
         end
 
