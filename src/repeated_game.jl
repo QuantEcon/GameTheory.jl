@@ -441,9 +441,33 @@ function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
     return vertices
 end
 
+"""
+    AS(rpd; maxiter=1000, plib=getlibraryfor(2, T), tol=1e-5, u=nothing)
 
-function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
-               plib=getlibraryfor(2, T), tol::Float64=1e-5, u=nothing)
+Using AS algorithm to compute the set of payoff pairs of all pure-strategy
+subgame-perfect equilibria with public randomization for any repeated
+two-player games with perfect monitoring and discounting, following
+Abreu and Sannikov (2014).
+
+# Arguments
+
+- `rpd::RepeatedGame{2, T}` : Two player repeated game with T<:Real.
+- `maxiter::Integer` : Maximum number of iterations.
+- `plib`: Allows users to choose a particular package for the geometry
+  computations.
+  (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
+  docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
+- `tol::Float64` : Tolerance in differences of set.
+- `u` : The punishment payoff paif if any player deviates. In default,
+  we use minimax payoff pair. If there is better guess, you can specify it
+  by passing a `Vector{T}` with length 2.
+
+# Returns
+
+- `::Matrix{T}` : Vertices of the set of payoff pairs.
+"""
+function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
+            plib=getlibraryfor(2, T), tol::Float64=1e-5, u=nothing) where T<:Real
 
     # Initialize W0 with each entries of payoff bimatrix
     v_old = _payoff_points(rpd.sg)
@@ -465,7 +489,7 @@ function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
     # normalize with (1-delta)/delta
     best_dev_gains1, best_dev_gains2 = (1-rpd.delta)/rpd.delta .* _best_dev_gains(rpd.sg)
 
-    for iter = 1:max_iter
+    for iter = 1:maxiter
 
         v_new = Vector{T}(0) # to store new vertices
         # step 1
@@ -517,8 +541,8 @@ function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
             end
         end
 
-        # check if max_iter is reached
-        if iter == max_iter
+        # check if maxiter is reached
+        if iter == maxiter
             warn("Maximum Iteration Reached")
         end
 
@@ -537,7 +561,22 @@ function AS{T}(rpd::RepeatedGame{2, T}; max_iter::Integer=1000,
     return V.V
 end
 
-function _payoff_points{T}(g::NormalFormGame{2, T})
+"""
+    _payoff_points(g)
+
+Return a matrix with each row being a payoff pair point in the two dimensional
+space.
+
+# Arguments
+
+- `g::NormalFormGame{2, T}` : Two-player NormalFormGame.
+
+# Returns
+
+- `v::Matrix{T}` : Matrix with size n by 2, where n is the number of
+  action profiles. Each row corresponds to one payoff pair.
+"""
+function _payoff_points(g::NormalFormGame{2, T}) where T
 
     nums_action_profiles = prod(g.nums_actions)
     v = Matrix{T}(nums_action_profiles, 2)
@@ -547,7 +586,24 @@ function _payoff_points{T}(g::NormalFormGame{2, T})
     return v
 end
 
-function _best_dev_gains{T}(g::NormalFormGame{2, T})
+"""
+    _best_dev_gains(g)
+
+Calculate the payoff gains from deviating from the current action to
+the best response for each player.
+
+# Arguments
+
+- `g::NormalFormGame{2, T}` : Two-player NormalFormGame.
+
+# Returns
+
+- `::Tuple{Matrix{T}, Matrix{T}}` : Tuple of best deviating gain matrices
+  for two players. For example, for the first matrix `best_dev_gains1`,
+  `best_dev_gains1[i, j]` is the payoff gain for player 1 for deviating
+  to the best response from ith action given player 2 choosing jth action.
+"""
+function _best_dev_gains(g::NormalFormGame{2, T}) where T
 
     best_dev_gains1 = (maximum(g.players[1].payoff_array, 1)
                        .- g.players[1].payoff_array)
