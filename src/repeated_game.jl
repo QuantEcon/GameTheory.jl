@@ -304,7 +304,7 @@ outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
   value set.
 """
 function outerapproximation(
-        rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
+        rpd::RepGame2; nH=32, tol::Float64=1e-8, maxiter=500,
         check_pure_nash=true, verbose=false, nskipprint=50,
         plib::Polyhedra.PolyhedraLibrary=getlibraryfor(Val{2}, Float64),
         lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()
@@ -430,7 +430,7 @@ function outerapproximation(
     # using Polyhedra.jl (it uses `plib` which was chosen for computations)
     p = polyhedron(SimpleHRepresentation(H, C), plib)
     vrep = SimpleVRepresentation(p)
-    vertices = vrep.V::Matrix{eltype(vrep)}
+    vertices = vrep.V::Matrix{Float64}
 
     # Reduce the number of vertices by rounding points to the tolerance
     tol_int = round(Int, abs(log10(tol))) - 1
