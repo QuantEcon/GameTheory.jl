@@ -221,7 +221,7 @@ Initialize matrices for the linear programming problems.
 - `b::Vector{Float64}` : Vector of length `nH+2` to be filled with the values
   for the constraints.
 """
-function initialize_LP_matrices(rpd::RepGame2, H)
+function initialize_LP_matrices(rpd::RepGame2, H::Matrix{Float64})
     # Need total number of subgradients
     nH = size(H, 1)
 
@@ -247,7 +247,7 @@ end
 
 Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 
-# Arugments
+# Arguments
 
 - `rpd::RepGame2` : Two player repeated game.
 - `H::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the subgradients
@@ -263,8 +263,8 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 
 - `out::Float64` : Worst possible payoff for player i.
 """
-function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
-                       C::Array{Float64, 1}, i::Int,
+function worst_value_i(rpd::RepGame2, H::Matrix{Float64},
+                       C::Vector{Float64}, i::Int,
                        lp_solver::MathProgBase.AbstractMathProgSolver=
                        ClpSolver())
     # Objective depends on which player we are minimizing
@@ -286,11 +286,11 @@ function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
 end
 
 "See worst_value_i for documentation"
-worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
+worst_value_1(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
               lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 1, lp_solver)
 "See worst_value_i for documentation"
-worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
+worst_value_2(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
               lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 2, lp_solver)
 
@@ -331,11 +331,13 @@ outer hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 - `vertices::Matrix{Float64}` : Vertices of the outer approximation of the
   value set.
 """
-function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
-                            check_pure_nash=true, verbose=false, nskipprint=50,
-                            plib=getlibraryfor(2, Float64),
-                            lp_solver::MathProgBase.AbstractMathProgSolver=
-                            ClpSolver())
+function outerapproximation(rpd::RepGame2; nH::Int=32, tol::Float64=1e-8,
+                             maxiter::Int=500, check_pure_nash::Bool=true,
+                             verbose::Bool=false, nskipprint::Int=50,
+                             plib::Polyhedra.PolyhedraLibrary=
+                             getlibraryfor(2, Float64),
+                             lp_solver::MathProgBase.AbstractMathProgSolver=
+                             ClpSolver())
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
