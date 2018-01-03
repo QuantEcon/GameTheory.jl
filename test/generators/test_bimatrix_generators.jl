@@ -127,6 +127,21 @@
         end
     end
 
+    @testset "tournament_game" begin
+        n, k = 6, 4
+        g1 = @inferred(tournament_game(0, n, k))
+        g2 = @inferred(tournament_game(0, n, k))
+
+        for i in 1:2
+            @test g1.players[i].payoff_array == g2.players[i].payoff_array
+        end
+
+        @test g1.nums_actions == (n, binomial(n, k))
+
+        @test all(sum(g1.players[2].payoff_array, 2) .== k)
+
+    end
+
     @testset "unit_vector_game" begin
         k = 5
         g1 = @inferred(unit_vector_game(MersenneTwister(0), k; random=false))
@@ -159,5 +174,6 @@
         end
 
     end
+
 
 end

@@ -16,7 +16,14 @@ This module contains functions that generate NormalFormGame instances of the
   Conitzer (2005) as a worst case scenario for support enumeration as it has a
   unique equilibrium where each player uses half of his actions in his support.
 
-* Tournament Games (`tournament_game`)
+* Tournament Games (`tournament_game`): These games were introduced by
+  Anbalagan et al. (2013). Starting from an arbitrary tournament graph with
+  n nodes, an asymmetric bipartite graph is created where the nodes on one
+  side (partition R) correspond to the nodes of the tournament graph, and the
+  nodes on the other (partition C) side correspond to the k-sized subsets of
+  nodes in the tournament graph. The bipartite graph is then transformed into
+  a win-lose game where the actions of each player are nodes on their side
+  of the graph.
 
 * Unit vector Games (`unit_vector_game`): These games were introduced by R. Savani
   and B. von Stengel (2015) whose payoffs for the column player are chosen randomly
@@ -74,7 +81,8 @@ References
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import QuantEcon: MVNSampler, simplex_grid
+import QuantEcon: MVNSampler, simplex_grid, next_k_array!, k_array_rank
+import LightGraphs: random_tournament_digraph
 
 
 # blotto_game
@@ -319,6 +327,110 @@ function sgc_game(k::Integer)
     return g
 end
 
+# tournament_game
+"""
+    tournament_game([seed=-1], n, k)
+
+Return a NormalFormGame instance of the 2-player game introduced by
+Anbalagan et al. (2013). Starting from an arbitrary tournament graph with
+n nodes, an asymmetric bipartite graph is created where the nodes on one
+side (partition R) correspond to the nodes of the tournament graph, and the
+nodes on the other (partition C) side correspond to the k-sized subsets of
+nodes in the tournament graph. The bipartite graph is then transformed into
+a win-lose game where the actions of each player are nodes on their side
+of the graph.
+
+# Notes
+
+The actions of player 2 are ordered according to the
+[combinatorial number system]
+(https://en.wikipedia.org/wiki/Combinatorial_number_system), 
+different from the order used in the original library in C.
+
+# Arguments
+
+- `seed::Integer=-1`: Seed for random number generator. If seed is negative,
+  then `Base.GLOBAL_RNG` is used.
+- `n::Integer` : Positive integer determining the number of nodes in the
+  tournament graph.
+- `k::Integer` : Parameter determining the size of subsets of nodes in the
+  tournament graph.
+
+# Returns
+
+- `g::NormalFormGame`
+
+# Examples
+
+```julia
+julia> seed = 1234;
+
+julia> g = tournament_game(seed, 4, 2)
+4×6 NormalFormGame{2,Float64}
+
+julia> g.players[1]
+4×6 Player{2,Float64}:
+ 0.0  0.0  0.0  0.0  0.0  1.0
+ 0.0  1.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  0.0  0.0  0.0
+
+julia> g.players[2]
+6×4 Player{2,Float64}:
+ 1.0  1.0  0.0  0.0
+ 1.0  0.0  1.0  0.0
+ 0.0  1.0  1.0  0.0
+ 1.0  0.0  0.0  1.0
+ 0.0  1.0  0.0  1.0
+ 0.0  0.0  1.0  1.0
+ ```
+"""
+function tournament_game(seed::Integer, n::Integer, k::Integer)
+
+    m = zero(Csize_t)
+    try
+        m = binomial(Csize_t(n), Csize_t(k))
+    catch InexactError
+        error("Maximum allowed size exceeded")
+    end
+
+    R = zeros(Float64, n, m)
+    C = zeros(Float64, m, n)
+    tourn_graph = random_tournament_digraph(n; seed=seed)
+    fadjlist = tourn_graph.fadjlist
+
+    # populate matrix C
+    X = collect(Csize_t, 1:k)
+    for j = 1:m
+        C[j, X] = 1.
+        next_k_array!(X)
+    end
+
+    # populate matrix R
+    # continue to use array `X` to store indices
+    a = Vector{Integer}(k)
+    for i = 1:n
+        d = length(fadjlist[i])
+        if d >= k
+            for j = 1:k
+                a[j] = j
+            end
+            while a[end] <= d
+                X[:] = fadjlist[i][a]
+                R[i, k_array_rank(Csize_t, X)] = 1.
+                next_k_array!(a)
+            end
+        end
+    end
+
+    g = NormalFormGame([Player(R), Player(C)])
+
+    return g
+end
+
+tournament_game(n::Integer, k::Integer) =
+    tournament_game(-1, n::Integer, k::Integer)
+
 # unit_vector_game
 """
     unit_vector_game([rng=GLOBAL_RNG], k; random=true)
@@ -429,4 +541,3 @@ end
 
 unit_vector_game(k::Integer; random::Bool=true) =
     unit_vector_game(Base.GLOBAL_RNG, k, random=random)
-
