@@ -30,8 +30,8 @@ minus 1 such pairs. This should thus be used only for small games.
 
 # Returns
 
-- `::Vector{Tuple{Vector{Real}, Vector{Real}}}`: Mixed-action
-  Nash equilibria that are found.
+- `::Vector{NTuple{2,Vector{Real}}}`: Mixed-action Nash equilibria that are
+  found.
 """
 function support_enumeration(g::NormalFormGame{2})
 
@@ -79,13 +79,13 @@ Main body of `support_enumeration_task`.
 # Arguments
 
 - `c::Channel`: Channel to be binded with the support enumeration task.
-- `payoff_matrices::NTuple{2, Matrix{T}}`: Payoff matrices of player 1 and
-  player 2. T<:Real.
+- `payoff_matrices::NTuple{2,Matrix{T}}`: Payoff matrices of player 1 and
+  player 2, where `T<:Real`.
 
 # Puts
 
-- `Tuple{Vector{S},Vector{S}}`: Tuple of Nash equilibrium mixed actions.
-  `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
+- `NTuple{2,Vector{S}}`: Tuple of Nash equilibrium mixed actions, where `S` is
+  Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
 function _support_enumeration_producer(c::Channel,
                                        payoff_matrices
@@ -127,8 +127,7 @@ function _support_enumeration_producer(c::Channel,
 end
 
 """
-    _indiff_mixed_action!(A, b, out, payoff_matrix,
-                          own_supp, opp_supp)
+    _indiff_mixed_action!(A, b, out, payoff_matrix, own_supp, opp_supp)
 
 Given a player's payoff matrix `payoff_matrix`, an array `own_supp`
 of this player's actions, and an array `opp_supp` of the opponent's
@@ -142,10 +141,10 @@ steps.
 
 # Arguments
 
-- `A::Matrix{T}`: Matrix used in intermediate steps. T<:Real.
-- `b::Vector{T}`: Vector used in intermediate steps. T<:Real.
+- `A::Matrix{T}`: Matrix used in intermediate steps, where `T<:Real`.
+- `b::Vector{T}`: Vector used in intermediate steps, where `T<:Real`.
 - `out::Vector{T}`: Vector to store the nonzero values of the
-  desired mixed action. T<:Real.
+  desired mixed action, where `T<:Real`.
 - `payoff_matrix::Matrix`: The player's payoff matrix.
 - `own_supp::Vector{Int}`: Vector containing the player's action indices.
 - `opp_supp::Vector{Int}`: Vector containing the opponent's action indices.
@@ -241,7 +240,7 @@ of the elements. `a` is modified in place.
 
 # Returns
 
-- `:::Vector{Int}`: Next k-array of `a`.
+- `::Vector{Int}`: Next k-array of `a`.
 
 # Examples
 
