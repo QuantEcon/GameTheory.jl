@@ -17,9 +17,9 @@ There are three parts to generate the documentation.
 ### auto_doc_gen.jl
 
 Main part of documentation generation. It reads `src/Games.jl` to find
-out all the source files, and then write markdown files for each with
-the structure instructed by `docs/build/Structure`, which will be utilized
-by "Documenter.jl" later.
+out all the source files (include the ones used in submodules), and then
+write markdown files for each by the structure instructed by 
+`docs/build/Structure`, which will be utilized by "Documenter.jl" later.
 
 Note that the pattern of each page can be modified by changing the
 strings in `auto_doc_gen.jl` called `file_page` and `section_page`.
@@ -34,9 +34,10 @@ You may modify `Structure` to arrange the structure of the website to be generat
 For example:
 
 ```
-Order: Base Types and Methods, Computing Nash Equilibria, Repeated Games
-Base Types and Methods: normal_form_game, random
-Computing Nash Equilibria: pure_nash
+Order: Base Types and Methods, Game Generators, Computing Nash Equilibria, Repeated Games
+Base Types and Methods: normal_form_game
+Game Generators: random, generators/bimatrix_generators
+Computing Nash Equilibria: pure_nash, support_enumeration
 Repeated Games: repeated_game_util, repeated_game
 ```
 
@@ -45,8 +46,13 @@ generate a single page, or the name of the section you want to create. In the fo
 you need to declare which files are included in each section. Note that you should not
 put a comma or dot at the end of each line.
 
-It is not necessary to declare the structure of every file included in the Module.
-A separate single page will be generated for each file not mentioned in `Structure` automatically.
+It is not necessary to declare the structure of every file included in the main module.
+A separate single page will be generated for each file not mentioned in `Structure`
+automatically.
+
+However, you must specify the structure for files in each submodule. If you want to let
+a submodule to be a seperate section, please state this in `Structure`, with the submodule
+name as the section name.
 
 #### Homepage
 

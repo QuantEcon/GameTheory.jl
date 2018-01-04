@@ -12,7 +12,7 @@ games, but could be extended to do more with some effort.
 """
     RepeatedGame{N,T}
 
-Class representing an N-player repeated game.
+Type representing an N-player repeated game.
 
 # Fields
 
@@ -26,6 +26,11 @@ struct RepeatedGame{N, T<:Real}
 end
 
 # Type alias for 2 player game
+"""
+    RepGame2
+
+Type representing a 2-player repeated game; alias for `RepeatedGame{2}`.
+"""
 const RepGame2 = RepeatedGame{2}
 
 #
@@ -55,6 +60,15 @@ RepeatedGame(p1::Player, p2::Player, delta::Float64) =
     unpack(rpd)
 
 Helper function that unpacks the elements of a repeated game.
+
+# Arguments
+
+- `rpd::RepeatedGame` : The repeated game.
+
+# Returns
+
+- `::Tuple{NormalFormGame, Float64}` : A tuple containing the stage game
+  and the delta.
 """
 unpack(rpd::RepeatedGame) = (rpd.sg, rpd.delta)
 
@@ -83,9 +97,18 @@ best_dev_payoff_2(rpd::RepGame2, a1::Int) =
 """
     unitcircle(npts)
 
-Places `npts` equally spaced points along the 2 dimensional circle and returns
-the points with x coordinates in first column and y coordinates in second
-column.
+Places `npts` equally spaced points along the 2 dimensional unit circle and
+returns the points with x coordinates in first column and y coordinates in
+second column.
+
+# Arguments
+
+- `npts::Int` : Number of points to be placed.
+
+# Returns
+
+- `pts::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the coordinates
+  of the points.
 """
 function unitcircle(npts::Int)
     # Want our points placed on [0, 2π]
@@ -116,10 +139,11 @@ approximation of the convex value set of a 2 player repeated game.
 
 # Returns
 
-- `C::Array{Float64}(nH, 1)` : The array containing the hyperplane levels.
-- `H::Array{Float64}(nH, 2)` : The array containing the subgradients.
-- `Z::Array{Float64}(nH, 2)` : The array containing the extreme points of the
-  value set.
+- `C::Vector{Float64}` : Vector of length `nH` containing the hyperplane
+  levels.
+- `H::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the subgradients.
+- `Z::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the extreme
+  points of the value set.
 """
 function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     # First create unit circle
@@ -155,10 +179,11 @@ an appropriate origin and radius.
 
 # Returns
 
-- `C::Array{Float64}(nH, 1)` : The array containing the hyperplane levels.
-- `H::Array{Float64}(nH, 2)` : The array containing the subgradients.
-- `Z::Array{Float64}(nH, 2)` : The array containing the extreme points of the
-  value set.
+- `C::Vector{Float64}` : Vector of length `nH` containing the hyperplane
+  levels.
+- `H::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the subgradients.
+- `Z::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the extreme
+  points of the value set.
 """
 function initialize_sg_hpl(rpd::RepeatedGame, nH::Int)
     # Choose the origin to be mean of max and min payoffs
@@ -184,18 +209,19 @@ Initialize matrices for the linear programming problems.
 # Arguments
 
 - `rpd::RepeatedGame` : Two player repeated game.
-- `H` : The subgradients used to approximate the value set.
+- `H::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the subgradients
+   used to approximate the value set, where `nH` is the number of subgradients.
 
 # Returns
 
-- `c::Array{Float64}(nH, 1)` : Vector used to determine which subgradient is
-  being used.
-- `A::Array{Float64}(nH, 2)` : Matrix with nH set constraints and to be filled
-  with 2 additional incentive compatibility constraints.
-- `b::Array{Float64}(nH, 1)` : Vector to be filled with the values for the
-  constraints.
+- `c::Vector{Float64}` : Vector of length `nH` used to determine which
+  subgradient should be used, where `nH` is the number of subgradients.
+- `A::Matrix{Float64}` : Matrix of shape `(nH+2, 2)` with nH set constraints
+  and to be filled with 2 additional incentive compatibility constraints.
+- `b::Vector{Float64}` : Vector of length `nH+2` to be filled with the values
+  for the constraints.
 """
-function initialize_LP_matrices(rpd::RepGame2, H)
+function initialize_LP_matrices(rpd::RepGame2, H::Matrix{Float64})
     # Need total number of subgradients
     nH = size(H, 1)
 
@@ -221,23 +247,24 @@ end
 
 Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 
-# Arugments
+# Arguments
 
 - `rpd::RepGame2` : Two player repeated game.
-- `H::Array{Float64, 2}` : The subgradients used to approximate the value set.
-- `C::Array{Float64, 1}` : The array containing the hyperplane levels.
+- `H::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the subgradients
+   here `nH` is the number of subgradients.
+- `C::Vector{Float64}` : The array containing the hyperplane levels.
 - `i::Int` : The player of interest.
-- `lp_solver` : Allows users to choose a particular solver for linear
-   programming problems. Options include ClpSolver(), CbcSolver(),
-   GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().
-
+- `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
+  solver for linear programming problems. Options include ClpSolver(),
+  CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
+  ClpSolver().
 
 # Returns
 
 - `out::Float64` : Worst possible payoff for player i.
 """
-function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
-                       C::Array{Float64, 1}, i::Int,
+function worst_value_i(rpd::RepGame2, H::Matrix{Float64},
+                       C::Vector{Float64}, i::Int,
                        lp_solver::MathProgBase.AbstractMathProgSolver=
                        ClpSolver())
     # Objective depends on which player we are minimizing
@@ -259,11 +286,11 @@ function worst_value_i(rpd::RepGame2, H::Array{Float64, 2},
 end
 
 "See worst_value_i for documentation"
-worst_value_1(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
+worst_value_1(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
               lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 1, lp_solver)
 "See worst_value_i for documentation"
-worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
+worst_value_2(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
               lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 2, lp_solver)
 
@@ -277,37 +304,40 @@ worst_value_2(rpd::RepGame2, H::Array{Float64, 2}, C::Array{Float64, 1},
                        lp_solver=ClpSolver())
 
 Approximates the set of equilibrium value set for a repeated game with the
-outer hyperplane approximation described by Judd, Yeltekin, Conklin 2002.
+outer hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 
 # Arguments
 
 - `rpd::RepGame2` : Two player repeated game.
-- `nH` : Number of subgradients used for the approximation.
-- `tol` : Tolerance in differences of set.
-- `maxiter` : Maximum number of iterations.
-- `verbose` : Whether to display updates about iterations and distance.
-- `nskipprint` : Number of iterations between printing information
-  (assuming verbose=true).
+- `nH::Int` : Number of subgradients used for the approximation.
+- `tol::Float64` : Tolerance in differences of set.
+- `maxiter::Int` : Maximum number of iterations.
 - `check_pure_nash`: Whether to perform a check about whether a pure Nash
   equilibrium exists.
-- `plib`: Allows users to choose a particular package for the geometry
-  computations.
+- `verbose::Bool` : Whether to display updates about iterations and distance.
+- `nskipprint::Int` : Number of iterations between printing information
+  (assuming verbose=true).
+- `plib::PolyhedraLibrary`: Allows users to choose a particular package for
+  the geometry computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
-- `lp_solver` : Allows users to choose a particular solver for linear
-   programming problems. Options include ClpSolver(), CbcSolver(),
-   GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().
+  docs for more info). By default, it chooses to use `SimplePolyhedraLibrary`.
+- `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
+  solver for linear programming problems. Options include ClpSolver(),
+  CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
+  ClpSolver().
 
 # Returns
 
-- `vertices::Array{Float64}` : Vertices of the outer approximation of the
+- `vertices::Matrix{Float64}` : Vertices of the outer approximation of the
   value set.
 """
-function outerapproximation(rpd::RepGame2; nH=32, tol=1e-8, maxiter=500,
-                            check_pure_nash=true, verbose=false, nskipprint=50,
-                            plib=getlibraryfor(2, Float64),
-                            lp_solver::MathProgBase.AbstractMathProgSolver=
-                            ClpSolver())
+function outerapproximation(rpd::RepGame2; nH::Int=32, tol::Float64=1e-8,
+                             maxiter::Int=500, check_pure_nash::Bool=true,
+                             verbose::Bool=false, nskipprint::Int=50,
+                             plib::Polyhedra.PolyhedraLibrary=
+                             getlibraryfor(2, Float64),
+                             lp_solver::MathProgBase.AbstractMathProgSolver=
+                             ClpSolver())
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players

@@ -31,15 +31,33 @@ open(joinpath(path, "docs/Structure")) do f
     end
 end
 
+modules = String["Games"]
 # find all files used in Games.jl
 re = r"include\(\"(.*)\.jl\"\)"
 files = String[]
 
 open(joinpath(path, "src/Games.jl")) do f
     for match in eachmatch(re, readstring(f))
-        push!(files, match.captures[1])
+        # check if it is a submodule
+        if contains(match.captures[1], "/")
+            submodule_path = match.captures[1]
+            submodule_dir, submodule_name = split(submodule_path, "/")
+            # add submodule name to modules
+            push!(modules, "Games.$submodule_name")
+            # find all files used in submodules
+            open(joinpath(path, "src/$submodule_path.jl")) do f_submodule
+                for match_sub in eachmatch(re, readstring(f_submodule))
+                    file = match_sub.captures[1]
+                    push!(files, "$submodule_dir/$file")
+                end
+            end
+        else
+            push!(files, match.captures[1])
+        end
     end
 end
+
+module_names = join(modules, ", ")
 
 files_names = Dict{String, String}(
                 file => replace(join(map(ucfirst, split(file, "_")), " "),
@@ -53,7 +71,7 @@ if !ispath(joinpath(path, "docs/src/lib"))
     mkpath(joinpath(path, "docs/src/lib"))
 end
 
-# write .md for files not in section
+# write .md for files in main modules not in section
 for file in files
     if file in vcat(values(sections)...)
         continue
@@ -71,7 +89,7 @@ This is documentation for `$file.jl`.
 ## Exported
 
 ```@autodocs
-Modules = [Games]
+Modules = [$module_names]
 Pages   = ["$file.jl"]
 Private = false
 ```
@@ -79,7 +97,7 @@ Private = false
 ## Internal
 
 ```@autodocs
-Modules = [Games]
+Modules = [$module_names]
 Pages   = ["$file.jl"]
 Public = false
 ```
@@ -99,19 +117,23 @@ for section_name in sections_names
     section_name_lower = replace(lowercase(section_name), " ", "_")
     section_file_list = join(map(i -> string("\"", i, ".jl\""),
                              section_files), ", ")
+    # include "Games.jl" in "Base Types and Methods"
+    if section_name == "Base Types and Methods"
+        section_file_list = string("\"Games.jl\", ", section_file_list)
+    end
     section_page = """
 # [$section_name](@id $section_name_lower)
 
 ## Exported
 ```@autodocs
-Modules = [Games]
+Modules = [$module_names]
 Pages   = [$section_file_list]
 Private = false
 ```
 
 ## Internal
 ```@autodocs
-Modules = [Games]
+Modules = [$module_names]
 Pages   = [$section_file_list]
 Public = false
 ```
@@ -126,7 +148,7 @@ index = """
 # Index
 
 ```@index
-modules = [Games]
+Modules = [$module_names]
 ```
 """
 
