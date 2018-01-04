@@ -49,7 +49,8 @@
     # Test the actual computation
     #
     @testset "Testing outer approximation" begin
-        vertices = outerapproximation(rpd; nH=128, maxiter=150, tol=1e-9)
+        vertices =
+            @inferred(outerapproximation(rpd; nH=128, maxiter=150, tol=1e-9))
         p_in_v = [vertices[i, :] for i in 1:size(vertices, 1)]
 
         mybools = [all(isapprox.([3.0, 3.0], p)) for p in p_in_v]
