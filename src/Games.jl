@@ -20,7 +20,7 @@ const PureAction = Integer
 """
     MixedAction{T}
 
-Alias for Vector{T} where `T<:Real`.
+Alias for `Vector{T}` where `T<:Real`.
 """
 MixedAction{T<:Real} = Vector{T}
 

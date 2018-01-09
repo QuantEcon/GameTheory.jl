@@ -11,8 +11,8 @@ will change in the future.
 # Arguments
 
 - `nfg::NormalFormGame`: Instance of N-player NormalFormGame.
-- `ntofind::Inf`: Maximal number of pure nash action Nash
-  equilibria to be found; default is `Inf`.
+- `ntofind::Inf`: Maximal number of pure action Nash equilibria to be
+  found; default is `Inf`.
 
 # Returns
 - `ne::Vector{NTuple{N,Int}}`: Vector of pure action Nash equilibria.
