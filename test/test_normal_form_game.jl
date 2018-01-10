@@ -6,7 +6,7 @@
 #       that multiple times for the same function if we have particular reason
 #       to believe there might be a type stability with that function.
 
-@testset "Testing game_theory/normal_form_game.jl" begin
+@testset "Testing normal_form_game.jl" begin
 
     # Player #
 
@@ -208,22 +208,22 @@
                           (1, 1, 2), (2, 1, 2), (1, 2, 2), (2, 2, 2)]]
 
         @testset "Testing is_pareto_efficient" begin
-            output_dict = [[true, false, false, false], 
+            output_dict = [[true, false, false, false],
                            [false, true, true, false],
-                           [true, false, false, false, false, false, false, 
+                           [true, false, false, false, false, false, false,
                             true]]
 
             for i = 1:length(games_dict)
                 for j in 1:length(act_prof_dict[i])
                     @test @inferred is_pareto_efficient(games_dict[i],
                                                        act_prof_dict[i][j]) ==
-                                    output_dict[i][j]                 
+                                    output_dict[i][j]
                 end
             end
         end
 
         @testset "Testing Pareto dominance" begin
-            output_dict = [[true, false, false, false], 
+            output_dict = [[true, false, false, false],
                            [false, false, false, false],
                            [false, false, false, false, false, false, false,
                             false]]
@@ -232,12 +232,10 @@
                 for j in 1:length(act_prof_dict[i])
                     @test @inferred is_pareto_dominant(games_dict[i],
                                                        act_prof_dict[i][j]) ==
-                                    output_dict[i][j]                 
+                                    output_dict[i][j]
                 end
             end
         end
     end
- 
-
 
 end
