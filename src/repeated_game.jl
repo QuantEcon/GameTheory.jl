@@ -285,11 +285,11 @@ function worst_value_i(rpd::RepGame2, H::Matrix{Float64},
     return out
 end
 
-"See worst_value_i for documentation"
+"See `worst_value_i` for documentation"
 worst_value_1(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
               lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 1, lp_solver)
-"See worst_value_i for documentation"
+"See `worst_value_i` for documentation"
 worst_value_2(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
               lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
     worst_value_i(rpd, H, C, 2, lp_solver)
@@ -303,8 +303,8 @@ worst_value_2(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
                        plib=getlibraryfor(2, Float64),
                        lp_solver=ClpSolver())
 
-Approximates the set of equilibrium value set for a repeated game with the
-outer hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
+Approximates the set of equilibrium values for a repeated game with the outer
+hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 
 # Arguments
 
