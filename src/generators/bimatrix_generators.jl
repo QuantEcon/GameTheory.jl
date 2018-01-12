@@ -142,7 +142,7 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
     actions = simplex_grid(h, t)
     n = size(actions)[2]
 
-    payoff_arrays = Array{Float64}(n, n, 2)
+    payoff_arrays = [Matrix{Float64}(n, n) for i in 1:2]
 
     payoffs = Array{Float64}(2)
     for i=1:n
@@ -158,13 +158,14 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
                     payoffs[winner] += values[winner, k]
                 end
             end
-            payoff_arrays[i, j, 1] = payoffs[1]
-            payoff_arrays[j, i, 2] = payoffs[2]
+            payoff_arrays[1][i, j] = payoffs[1]
+            payoff_arrays[2][j, i] = payoffs[2]
         end
     end
 
-    g = NormalFormGame((Player(payoff_arrays[:, :, 1]),
-                        Player(payoff_arrays[:, :, 2])))
+    g = NormalFormGame(
+        [Player(payoff_array) for payoff_array in payoff_arrays]
+    )
 
     return g
 end
