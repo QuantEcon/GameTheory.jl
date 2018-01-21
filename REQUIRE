@@ -1,6 +1,6 @@
 julia 0.6
 Clp
 MathProgBase
-QuantEcon
+QuantEcon 0.14.1
 Polyhedra
 LightGraphs
