@@ -36,6 +36,10 @@ https://github.com/bimatrix-games/bimatrix-generators distributed under BSD
 
 References
 ----------
+* Y. Anbalagan, S. Norin, R. Savani, and A. Vetta, "Polylogarithmic
+  Supports Are Required for Approximate Well-Supported Nash Equilibria
+  below 2/3," WINE, 2013.
+
 * J. Fearnley, T. P. Igwe, R. Savani, "An Empirical Study of Finding
   Approximate Equilibria in Bimatrix Games," International Symposium on
   Experimental Algorithms (SEA), 2015.
@@ -48,6 +52,9 @@ References
 
 * T. Sandholm, A. Gilpin, and V. Conitzer, "Mixed-Integer Programming Methods
   for Finding Nash Equilibria," AAAI, 2005.
+
+* R. Savani and B. von Stengel, "Unit Vector Games," International
+  Journal of Economic Theory, 2016.
 
 =#
 
@@ -384,7 +391,7 @@ julia> g.players[2]
  1.0  0.0  0.0  1.0
  0.0  1.0  0.0  1.0
  0.0  0.0  1.0  1.0
- ```
+```
 """
 function tournament_game(seed::Integer, n::Integer, k::Integer)
 
