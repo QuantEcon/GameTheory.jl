@@ -6,8 +6,8 @@
         NEs = [([1.0, 0.0, 0.0], [1.0, 0.0]),
                ([0.8, 0.2, 0.0], [2/3, 1/3]),
                ([0.0, 1/3, 2/3], [1/3, 2/3])]
-        
-        for (actions_computed, actions) in zip(NEs, support_enumeration(g))
+
+        for (actions_computed, actions) in zip(support_enumeration(g), NEs)
             for (action_computed, action) in zip(actions_computed, actions)
                 @test action_computed ≈ action
                 @test eltype(action_computed) <: AbstractFloat
@@ -22,7 +22,7 @@
                ([0.8, 0.2, 0.0], [2/3, 1/3]),
                ([0.0, 1/3, 2/3], [1/3, 2/3])]
 
-        for (actions_computed, actions) in zip(NEs, support_enumeration(g))
+        for (actions_computed, actions) in zip(support_enumeration(g), NEs)
             for (action_computed, action) in zip(actions_computed, actions)
                 @test action_computed ≈ action
                 @test eltype(action_computed) <: AbstractFloat
@@ -37,7 +37,7 @@
                ([4//5, 1//5, 0//1], [2//3, 1//3]),
                ([0//1, 1//3, 2//3], [1//3, 2//3])]
 
-        for (actions_computed, actions) in zip(NEs, support_enumeration(g))
+        for (actions_computed, actions) in zip(support_enumeration(g), NEs)
             for (action_computed, action) in zip(actions_computed, actions)
                 @test action_computed ≈ action
                 @test eltype(action_computed) <: Rational
@@ -51,7 +51,7 @@
         NEs = [([1.0, 0.0, 0.0], [1.0, 0.0]),
                ([0.0, 1.0, 0.0], [0.0, 1.0])]
 
-        for (actions_computed, actions) in zip(NEs, support_enumeration(g))
+        for (actions_computed, actions) in zip(support_enumeration(g), NEs)
             for (action_computed, action) in zip(actions_computed, actions)
                 @test action_computed ≈ action
                 @test eltype(action_computed) <: AbstractFloat
@@ -65,7 +65,7 @@
         NEs = [([1.0, 0.0, 0.0], [1.0, 0.0]),
                ([0.0, 1.0, 0.0], [0.0, 1.0])]
 
-        for (actions_computed, actions) in zip(NEs, support_enumeration(g))
+        for (actions_computed, actions) in zip(support_enumeration(g), NEs)
             for (action_computed, action) in zip(actions_computed, actions)
                 @test action_computed ≈ action
                 @test eltype(action_computed) <: AbstractFloat
@@ -79,7 +79,7 @@
         NEs = [([1//1, 0//1, 0//1], [1//1, 0//1]),
                ([0//1, 1//1, 0//1], [0//1, 1//1])]
 
-        for (actions_computed, actions) in zip(NEs, support_enumeration(g))
+        for (actions_computed, actions) in zip(support_enumeration(g), NEs)
             for (action_computed, action) in zip(actions_computed, actions)
                 @test action_computed ≈ action
                 @test eltype(action_computed) <: Rational
