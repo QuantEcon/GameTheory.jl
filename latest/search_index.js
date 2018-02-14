@@ -101,7 +101,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Type",
-    "text": "NormalFormGame{N,T}\n\nType representing an N-player normal form game.\n\nFields\n\nplayers::NTuple{N,Player{N,T<:Real}} : Tuple of Player instances.\nN::Int : The number of players.\nnums_actions::NTuple{N,Int} : Tuple of the numbers of actions, one for each player.\n\n\n\n"
+    "text": "NormalFormGame{N,T}\n\nType representing an N-player normal form game.\n\nFields\n\nplayers::NTuple{N,Player{N,T<:Real}} : Tuple of Player instances.\nnums_actions::NTuple{N,Int} : Tuple of the numbers of actions, one for each player.\n\n\n\n"
 },
 
 {
@@ -381,15 +381,15 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Nash Equilibria",
     "title": "Games.pure_nash",
     "category": "Method",
-    "text": "pure_nash(nfg; ntofind=Inf)\n\nFinds all pure action Nash equilibria for a normal form game. It returns an empty array if there is no pure action Nash.\n\nCurrently uses a brute force algorithm, but that hopefully will change in the future.\n\nArguments\n\nnfg::NormalFormGame: Instance of N-player NormalFormGame.\nntofind::Inf: Maximal number of pure nash action Nash equilibria to be found; default is Inf.\n\nReturns\n\nne::Vector{NTuple{N,Int}}: Vector of pure action Nash equilibria.\n\n\n\n"
+    "text": "pure_nash(nfg; ntofind=Inf)\n\nFinds all pure action Nash equilibria for a normal form game. It returns an empty array if there is no pure action Nash.\n\nCurrently uses a brute force algorithm, but that hopefully will change in the future.\n\nArguments\n\nnfg::NormalFormGame: Instance of N-player NormalFormGame.\nntofind::Inf: Maximal number of pure action Nash equilibria to be found; default is Inf.\n\nReturns\n\nne::Vector{NTuple{N,Int}}: Vector of pure action Nash equilibria.\n\n\n\n"
 },
 
 {
-    "location": "lib/computing_nash_equilibria.html#Games.support_enumeration-Tuple{Games.NormalFormGame{2,T} where T<:Real}",
+    "location": "lib/computing_nash_equilibria.html#Games.support_enumeration-Union{Tuple{Games.NormalFormGame{2,T}}, Tuple{T}} where T",
     "page": "Computing Nash Equilibria",
     "title": "Games.support_enumeration",
     "category": "Method",
-    "text": "support_enumeration(g)\n\nCompute mixed-action Nash equilibria with equal support size for a 2-player normal form game by support enumeration. For a non-degenerate game input, these are all the Nash equilibria.\n\nThe algorithm checks all the equal-size support pairs; if the players have the same number n of actions, there are 2n choose n minus 1 such pairs. This should thus be used only for small games.\n\nArguments\n\ng::NormalFormGame{2}: 2-player NormalFormGame instance.\n\nReturns\n\n::Vector{NTuple{2,Vector{Real}}}: Mixed-action Nash equilibria that are found.\n\n\n\n"
+    "text": "support_enumeration(g)\n\nCompute mixed-action Nash equilibria with equal support size for a 2-player normal form game by support enumeration. For a non-degenerate game input, these are all the Nash equilibria.\n\nThe algorithm checks all the equal-size support pairs; if the players have the same number n of actions, there are 2n choose n minus 1 such pairs. This should thus be used only for small games.\n\nArguments\n\ng::NormalFormGame{2,T}: 2-player NormalFormGame instance.\n\nReturns\n\n::Vector{NTuple{2,Vector{S}}}: Mixed-action Nash equilibria that are found, where S is Float if T is Int or Float, and Rational if T is Rational.\n\n\n\n"
 },
 
 {
@@ -485,7 +485,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Games.outerapproximation",
     "category": "Method",
-    "text": "outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,\n                   verbose=false, nskipprint=50,\n                   plib=getlibraryfor(2, Float64),\n                   lp_solver=ClpSolver())\n\nApproximates the set of equilibrium value set for a repeated game with the outer hyperplane approximation described by Judd, Yeltekin, Conklin (2002).\n\nArguments\n\nrpd::RepGame2 : Two player repeated game.\nnH::Int : Number of subgradients used for the approximation.\ntol::Float64 : Tolerance in differences of set.\nmaxiter::Int : Maximum number of iterations.\ncheck_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists.\nverbose::Bool : Whether to display updates about iterations and distance.\nnskipprint::Int : Number of iterations between printing information (assuming verbose=true).\nplib::PolyhedraLibrary: Allows users to choose a particular package for the geometry computations. (See Polyhedra.jl docs for more info). By default, it chooses to use SimplePolyhedraLibrary.\nlp_solver::AbstractMathProgSolver : Allows users to choose a particular solver for linear programming problems. Options include ClpSolver(), CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().\n\nReturns\n\nvertices::Matrix{Float64} : Vertices of the outer approximation of the value set.\n\n\n\n"
+    "text": "outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,\n                   verbose=false, nskipprint=50,\n                   plib=getlibraryfor(2, Float64),\n                   lp_solver=ClpSolver())\n\nApproximates the set of equilibrium values for a repeated game with the outer hyperplane approximation described by Judd, Yeltekin, Conklin (2002).\n\nArguments\n\nrpd::RepGame2 : Two player repeated game.\nnH::Int : Number of subgradients used for the approximation.\ntol::Float64 : Tolerance in differences of set.\nmaxiter::Int : Maximum number of iterations.\ncheck_pure_nash: Whether to perform a check about whether a pure Nash equilibrium exists.\nverbose::Bool : Whether to display updates about iterations and distance.\nnskipprint::Int : Number of iterations between printing information (assuming verbose=true).\nplib::PolyhedraLibrary: Allows users to choose a particular package for the geometry computations. (See Polyhedra.jl docs for more info). By default, it chooses to use SimplePolyhedraLibrary.\nlp_solver::AbstractMathProgSolver : Allows users to choose a particular solver for linear programming problems. Options include ClpSolver(), CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().\n\nReturns\n\nvertices::Matrix{Float64} : Vertices of the outer approximation of the value set.\n\n\n\n"
 },
 
 {
