@@ -26,20 +26,20 @@ minus 1 such pairs. This should thus be used only for small games.
 
 # Arguments
 
-- `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
+- `g::NormalFormGame{2,T}`: 2-player NormalFormGame instance.
 
 # Returns
 
-- `::Vector{NTuple{2,Vector{Real}}}`: Mixed-action Nash equilibria that are
-  found.
+- `::Vector{NTuple{2,Vector{S}}}`: Mixed-action Nash equilibria that are found,
+  where `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
-function support_enumeration(g::NormalFormGame{2})
-
-    c = Channel(0)
+function support_enumeration(g::NormalFormGame{2,T}) where T
+    S = typeof(zero(T)/one(T))
+    c = Channel{Tuple{Vector{S},Vector{S}}}(0)
     task = support_enumeration_task(c, g)
     bind(c, task)
     schedule(task)
-    NEs = Tuple{Vector{Real}, Vector{Real}}[NE for NE in c]
+    NEs = collect(c)
 
     return NEs
 
