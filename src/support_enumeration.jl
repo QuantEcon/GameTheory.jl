@@ -126,6 +126,27 @@ function _support_enumeration_producer(c::Channel,
 
 end
 
+function _solve!(A::Matrix{T}, b::Vector{T}) where T <: Union{Float64,Float32}
+    r = 0
+    try
+        LAPACK.gesv!(A, b)
+    catch LinAlg.LAPACKException
+        r = 1
+    end
+    return r
+end
+
+@inline function _solve!(A::Matrix{Rational{T}},
+                         b::Vector{Rational{T}}) where T <: Integer
+    r = 0
+    try
+        b[:] = A_ldiv_B!(lufact!(A), b)
+    catch LinAlg.SingularException
+        r = 1
+    end
+    return r
+end
+
 """
     _indiff_mixed_action!(A, b, out, payoff_matrix, own_supp, opp_supp)
 
@@ -174,11 +195,9 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     A[end, end] = zero(T)
     b[1:end-1] = zero(T)
     b[end] = one(T)
-    try
-        b = A_ldiv_B!(lufact!(A), b)
-    catch LinAlg.SingularException
-        return false
-    end
+
+    r = _solve!(A, b)
+    r == 0 || return false  # A: singular
 
     for i in 1:k
         b[i] <= zero(T) && return false
