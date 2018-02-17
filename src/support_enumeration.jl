@@ -141,13 +141,17 @@ steps.
 
 # Arguments
 
-- `A::Matrix{T}`: Matrix used in intermediate steps, where `T<:Real`.
-- `b::Vector{T}`: Vector used in intermediate steps, where `T<:Real`.
-- `out::Vector{T}`: Vector to store the nonzero values of the
+- `A::Matrix{T}`: Matrix of shape (k+1, k+1) used in intermediate steps, where
+  `T<:Real`.
+- `b::Vector{T}`: Vector of length k+1 used in intermediate steps, where
+  `T<:Real`.
+- `out::Vector{T}`: Vector of length k to store the nonzero values of the
   desired mixed action, where `T<:Real`.
-- `payoff_matrix::Matrix`: The player's payoff matrix.
-- `own_supp::Vector{Int}`: Vector containing the player's action indices.
-- `opp_supp::Vector{Int}`: Vector containing the opponent's action indices.
+- `payoff_matrix::Matrix`: The player's payoff matrix, of shape (m, n).
+- `own_supp::Vector{Int}`: Vector containing the player's action indices, of
+  length k.
+- `opp_supp::Vector{Int}`: Vector containing the opponent's action indices, of
+  length k.
 
 # Returns
 
@@ -162,7 +166,9 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     m = size(payoff_matrix, 1)
     k = length(own_supp)
 
-    A[1:end-1, 1:end-1] = payoff_matrix[own_supp, opp_supp]
+    for j in 1:k, i in 1:k
+        A[i, j] = payoff_matrix[own_supp[i], opp_supp[j]]
+    end
     A[1:end-1, end] = -one(T)
     A[end, 1:end-1] = one(T)
     A[end, end] = zero(T)
