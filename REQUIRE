@@ -3,4 +3,4 @@ Clp
 MathProgBase
 QuantEcon 0.14.1
 Polyhedra
-LightGraphs
+LightGraphs 0.12.0
