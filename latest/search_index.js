@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "Method",
-    "text": "NormalFormGame(payoffs)\n\nConstruct a symmetric 2-player NormalFormGame with a square matrix.\n\nArguments\n\npayoffs::Matrix{T<:Real} : Square matrix representing each player's payoff matrix.\n\n\n\n"
+    "text": "NormalFormGame(payoffs)\n\nConstruct a symmetric 2-player NormalFormGame with a square matrix.\n\nArguments\n\npayoffs::Matrix{T<:Real} : Square matrix representing each player\'s payoff matrix.\n\n\n\n"
 },
 
 {
@@ -157,7 +157,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.Player",
     "category": "Type",
-    "text": "Player{N,T}\n\nType representing a player in an N-player normal form game.\n\nFields\n\npayoff_array::Array{T<:Real} : Array representing the player's payoff function.\n\n\n\n"
+    "text": "Player{N,T}\n\nType representing a player in an N-player normal form game.\n\nFields\n\npayoff_array::Array{T<:Real} : Array representing the player\'s payoff function.\n\n\n\n"
 },
 
 {
@@ -165,7 +165,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "Method",
-    "text": "best_response(player, opponents_actions, payoff_perturbation)\n\nReturn the perturbed best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\npayoff_perturbation::Vector{Float64} : Vector of length equal to the number of actions of the player containing the values (\"noises\") to be added to the payoffs in determining the best response.\n\nReturns\n\n::Int : Best response action.\n\n\n\n"
+    "text": "best_response(player, opponents_actions, payoff_perturbation)\n\nReturn the perturbed best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\npayoff_perturbation::Vector{Float64} : Vector of length equal to the number of actions of the player containing the values (\"noises\") to be added to the payoffs in determining the best response.\n\nReturns\n\n::Int : Best response action.\n\n\n\n"
 },
 
 {
@@ -173,7 +173,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "Method",
-    "text": "best_response(player, opponents_actions; tie_breaking=\"smallest\", tol=1e-8)\n\nReturn a best response action to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntie_breaking::AbstractString(\"smallest\") : Control how to break a tie (see Returns for details).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Int : If tie_breaking=\"smallest\", returns the best response action with the smallest index; if tie_breaking=\"random\", returns an action randomly chosen from the best response actions.\n\n\n\n"
+    "text": "best_response(player, opponents_actions; tie_breaking=\"smallest\", tol=1e-8)\n\nReturn a best response action to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntie_breaking::AbstractString(\"smallest\") : Control how to break a tie (see Returns for details).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Int : If tie_breaking=\"smallest\", returns the best response action with the smallest index; if tie_breaking=\"random\", returns an action randomly chosen from the best response actions.\n\n\n\n"
 },
 
 {
@@ -181,7 +181,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.best_responses",
     "category": "Method",
-    "text": "best_responses(player, opponents_actions; tol=1e-8)\n\nReturn all the best response actions to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nbest_responses::Vector{Int} : Vector containing all the best response actions.\n\n\n\n"
+    "text": "best_responses(player, opponents_actions; tol=1e-8)\n\nReturn all the best response actions to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nbest_responses::Vector{Int} : Vector containing all the best response actions.\n\n\n\n"
 },
 
 {
@@ -189,7 +189,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "Method",
-    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::MixedAction : Own mixed action (vector of reals).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n"
+    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::MixedAction : Own mixed action (vector of reals).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n"
 },
 
 {
@@ -197,7 +197,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "Method",
-    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn True if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent's mixed action) or a scalar of integer (in which case it is treated as the opponent's pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n"
+    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn True if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Void} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\n;tol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n"
 },
 
 {
@@ -237,7 +237,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "Method",
-    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents' pure actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::PureActionProfile : Tuple of N-1 opponents' pure actions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
+    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents\' pure actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::PureActionProfile : Tuple of N-1 opponents\' pure actions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
 },
 
 {
@@ -253,7 +253,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "Method",
-    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent's mixed action.\n\nArguments\n\nplayer::Player : Player instance.\nopponent_action::MixedAction : Opponent's mixed action (vector of reals).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
+    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent\'s mixed action.\n\nArguments\n\nplayer::Player : Player instance.\nopponent_action::MixedAction : Opponent\'s mixed action (vector of reals).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
 },
 
 {
@@ -261,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "Method",
-    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent's pure action.\n\nArguments\n\nplayer::Player : Player instance.\nopponent_action::PureAction : Opponent's pure action (integer).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
+    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent\'s pure action.\n\nArguments\n\nplayer::Player : Player instance.\nopponent_action::PureAction : Opponent\'s pure action (integer).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
 },
 
 {
@@ -269,7 +269,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "Method",
-    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents' mixed actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::MixedActionProfile : Tuple of N-1 opponents' mixed actions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
+    "text": "payoff_vector(player, opponents_actions)\n\nReturn a vector of payoff values for a Player in an N>2 player game, one for each own action, given a tuple of the opponents\' mixed actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::MixedActionProfile : Tuple of N-1 opponents\' mixed actions.\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n"
 },
 
 {
@@ -413,7 +413,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Nash Equilibria",
     "title": "Games._indiff_mixed_action!",
     "category": "Method",
-    "text": "_indiff_mixed_action!(A, b, out, payoff_matrix, own_supp, opp_supp)\n\nGiven a player's payoff matrix payoff_matrix, an array own_supp of this player's actions, and an array opp_supp of the opponent's actions, each of length k, compute the opponent's mixed action whose support equals opp_supp and for which the player is indifferent among the actions in own_supp, if any such exists. Return true if such a mixed action exists and actions in own_supp are indeed best responses to it, in which case the outcome is stored in out; false otherwise. Arrays A and b are used in intermediate steps.\n\nArguments\n\nA::Matrix{T}: Matrix used in intermediate steps, where T<:Real.\nb::Vector{T}: Vector used in intermediate steps, where T<:Real.\nout::Vector{T}: Vector to store the nonzero values of the desired mixed action, where T<:Real.\npayoff_matrix::Matrix: The player's payoff matrix.\nown_supp::Vector{Int}: Vector containing the player's action indices.\nopp_supp::Vector{Int}: Vector containing the opponent's action indices.\n\nReturns\n\n::Bool: true if a desired mixed action exists and false otherwise.\n\n\n\n"
+    "text": "_indiff_mixed_action!(A, b, out, payoff_matrix, own_supp, opp_supp)\n\nGiven a player\'s payoff matrix payoff_matrix, an array own_supp of this player\'s actions, and an array opp_supp of the opponent\'s actions, each of length k, compute the opponent\'s mixed action whose support equals opp_supp and for which the player is indifferent among the actions in own_supp, if any such exists. Return true if such a mixed action exists and actions in own_supp are indeed best responses to it, in which case the outcome is stored in out; false otherwise. Arrays A and b are used in intermediate steps.\n\nArguments\n\nA::Matrix{T}: Matrix of shape (k+1, k+1) used in intermediate steps, where T<:Real.\nb::Vector{T}: Vector of length k+1 used in intermediate steps, where T<:Real.\nout::Vector{T}: Vector of length k to store the nonzero values of the desired mixed action, where T<:Real.\npayoff_matrix::Matrix: The player\'s payoff matrix, of shape (m, n).\nown_supp::Vector{Int}: Vector containing the player\'s action indices, of length k.\nopp_supp::Vector{Int}: Vector containing the opponent\'s action indices, of length k.\n\nReturns\n\n::Bool: true if a desired mixed action exists and false otherwise.\n\n\n\n"
 },
 
 {
@@ -429,7 +429,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Nash Equilibria",
     "title": "Games._next_k_combination",
     "category": "Method",
-    "text": "_next_k_combination(x)\n\nFind the next k-combination, as described by an integer in binary representation with the k set bits, by \"Gosper's hack\".\n\nCopy-paste from en.wikipedia.org/wiki/Combinatorial_number_system\n\nArguments\n\nx::Int: Integer with k set bits.\n\nReturns\n\n::Int: Smallest integer > x with k set bits.\n\n\n\n"
+    "text": "_next_k_combination(x)\n\nFind the next k-combination, as described by an integer in binary representation with the k set bits, by \"Gosper\'s hack\".\n\nCopy-paste from en.wikipedia.org/wiki/Combinatorial_number_system\n\nArguments\n\nx::Int: Integer with k set bits.\n\nReturns\n\n::Int: Smallest integer > x with k set bits.\n\n\n\n"
 },
 
 {
