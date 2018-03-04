@@ -5,7 +5,7 @@
         t = 7
         rho = 0.5
 
-        g = blotto_game(h, t, rho)
+        g = @inferred(blotto_game(h, t, rho))
 
         @testset "test_nb_actions" begin
             nb_actions = (factorial(t+h-1)/
@@ -55,7 +55,7 @@
     end
 
     @testset "ranking_game" begin
-        g = ranking_game(100)
+        g = @inferred(ranking_game(100))
         p1_array = g.players[1].payoff_array
         p2_array = g.players[2].payoff_array
 
