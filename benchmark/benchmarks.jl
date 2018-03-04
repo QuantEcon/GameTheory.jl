@@ -51,7 +51,7 @@ SUITE["bimatrix_generators"]["sgc_game"] = @benchmarkable sgc_game($k)
 # tournament_game
 n, k = 200, 2
 SUITE["bimatrix_generators"]["tournament_game"] =
-    @benchmarkable tournament_game($seed, $n, $k)
+    @benchmarkable tournament_game($n, $k; seed=$seed)
 
 # unit_vector_game
 n = 2000

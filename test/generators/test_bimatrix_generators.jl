@@ -129,8 +129,9 @@
 
     @testset "tournament_game" begin
         n, k = 6, 4
-        g1 = @inferred(tournament_game(0, n, k))
-        g2 = @inferred(tournament_game(0, n, k))
+        seed = 0
+        g1 = @inferred(tournament_game(n, k; seed=seed))
+        g2 = @inferred(tournament_game(n, k; seed=seed))
 
         for i in 1:2
             @test g1.players[i].payoff_array == g2.players[i].payoff_array
@@ -174,6 +175,5 @@
         end
 
     end
-
 
 end

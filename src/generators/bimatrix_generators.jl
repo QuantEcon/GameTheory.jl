@@ -337,7 +337,7 @@ end
 
 # tournament_game
 """
-    tournament_game([seed=-1], n, k)
+    tournament_game(n, k; seed=-1)
 
 Return a NormalFormGame instance of the 2-player game introduced by
 Anbalagan et al. (2013). Starting from an arbitrary tournament graph with
@@ -357,12 +357,13 @@ different from the order used in the original library in C.
 
 # Arguments
 
-- `seed::Integer=-1`: Seed for random number generator. If seed is negative,
-  then `Base.GLOBAL_RNG` is used.
 - `n::Integer` : Positive integer determining the number of nodes in the
   tournament graph.
 - `k::Integer` : Parameter determining the size of subsets of nodes in the
   tournament graph.
+- `seed::Integer=-1`: Seed for random number generator. If seed is negative,
+  then `Base.GLOBAL_RNG` is used.
+
 
 # Returns
 
@@ -393,7 +394,7 @@ julia> g.players[2]
  0.0  0.0  1.0  1.0
 ```
 """
-function tournament_game(seed::Integer, n::Integer, k::Integer)
+function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
 
     m = zero(Csize_t)
     try
@@ -437,9 +438,6 @@ function tournament_game(seed::Integer, n::Integer, k::Integer)
 
     return g
 end
-
-tournament_game(n::Integer, k::Integer) =
-    tournament_game(-1, n::Integer, k::Integer)
 
 # unit_vector_game
 """
