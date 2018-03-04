@@ -16,14 +16,10 @@ This module contains functions that generate NormalFormGame instances of the
   Conitzer (2005) as a worst case scenario for support enumeration as it has a
   unique equilibrium where each player uses half of his actions in his support.
 
-* Tournament Games (`tournament_game`): These games were introduced by
-  Anbalagan et al. (2013). Starting from an arbitrary tournament graph with
-  n nodes, an asymmetric bipartite graph is created where the nodes on one
-  side (partition R) correspond to the nodes of the tournament graph, and the
-  nodes on the other (partition C) side correspond to the k-sized subsets of
-  nodes in the tournament graph. The bipartite graph is then transformed into
-  a win-lose game where the actions of each player are nodes on their side
-  of the graph.
+* Tournament Games (`tournament_game`): These games are constructed by
+  Anbalagan et al. (2013) as games that do not have interim epsilon-Nash
+  equilibria with constant cardinaliry supports for epsilon smaller than a
+  certain threshold.
 
 * Unit vector Games (`unit_vector_game`): These games were introduced by R. Savani
   and B. von Stengel (2015) whose payoffs for the column player are chosen randomly
@@ -36,9 +32,9 @@ https://github.com/bimatrix-games/bimatrix-generators distributed under BSD
 
 References
 ----------
-* Y. Anbalagan, S. Norin, R. Savani, and A. Vetta, "Polylogarithmic
-  Supports Are Required for Approximate Well-Supported Nash Equilibria
-  below 2/3," WINE, 2013.
+* Y. Anbalagan, S. Norin, R. Savani, and A. Vetta, "Polylogarithmic Supports
+  Are Required for Approximate Well-Supported Nash Equilibria below 2/3," WINE,
+  2013.
 
 * J. Fearnley, T. P. Igwe, R. Savani, "An Empirical Study of Finding
   Approximate Equilibria in Bimatrix Games," International Symposium on
@@ -339,14 +335,14 @@ end
 """
     tournament_game(n, k; seed=-1)
 
-Return a NormalFormGame instance of the 2-player game introduced by
-Anbalagan et al. (2013). Starting from an arbitrary tournament graph with
-n nodes, an asymmetric bipartite graph is created where the nodes on one
-side (partition R) correspond to the nodes of the tournament graph, and the
-nodes on the other (partition C) side correspond to the k-sized subsets of
-nodes in the tournament graph. The bipartite graph is then transformed into
-a win-lose game where the actions of each player are nodes on their side
-of the graph.
+Return a NormalFormGame instance of the 2-player win-lose game, whose payoffs
+are either 0 or 1, introduced by Anbalagan et al. (2013). Player 1 has n
+actions, which constitute the set of nodes {1, ..., n}, while player 2 has n
+choose k actions, each corresponding to a subset of k elements of the set of n
+nodes. Given a randomly generated tournament graph on the n nodes, the payoff
+for player 1 is 1 if, in the tournament, the node chosen by player 1 dominates
+all the nodes in the k-subset chosen by player 2. The payoff for player 2 is 1
+if player 2's k-subset contains player 1's node.
 
 # Notes
 
@@ -357,13 +353,10 @@ different from the order used in the original library in C.
 
 # Arguments
 
-- `n::Integer` : Positive integer determining the number of nodes in the
-  tournament graph.
-- `k::Integer` : Parameter determining the size of subsets of nodes in the
-  tournament graph.
+- `n::Integer` : Number of nodes in the tournament graph.
+- `k::Integer` : Size of subsets of nodes in the tournament graph.
 - `seed::Integer=-1`: Seed for random number generator. If seed is negative,
   then `Base.GLOBAL_RNG` is used.
-
 
 # Returns
 
@@ -374,24 +367,29 @@ different from the order used in the original library in C.
 ```julia
 julia> seed = 1234;
 
-julia> g = tournament_game(seed, 4, 2)
-4×6 NormalFormGame{2,Float64}
+julia> g = tournament_game(5, 2; seed=seed)
+5×10 NormalFormGame{2,Float64}
 
 julia> g.players[1]
-4×6 Player{2,Float64}:
- 0.0  0.0  0.0  0.0  0.0  1.0
- 0.0  1.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  1.0  0.0  0.0  0.0
+5×10 Player{2,Float64}:
+ 0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0  1.0  1.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0
+ 0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 
 julia> g.players[2]
-6×4 Player{2,Float64}:
- 1.0  1.0  0.0  0.0
- 1.0  0.0  1.0  0.0
- 0.0  1.0  1.0  0.0
- 1.0  0.0  0.0  1.0
- 0.0  1.0  0.0  1.0
- 0.0  0.0  1.0  1.0
+10×5 Player{2,Float64}:
+ 1.0  1.0  0.0  0.0  0.0
+ 1.0  0.0  1.0  0.0  0.0
+ 0.0  1.0  1.0  0.0  0.0
+ 1.0  0.0  0.0  1.0  0.0
+ 0.0  1.0  0.0  1.0  0.0
+ 0.0  0.0  1.0  1.0  0.0
+ 1.0  0.0  0.0  0.0  1.0
+ 0.0  1.0  0.0  0.0  1.0
+ 0.0  0.0  1.0  0.0  1.0
+ 0.0  0.0  0.0  1.0  1.0
 ```
 """
 function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
