@@ -352,7 +352,7 @@ of the graph.
 
 The actions of player 2 are ordered according to the
 [combinatorial number system]
-(https://en.wikipedia.org/wiki/Combinatorial_number_system), 
+(https://en.wikipedia.org/wiki/Combinatorial_number_system),
 different from the order used in the original library in C.
 
 # Arguments
@@ -408,7 +408,7 @@ function tournament_game(seed::Integer, n::Integer, k::Integer)
     fadjlist = tourn_graph.fadjlist
 
     # populate matrix C
-    X = collect(Csize_t, 1:k)
+    X = collect(1:k)
     for j = 1:m
         C[j, X] = 1.
         next_k_array!(X)
@@ -416,7 +416,7 @@ function tournament_game(seed::Integer, n::Integer, k::Integer)
 
     # populate matrix R
     # continue to use array `X` to store indices
-    a = Vector{Integer}(k)
+    a = Vector{Int}(k)
     for i = 1:n
         d = length(fadjlist[i])
         if d >= k
@@ -424,7 +424,9 @@ function tournament_game(seed::Integer, n::Integer, k::Integer)
                 a[j] = j
             end
             while a[end] <= d
-                X[:] = fadjlist[i][a]
+                for j in 1:k
+                    X[j] = fadjlist[i][a[j]]
+                end
                 R[i, k_array_rank(Csize_t, X)] = 1.
                 next_k_array!(a)
             end
