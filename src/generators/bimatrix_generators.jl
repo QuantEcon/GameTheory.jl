@@ -2,10 +2,9 @@
 This module contains functions that generate NormalFormGame instances of the
 2-player games studied by Fearnley, Igwe, and Savani (2015):
 
-* Colonel Blotto Games (`blotto_game`): A non-zero sum extension of the
-  Blotto game as studied by Hortala-Vallve and Llorente-Saguer (2012),
-  where opposing parties have asymmetric and heterogeneous battlefield
-  valuations.
+* Colonel Blotto Games (`blotto_game`): A non-zero sum extension of the Blotto
+  game as studied by Hortala-Vallve and Llorente-Saguer (2012), where opposing
+  parties have asymmetric and heterogeneous battlefield valuations.
 
 * Ranking Games (`ranking_game`): These games were introduced by Goldberg,
   Goldberg, Krysta, and Ventre (2013) because of (i) they are
@@ -36,15 +35,16 @@ References
   Are Required for Approximate Well-Supported Nash Equilibria below 2/3," WINE,
   2013.
 
-* J. Fearnley, T. P. Igwe, R. Savani, "An Empirical Study of Finding
+* J. Fearnley, T. P. Igwe, and R. Savani, "An Empirical Study of Finding
   Approximate Equilibria in Bimatrix Games," International Symposium on
   Experimental Algorithms (SEA), 2015.
 
 * L.A. Goldberg, P.W. Goldberg, P. Krysta, and C. Ventre, "Ranking Games that
   have Competitiveness-based Strategies", Theoretical Computer Science, 2013
 
-* R. Hortala-Vallve, A. Llorente-Saguer, "Pure strategy Nash equilibria in
-  non-zero sum colonel Blotto games", Int J Game Theory, 2012
+* R. Hortala-Vallve and A. Llorente-Saguer, "Pure Strategy Nash Equilibria in
+  Non-Zero Sum Colonel Blotto Games", International Journal of Game Theory,
+  2012.
 
 * T. Sandholm, A. Gilpin, and V. Conitzer, "Mixed-Integer Programming Methods
   for Finding Nash Equilibria," AAAI, 2005.
@@ -90,17 +90,17 @@ import LightGraphs: random_tournament_digraph
 
 # blotto_game
 """
-    blotto_game([rng=GLOBAL_RNG], h, T, rho)
+    blotto_game([rng=GLOBAL_RNG], h, t, rho[, mu=0])
 
-Return a NormalFormGame instance of a 2-player non-zero sum Colonel Blotto
-game (Hortala-Vallve and Llorente-Saguer, 2012), where the players have an
-equal number `T` of troops to assign to `h` hills (so that the number of
-actions for each player is equal to `(T+h-1)` choose
-`(h-1) = (T+h-1)!/(T!*(h-1)!))`. Each player has a value for each hill that he
-receives if he assigns strictly more troops to the hill than his opponent
-(ties are broken uniformly at random), where the values are drawn from a
-multivariate normal distribution with covariance `rho`. Each player’s payoff
-is the sum of the values of the hills won by that player.
+Return a NormalFormGame instance of a 2-player non-zero sum Colonel Blotto game
+(Hortala-Vallve and Llorente-Saguer, 2012), where the players have an equal
+number `t` of troops to assign to `h` hills (so that the number of actions for
+each player is equal to (t+h-1) choose (h-1) = (T+h-1)!/(T!*(h-1)!)). Each
+player has a value for each hill that he receives if he assigns strictly more
+troops to the hill than his opponent (ties are broken uniformly at random),
+where the values are drawn from a multivariate normal distribution with
+covariance `rho`. Each player’s payoff is the sum of the values of the hills won
+by that player.
 
 
 # Arguments
@@ -108,9 +108,9 @@ is the sum of the values of the hills won by that player.
 - `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 - `h::Integer` : Number of hills.
 - `t::Integer` : Number of troops.
-- `rho::Real` : Correlation coefficient of the distribution of the value of
-   hills.
-- `mu::Real` : Mean of the distribution of the values of each hill.
+- `rho::Real` : Covariance of the players' values of each hill. Must be in
+  [-1, 1].
+- `mu::Real=0` : Mean of the players' values of each hill.
 
 # Returns
 
@@ -119,20 +119,24 @@ is the sum of the values of the hills won by that player.
 # Examples
 
 ```julia
-julia> g = blotto_game(2, 2, 0.5)
-3×3 NormalFormGame{2,Float64}
+julia> rng = MersenneTwister(1234);
+
+julia> g = blotto_game(rng, 2, 3, 0.5)
+4×4 NormalFormGame{2,Float64}
 
 julia> g.players[1]
-2×2 Player{2,Float64}:
- 0.631199  0.336441  0.336441
- 0.631199  0.631199  0.336441
- 0.631199  0.631199  0.631199
+4×4 Player{2,Float64}:
+ 0.186434  -0.494479  -0.494479  -0.494479
+ 0.867347   0.186434  -0.494479  -0.494479
+ 0.867347   0.867347   0.186434  -0.494479
+ 0.867347   0.867347   0.867347   0.186434
 
 julia> g.players[2]
-2×2 Player{2,Float64}:
- 0.147396  0.462247  0.462247
- 0.147396  0.147396  0.462247
- 0.147396  0.147396  0.147396
+4×4 Player{2,Float64}:
+ -0.688223  -1.02919   -1.02919   -1.02919
+ -0.347259  -0.688223  -1.02919   -1.02919
+ -0.347259  -0.347259  -0.688223  -1.02919
+ -0.347259  -0.347259  -0.347259  -0.688223
 ```
 """
 function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
