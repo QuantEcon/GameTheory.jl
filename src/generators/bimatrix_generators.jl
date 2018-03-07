@@ -223,17 +223,35 @@ julia> g.players[2]
  0.433333  -0.0666667  -0.566667
 ```
 """
-function ranking_game(rng::AbstractRNG, n::Integer)
-    score_p1, score_p2 = cumsum(rand(rng, 1:10, n)), cumsum(rand(rng, 1:10, n))
+function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
+    payoff_arrays = [Array{Float64}(n, n) for i in 1:2]
 
-    cost_p1 = cumsum([0, rand(rng, 1:10, n-1)...])/(10*n)
-    cost_p2 = cumsum([0, rand(rng, 1:10, n-1)...])/(10*n)
+    scores = rand(rng, 1:steps, (n, 2))
+    cumsum!(scores, scores, 1)
 
-    tie_matrix = [s1==s2 for s1 in score_p1, s2 in score_p2]
-    win_matrix_p1 = [s1>s2 for s1 in score_p1, s2 in score_p2]
-    win_matrix_p2 = transpose(.!win_matrix_p1)
-    payoff_arrays = [(win_matrix_p1+tie_matrix/2).-cost_p1,
-                     (win_matrix_p2-transpose(tie_matrix)/2).-cost_p2]
+    costs = Array{Float64}(n-1, 2)
+    rand!(rng, costs, 1:steps)
+    cumsum!(costs, costs, 1)
+    costs ./= n * steps
+
+    for (p, payoff_array) in enumerate(payoff_arrays)
+        fill!(view(payoff_array, 1, :), 0)
+        for j in 1:n, i in 2:n
+            @inbounds payoff_array[i, j] = -costs[i-1, p]
+        end
+    end
+
+    prize = 1.
+    for j in 1:n, i in 1:n
+        if scores[i, 1] > scores[j, 2]
+            payoff_arrays[1][i, j] += prize
+        elseif scores[i, 1] < scores[j, 2]
+            payoff_arrays[2][j, i] += prize
+        else
+            payoff_arrays[1][i, j] += prize / 2
+            payoff_arrays[2][j, i] += prize / 2
+        end
+    end
 
     g = NormalFormGame(
         [Player(payoff_array) for payoff_array in payoff_arrays]
@@ -241,7 +259,8 @@ function ranking_game(rng::AbstractRNG, n::Integer)
     return g
 end
 
-ranking_game(n::Integer) = ranking_game(Base.GLOBAL_RNG, n)
+ranking_game(n::Integer, steps::Integer=10) =
+    ranking_game(Base.GLOBAL_RNG, n, steps)
 
 # sgc_game
 """
