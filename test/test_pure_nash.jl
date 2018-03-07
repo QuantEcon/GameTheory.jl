@@ -68,4 +68,21 @@ using Combinatorics
         @test sort(ne) == sort(Unanimity_NE)
     end
 
+    @testset "Tolerance" begin
+        epsilon = 1e-08
+
+        g = NormalFormGame((2, 2))
+        g[1, 1] = [1, 1]
+        g[1, 2] = [-2, 1 + epsilon]
+        g[2, 1] = [1 + epsilon, -2]
+        g[2, 2] = [0, 0];
+
+        NEs = [[(2, 2)]]
+        epsilon_NEs = [[(1, 1); (2, 2)]]
+
+        for (tol, answer) in zip([0 epsilon], [NEs epsilon_NEs])
+            @test sort(pure_nash(g, tol=tol)) ==  sort(answer)
+        end
+    end
+
 end
