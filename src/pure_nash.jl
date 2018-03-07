@@ -1,5 +1,5 @@
 """
-    pure_nash(nfg; ntofind=Inf)
+    pure_nash(nfg; ntofind=Inf, tol=1e-8)
 
 Finds all pure action Nash equilibria for a normal form
 game. It returns an empty array if there is no pure
@@ -13,11 +13,12 @@ will change in the future.
 - `nfg::NormalFormGame`: Instance of N-player NormalFormGame.
 - `ntofind::Inf`: Maximal number of pure action Nash equilibria to be
   found; default is `Inf`.
+- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 - `ne::Vector{NTuple{N,Int}}`: Vector of pure action Nash equilibria.
 """
-function pure_nash(nfg::NormalFormGame; ntofind=Inf)
+function pure_nash(nfg::NormalFormGame; ntofind=Inf, tol::Float64=1e-8)
     # Get number of players and their actions
     np = num_players(nfg)
     na = nfg.nums_actions
@@ -37,7 +38,7 @@ function pure_nash(nfg::NormalFormGame; ntofind=Inf)
         a, state = next(as, state)
         _a = a.I
 
-        if is_nash(nfg, _a)
+        if is_nash(nfg, _a, tol=tol)
             push!(ne, _a)
             nfound = nfound + 1
         end
