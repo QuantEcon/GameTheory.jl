@@ -145,25 +145,23 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
     actions = simplex_grid(h, t)
     n = size(actions)[2]
 
-    payoff_arrays = [Matrix{Float64}(n, n) for i in 1:2]
+    payoff_arrays = [Array{Float64}(n, n) for i in 1:2]
 
     payoffs = Array{Float64}(2)
-    for i=1:n
-        for j=1:n
-            payoffs[:] = 0
-            for k=1:h
-                if actions[k, i] == actions[k, j]
-                    for p=1:2
-                        payoffs[p] += values[p, k] / 2
-                    end
-                else
-                    winner = 1 + round(Int, actions[k, i] < actions[k, j])
-                    payoffs[winner] += values[winner, k]
+    @inbounds for i = 1:n, j = 1:n
+        fill!(payoffs, 0)
+        for k = 1:h
+            if actions[k, i] == actions[k, j]
+                for p = 1:2
+                    payoffs[p] += values[p, k] / 2
                 end
+            else
+                winner = 1 + Int(actions[k, i] < actions[k, j])
+                payoffs[winner] += values[winner, k]
             end
-            payoff_arrays[1][i, j] = payoffs[1]
-            payoff_arrays[2][j, i] = payoffs[2]
         end
+        payoff_arrays[1][i, j] = payoffs[1]
+        payoff_arrays[2][j, i] = payoffs[2]
     end
 
     g = NormalFormGame(
@@ -173,14 +171,14 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
     return g
 end
 
-blotto_game(rng::AbstractRNG, h::Integer, troops::Integer, rho::Real) =
-    blotto_game(rng, h, troops, rho, 0)
+blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real) =
+    blotto_game(rng, h, t, rho, 0)
 
-blotto_game(h::Integer, troops::Integer, rho::Real, mu::Real) =
-    blotto_game(Base.GLOBAL_RNG, h, troops, rho, mu)
+blotto_game(h::Integer, t::Integer, rho::Real, mu::Real) =
+    blotto_game(Base.GLOBAL_RNG, h, t, rho, mu)
 
-blotto_game(h::Integer, troops::Integer, rho::Real) =
-    blotto_game(Base.GLOBAL_RNG, h, troops, rho, 0)
+blotto_game(h::Integer, t::Integer, rho::Real) =
+    blotto_game(Base.GLOBAL_RNG, h, t, rho, 0)
 
 # ranking_game
 """
