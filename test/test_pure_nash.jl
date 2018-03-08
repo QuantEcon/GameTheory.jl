@@ -85,4 +85,10 @@ using Combinatorics
         end
     end
 
+    @testset "Trivial game with 1 player" begin
+        n = 3
+        g1 = NormalFormGame(Player(collect(1:n)))
+        @test pure_nash(g1) == [(3,)]
+    end
+
 end
