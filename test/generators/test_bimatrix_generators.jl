@@ -65,6 +65,7 @@
         end
 
         @testset "test_elements_first_row" begin
+            @test sum(g[1, 1]) == 1
             possible_elements = [0, 1, 0.5]
             @test all([value in possible_elements for value in p1_array[1, :]])
             @test all([value in possible_elements for value in p2_array[1, :]])
