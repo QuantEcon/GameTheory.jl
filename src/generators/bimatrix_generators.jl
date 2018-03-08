@@ -6,10 +6,11 @@ This module contains functions that generate NormalFormGame instances of the
   game as studied by Hortala-Vallve and Llorente-Saguer (2012), where opposing
   parties have asymmetric and heterogeneous battlefield valuations.
 
-* Ranking Games (`ranking_game`): These games were introduced by Goldberg,
-  Goldberg, Krysta, and Ventre (2013) because of (i) they are
-  important and well-motivated games by Economics literature and (ii) their
-  computational complexity.
+* Ranking Games (`ranking_game`): In these games, as studied by Goldberg et al.
+  (2013), each player chooses an effort level associated with a cost and a
+  score. The players are ranked according to their scores, nd the player with
+  the higher score wins the prize. Each player's payoff is given by the value of
+  the prize minus the cost of the effort.
 
 * SGC Games (`sgc_game`): These games were introduced by Sandholm, Gilpin, and
   Conitzer (2005) as a worst case scenario for support enumeration as it has a
@@ -186,19 +187,26 @@ blotto_game(h::Integer, t::Integer, rho::Real) =
 
 # ranking_game
 """
-    ranking_game([rng=GLOBAL_RNG], k)
+    ranking_game([rng=GLOBAL_RNG], n[, steps=10])
 
-Return a NormalFormGame instance of the 2-player game introduced by Goldberg,
-Goldberg, Krysta, and Ventre (2013) where each player chooses an effort level
+Return a NormalFormGame instance of (the 2-player version of) the "ranking game"
+studied by Goldberg et al. (2013), where each player chooses an effort level
 associated with a score and a cost which are both increasing functions with
-randomly generated step sizes.
-
+randomly generated step sizes. The player with the higher score wins the first
+prize, whose value is 1, and the other player obtains the "second prize" of
+value 0; in the case of a tie, the first prize is split and each player receives
+a value 0.5. The payoff of a player is given by the value of the prize minus the
+cost of the effort.
 
 # Arguments
 
 - `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
-- `n::Integer` : Positive integer determining the number of actions, i.e,
-   effort levels.
+- `n::Integer` : Number of actions, i.e, number of possible effort levels.
+- `steps::Integer=10` : Parameter determining the random step sizes for the
+  scores and costs for each player: The step sizes for the scores are drawn from
+  `1`, ..., `steps`, while those for the costs are multiples of `1/(n*steps)`,
+  where the cost of effort level `1` is 0, and the maximum possible cost of
+  effort level `n` is less than or equal to 1.
 
 # Returns
 
@@ -207,20 +215,26 @@ randomly generated step sizes.
 # Examples
 
 ```julia
-julia> g = ranking_game(3)
-3×3 NormalFormGame{2,Float64}
+julia> rng = MersenneTwister(1234);
 
-julia> g.players[1]
-2×2 Player{2,Float64}:
- 1.0       0.0        0.0
- 0.9       0.9       -0.6
- 0.633333  0.633333   0.633333
+julia> g = ranking_game(rng, 5)
+5×5 NormalFormGame{2,Float64}
 
-julia> g.players[2]
-2×2 Player{2,Float64}:
- 0.0        0.0         0.0
- 0.7       -0.3        -0.3
- 0.433333  -0.0666667  -0.566667
+julia> g.players[1].payoff_array
+5×5 Array{Float64,2}:
+ 0.5    0.0    0.0    0.0    0.0
+ 0.84  -0.16  -0.16  -0.16  -0.16
+ 0.8    0.8   -0.2   -0.2   -0.2
+ 0.78   0.78   0.78  -0.22  -0.22
+ 0.6    0.6    0.6    0.6   -0.4
+
+julia> g.players[2].payoff_array
+5×5 Array{Float64,2}:
+ 0.5   0.0    0.0    0.0    0.0
+ 0.84  0.84  -0.16  -0.16  -0.16
+ 0.7   0.7    0.7   -0.3   -0.3
+ 0.5   0.5    0.5    0.5   -0.5
+ 0.36  0.36   0.36   0.36   0.36
 ```
 """
 function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
