@@ -146,6 +146,10 @@
         @test g.players[1].payoff_array == zeros(2)
         g[1] = 10
         @test g.players[1].payoff_array == [10, 0]
+
+        n = 3
+        g1 = NormalFormGame(Player(collect(1:n)))
+        @test pure_nash(g1) == [(3,)]
     end
 
     # Invalid inputs #

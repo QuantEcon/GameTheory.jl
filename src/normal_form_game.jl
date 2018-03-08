@@ -602,6 +602,23 @@ Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 is_nash(g::NormalFormGame{1}, action::Action) =
     is_best_response(g.players[1], action, nothing)
 
+"""
+    is_nash(g, action)
+
+Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
+
+# Arguments
+
+- `g::NormalFormGame` : Instance of 1-player NormalFormGame.
+- `action::ActionProfile` : Tuple of one integer (pure action) or one vector of
+  reals (mixed action).
+
+# Returns
+
+- `::Bool`
+"""
+is_nash(g::NormalFormGame{1}, action::ActionProfile) = is_nash(g, action...)
+
 # Utility functions
 
 """
