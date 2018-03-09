@@ -197,7 +197,7 @@ Return True if `own_action` is a best response to `opponents_actions`.
 - `player::Player` : Player instance.
 - `own_action::PureAction` : Own pure action (integer).
 - $(opponents_actions_docstring)
-- `;tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -223,7 +223,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 - `player::Player` : Player instance.
 - `own_action::MixedAction` : Own mixed action (vector of reals).
 - $(opponents_actions_docstring)
-- `;tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -250,7 +250,7 @@ Return all the best response actions to `opponents_actions`.
 
 - `player::Player` : Player instance.
 - $(opponents_actions_docstring)
-- `;tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -544,23 +544,25 @@ Base.setindex!(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) where {N} =
 
 # is_nash
 
-function is_nash(g::NormalFormGame, action_profile::ActionProfile)
+function is_nash(g::NormalFormGame, action_profile::ActionProfile;
+                 tol::Float64=1e-8)
     for (i, player) in enumerate(g.players)
         own_action = action_profile[i]
         opponents_actions =
             tuple(action_profile[i+1:end]..., action_profile[1:i-1]...)
-        if !(is_best_response(player, own_action, opponents_actions))
+        if !(is_best_response(player, own_action, opponents_actions, tol=tol))
             return false
         end
     end
     return true
 end
 
-function is_nash(g::NormalFormGame{2}, action_profile::ActionProfile)
+function is_nash(g::NormalFormGame{2}, action_profile::ActionProfile;
+                 tol::Float64=1e-8)
     for (i, player) in enumerate(g.players)
         own_action, opponent_action =
             action_profile[i], action_profile[3-i]
-        if !(is_best_response(player, own_action, opponent_action))
+        if !(is_best_response(player, own_action, opponent_action, tol=tol))
             return false
         end
     end
@@ -569,7 +571,7 @@ end
 
 # attach docstring for N>1 player games
 @doc """
-    is_nash(g, action_profile)
+    is_nash(g, action_profile; tol=1e-8)
 
 Return true if `action_profile` is a Nash equilibrium.
 
@@ -578,6 +580,7 @@ Return true if `action_profile` is a Nash equilibrium.
 - `g::NormalFormGame` : Instance of N-player NormalFormGame.
 - `action_profile::ActionProfile` : Tuple of N integers (pure actions) or N
   vectors of reals (mixed actions).
+- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -586,7 +589,7 @@ Return true if `action_profile` is a Nash equilibrium.
 
 # Trivial game with 1 player
 """
-    is_nash(g, action)
+    is_nash(g, action; tol=1e-8)
 
 Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 
@@ -594,13 +597,17 @@ Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 
 - `g::NormalFormGame` : Instance of 1-player NormalFormGame.
 - `action::Action` : Integer (pure action) or vector of reals (mixed action).
+- `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 
 - `::Bool`
 """
-is_nash(g::NormalFormGame{1}, action::Action) =
-    is_best_response(g.players[1], action, nothing)
+is_nash(g::NormalFormGame{1}, action::Action; tol::Float64=1e-8) =
+    is_best_response(g.players[1], action, nothing, tol=tol)
+
+is_nash(g::NormalFormGame{1}, action_profile::ActionProfile;
+        tol::Float64=1e-8) = is_nash(g, action_profile..., tol=tol)
 
 # Utility functions
 

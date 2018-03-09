@@ -21,6 +21,9 @@
         @test best_response(
             player, [2/3, 1/3], tie_breaking="random"
             ) in [1, 2]
+        @test_throws ArgumentError best_response(
+            player, [2/3, 1/3], tie_breaking="0"
+            )
         @test @inferred(is_best_response(player, 1, 1))
         @test @inferred(is_best_response(player, [1/2, 1/2], [2/3, 1/3]))
 
@@ -169,6 +172,15 @@
 
     @testset "NormalFormGame invalid payoff profiles" begin
         @test_throws ArgumentError g = NormalFormGame(zeros((2, 2, 1)))
+    end
+
+    @testset "NormalFormGame empty tuple" begin
+        @test_throws ArgumentError g = NormalFormGame(tuple())
+    end
+
+    @testset "payoff_vector empty tuple" begin
+        p1 = Player(zeros((2, 2, 2)))
+        @test_throws ArgumentError payoff_vector(p1, tuple())
     end
 
     # Utility functions #
