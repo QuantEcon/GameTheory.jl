@@ -606,6 +606,9 @@ Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 is_nash(g::NormalFormGame{1}, action::Action; tol::Float64=1e-8) =
     is_best_response(g.players[1], action, nothing, tol=tol)
 
+is_nash(g::NormalFormGame{1}, action_profile::ActionProfile;
+        tol::Float64=1e-8) = is_nash(g, action_profile..., tol=tol)
+
 # Utility functions
 
 """
