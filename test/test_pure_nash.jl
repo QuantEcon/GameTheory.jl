@@ -88,7 +88,8 @@ using Combinatorics
     @testset "Trivial game with 1 player" begin
         n = 3
         g1 = NormalFormGame(Player(collect(1:n)))
-        @test pure_nash(g1) == [(3,)]
+        @test pure_nash(g1) == [(n,)]
+        @test sort(pure_nash(g1, tol=1.)) == [(n-1,), (n,)]
     end
 
 end
