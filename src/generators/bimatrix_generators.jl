@@ -542,44 +542,44 @@ julia> pure_nash(g)
 0-element Array{Tuple{Int64,Int64},1}
 ```
 """
-function unit_vector_game(rng::AbstractRNG, k::Integer;
+function unit_vector_game(rng::AbstractRNG, n::Integer;
                           avoid_pure_nash::Bool=false)
-
-    payoff_arrays = [zeros(Float64, k, k) for i in 1:2]
+    payoff_arrays = [zeros(Float64, n, n), rand(rng, (n, n))]
 
     if !avoid_pure_nash
-        payoff_arrays[2][:, :] = rand(rng, (k, k))
-        for c in 1:k
-            payoff_arrays[1][rand(rng, 1:k), c] = 1
+        ones_ind = rand(rng, 1:n, n)
+        for j in 1:n
+            payoff_arrays[1][ones_ind[j], j] = 1
         end
     else
-        while true
-            payoff_arrays[2][:, :] = rand(rng, (k, k))
-            brs = [indmax(payoff_arrays[2][:, r]) for r in 1:k]
-            if length(unique(brs)) == 1
-                continue
+        n == 1 && throw(ArgumentError("Cannot avoid pure Nash with n=1"))
+        maxes = maximum(payoff_arrays[2], 1)
+        is_subotimal = payoff_arrays[2] .< maxes
+        nums_suboptimal = sum(is_subotimal, 2)
+
+        while any(nums_suboptimal .== 0)
+            rand!(rng, payoff_arrays[2])
+            maximum!(maxes, payoff_arrays[2])
+            for i in 1:n, j in 1:n
+                is_subotimal[j, i] = payoff_arrays[2][j, i] < maxes[i]
             end
-            pure_nash_rows = [[] for i in 1:k]
-            for (r, c) in enumerate(brs)
-                push!(pure_nash_rows[c], r)
+            sum!(nums_suboptimal, is_subotimal)
+        end
+
+        for j in 1:n
+            one_ind = rand(rng, 1:n)
+            while !is_subotimal[j, one_ind]
+                one_ind = rand(rng, 1:n)
             end
-            for c in 1:k
-                payoff_arrays[1][rand(rng,
-                                      deleteat!(collect(1:k),
-                                                pure_nash_rows[c])),
-                                 c] = 1
-            end
-            break
+            payoff_arrays[1][one_ind, j] = 1
         end
     end
 
     g = NormalFormGame(
         [Player(payoff_array) for payoff_array in payoff_arrays]
     )
-
     return g
-
 end
 
-unit_vector_game(k::Integer; avoid_pure_nash::Bool=false) =
-    unit_vector_game(Base.GLOBAL_RNG, k, avoid_pure_nash=avoid_pure_nash)
+unit_vector_game(n::Integer; avoid_pure_nash::Bool=false) =
+    unit_vector_game(Base.GLOBAL_RNG, n, avoid_pure_nash=avoid_pure_nash)

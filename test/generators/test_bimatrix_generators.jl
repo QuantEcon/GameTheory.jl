@@ -145,36 +145,45 @@
     end
 
     @testset "unit_vector_game" begin
-        k = 5
-        g1 = @inferred(unit_vector_game(MersenneTwister(0), k; avoid_pure_nash=true))
-        g2 = @inferred(unit_vector_game(MersenneTwister(0), k; avoid_pure_nash=true))
+        n = 100
+        g = @inferred(unit_vector_game(n))
 
-        for i in 1:2
-            @test g1.players[i].payoff_array == g2.players[i].payoff_array
+        @testset "test_size" begin
+            @test g.nums_actions == (n, n)
         end
 
-        for i in 1:k
-            n_0s = 0
-            n_1s = 0
-            for j in g1.players[1].payoff_array[:, i]
-                if j == 0.0
-                    n_0s += 1
-                elseif j == 1.0
-                    n_1s += 1
-                end
-            end
-            @test n_0s == k - 1
-            @test n_1s == 1
+        @testset "test_payoff_values" begin
+            @test all(sum(g.players[1].payoff_array, 1) .== 1.)
         end
 
-        for k in 2:10
-            g = unit_vector_game(k; avoid_pure_nash=true)
+        @testset "test_avoid_pure_nash" begin
+            NEs = pure_nash(unit_vector_game(n, avoid_pure_nash=true), tol=0.)
+            @test length(NEs) == 0
+        end
+
+        @testset "test_seed" begin
+            seed = 0
+            n = 100
+            g1 = unit_vector_game(MersenneTwister(seed), n)
+            g2 = unit_vector_game(MersenneTwister(seed), n)
             for i in 1:2
-                @test size(g.players[i].payoff_array) == (k, k)
+                @test g1.players[i].payoff_array == g2.players[i].payoff_array
             end
-            @test pure_nash(g) == []
         end
 
+        @testset "test_redraw" begin
+            seed = 6
+            rng = MersenneTwister(seed)
+            n = 2
+            g = unit_vector_game(rng, n, avoid_pure_nash=true)
+            NEs = pure_nash(g, tol=0.)
+            @test length(NEs) == 0
+        end
+
+        @testset "test_raises_value_error_avoid_pure_nash_n_1" begin
+            n = 1
+            @test_throws ArgumentError unit_vector_game(n, avoid_pure_nash=true)
+        end
     end
 
 end
