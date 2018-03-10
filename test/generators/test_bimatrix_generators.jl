@@ -146,8 +146,8 @@
 
     @testset "unit_vector_game" begin
         k = 5
-        g1 = @inferred(unit_vector_game(MersenneTwister(0), k; random=false))
-        g2 = @inferred(unit_vector_game(MersenneTwister(0), k; random=false))
+        g1 = @inferred(unit_vector_game(MersenneTwister(0), k; avoid_pure_nash=true))
+        g2 = @inferred(unit_vector_game(MersenneTwister(0), k; avoid_pure_nash=true))
 
         for i in 1:2
             @test g1.players[i].payoff_array == g2.players[i].payoff_array
@@ -168,7 +168,7 @@
         end
 
         for k in 2:10
-            g = unit_vector_game(k; random=false)
+            g = unit_vector_game(k; avoid_pure_nash=true)
             for i in 1:2
                 @test size(g.players[i].payoff_array) == (k, k)
             end

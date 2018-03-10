@@ -542,11 +542,12 @@ julia> pure_nash(g)
 0-element Array{Tuple{Int64,Int64},1}
 ```
 """
-function unit_vector_game(rng::AbstractRNG, k::Integer; random::Bool=true)
+function unit_vector_game(rng::AbstractRNG, k::Integer;
+                          avoid_pure_nash::Bool=false)
 
     payoff_arrays = [zeros(Float64, k, k) for i in 1:2]
 
-    if random
+    if !avoid_pure_nash
         payoff_arrays[2][:, :] = rand(rng, (k, k))
         for c in 1:k
             payoff_arrays[1][rand(rng, 1:k), c] = 1
@@ -580,5 +581,5 @@ function unit_vector_game(rng::AbstractRNG, k::Integer; random::Bool=true)
 
 end
 
-unit_vector_game(k::Integer; random::Bool=true) =
-    unit_vector_game(Base.GLOBAL_RNG, k, random=random)
+unit_vector_game(k::Integer; avoid_pure_nash::Bool=false) =
+    unit_vector_game(Base.GLOBAL_RNG, k, avoid_pure_nash=avoid_pure_nash)

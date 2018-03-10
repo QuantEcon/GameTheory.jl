@@ -59,5 +59,5 @@ bools = [true, false]
 SUITE["bimatrix_generators"]["unit_vector_game"] = BenchmarkGroup()
 for b in bools
     SUITE["bimatrix_generators"]["unit_vector_game"][b] =
-        @benchmarkable unit_vector_game($rng, $n; random=$b)
+        @benchmarkable unit_vector_game($rng, $n; avoid_pure_nash=$b)
 end
