@@ -21,10 +21,10 @@ This module contains functions that generate NormalFormGame instances of the
   equilibria with constant cardinaliry supports for epsilon smaller than a
   certain threshold.
 
-* Unit vector Games (`unit_vector_game`): These games were introduced by R. Savani
-  and B. von Stengel (2015) whose payoffs for the column player are chosen randomly
-  from the range [0, 1], but for the row player each column j contains exactly one
-  1 payoff with the rest being 0.
+* Unit vector Games (`unit_vector_game`): These games are games where the payoff
+  matrix of one player consists of unit (column) vectors, used by Savani and von
+  Stengel (2016) to construct instances that are hard, in temrs of computation
+  complexity, both for the Lemke-Howson and support enumeration algorithms.
 
 Large part of the code here is based on the C code available at
 https://github.com/bimatrix-games/bimatrix-generators distributed under BSD
@@ -50,8 +50,8 @@ References
 * T. Sandholm, A. Gilpin, and V. Conitzer, "Mixed-Integer Programming Methods
   for Finding Nash Equilibria," AAAI, 2005.
 
-* R. Savani and B. von Stengel, "Unit Vector Games," International
-  Journal of Economic Theory, 2016.
+* R. Savani and B. von Stengel, "Unit Vector Games," International Journal of
+  Economic Theory, 2016.
 
 =#
 
@@ -474,19 +474,20 @@ end
 
 # unit_vector_game
 """
-    unit_vector_game([rng=GLOBAL_RNG], k; random=true)
+    unit_vector_game([rng=GLOBAL_RNG], n; avoid_pure_nash=false)
 
-Return a NormalFormGame instance of the 2-player game introduced by R. Savani
-and B. von Stengel (2015), which has the payoffs for the column player being
-chosen randomly from the range [0, 1], and for the row player each column j
-contains exactly one 1 payoff with the rest being 0.
+Return a NormalFormGame instance of the 2-player game "unit vector game" (Savani
+and von Stengel, 2016). Payoffs for player 2 are chosen randomly from the [0, 1)
+range. For player 1, each column contains exactly one 1 payoff and the rest is
+0.
 
 # Arguments
 
 - `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
-- `k::Integer` : Positive integer determining the number of actions.
-- `random::Bool=true` : If set `random` to be `false`, then 1 payoffs for
-  the row player will be placed to avoid the existence of pure NE.
+- `n::Integer` : Number of actions.
+- `avoid_pure_nash::Bool=false` : If true, player 1's payoffs will be placed in
+  order to avoid pure Nash equilibria. (If necessary, the payoffs for player 2
+  are redrawn so as not to have a dominant action.)
 
 # Returns
 
@@ -495,48 +496,55 @@ contains exactly one 1 payoff with the rest being 0.
 # Examples
 
 ```julia
-julia> g = unit_vector_game(MersenneTwister(0), 5)
+julia> rng = MersenneTwister(1234);
+
+julia> g = unit_vector_game(rng, 5)
 5×5 NormalFormGame{2,Float64}
 
-julia> g.players[1]
-5×5 Player{2,Float64}:
- 0.0  1.0  1.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  0.0  0.0  0.0
- 1.0  0.0  0.0  1.0  1.0
- 0.0  0.0  0.0  0.0  0.0
-
-julia> g.players[2]
-5×5 Player{2,Float64}:
- 0.823648  0.203477   0.585812  0.655448  0.469304
- 0.910357  0.0423017  0.539289  0.575887  0.0623676
- 0.164566  0.0682693  0.260036  0.868279  0.353129
- 0.177329  0.361828   0.910047  0.9678    0.767602
- 0.27888   0.973216   0.167036  0.76769   0.043141
-
-julia> pure_nash(g)
-2-element Array{Tuple{Int64,Int64},1}:
- (1, 2)
- (4, 4)
-
-julia> g = unit_vector_game(MersenneTwister(0), 5, random=false)
-5×5 NormalFormGame{2,Float64}
-
-julia> g.players[1]
-5×5 Player{2,Float64}:
- 0.0  0.0  1.0  1.0  1.0
- 0.0  0.0  0.0  0.0  0.0
+julia> g.players[1].payoff_array
+5×5 Array{Float64,2}:
  0.0  0.0  0.0  0.0  0.0
  1.0  1.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  1.0
  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  1.0  1.0  0.0
 
-julia> g.players[2]
-5×5 Player{2,Float64}:
- 0.823648  0.203477   0.585812  0.655448  0.469304
- 0.910357  0.0423017  0.539289  0.575887  0.0623676
- 0.164566  0.0682693  0.260036  0.868279  0.353129
- 0.177329  0.361828   0.910047  0.9678    0.767602
- 0.27888   0.973216   0.167036  0.76769   0.043141
+julia> g.players[2].payoff_array
+5×5 Array{Float64,2}:
+ 0.590845  0.854147  0.648882   0.112486   0.950498
+ 0.766797  0.200586  0.0109059  0.276021   0.96467
+ 0.566237  0.298614  0.066423   0.651664   0.945775
+ 0.460085  0.246837  0.956753   0.0566425  0.789904
+ 0.794026  0.579672  0.646691   0.842714   0.82116
+
+julia> pure_nash(g)
+1-element Array{Tuple{Int64,Int64},1}:
+ (2, 1)
+```
+
+With `avoid_pure_nash=true`:
+
+```julia
+julia> rng = MersenneTwister(1234);
+
+julia> g = unit_vector_game(rng, 5; avoid_pure_nash=true)
+5×5 NormalFormGame{2,Float64}
+
+julia> g.players[1].payoff_array
+5×5 Array{Float64,2}:
+ 0.0  0.0  0.0  1.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  1.0  1.0  0.0  1.0
+ 0.0  0.0  0.0  0.0  0.0
+ 1.0  0.0  0.0  0.0  0.0
+
+julia> g.players[2].payoff_array
+5×5 Array{Float64,2}:
+ 0.590845  0.854147  0.648882   0.112486   0.950498
+ 0.766797  0.200586  0.0109059  0.276021   0.96467
+ 0.566237  0.298614  0.066423   0.651664   0.945775
+ 0.460085  0.246837  0.956753   0.0566425  0.789904
+ 0.794026  0.579672  0.646691   0.842714   0.82116
 
 julia> pure_nash(g)
 0-element Array{Tuple{Int64,Int64},1}
