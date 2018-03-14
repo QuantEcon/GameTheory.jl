@@ -1,3 +1,5 @@
+import Combinatorics: binomial
+
 @testset "bimatrix_generators.jl" begin
 
     @testset "blotto_game" begin
@@ -130,18 +132,33 @@
 
     @testset "tournament_game" begin
         n, k = 6, 4
-        seed = 0
-        g1 = @inferred(tournament_game(n, k; seed=seed))
-        g2 = @inferred(tournament_game(n, k; seed=seed))
+        m = binomial(n, k)
+        g = @inferred(tournament_game(n, k))
 
-        for i in 1:2
-            @test g1.players[i].payoff_array == g2.players[i].payoff_array
+        @testset "test_size" begin
+            @test g.nums_actions == (n, m)
         end
 
-        @test g1.nums_actions == (n, binomial(n, k))
+        @testset "test_payoff_values" begin
+            possible_values = [0., 1.]
+            for player in g.players
+                @test issubset(player.payoff_array, possible_values)
+            end
 
-        @test all(sum(g1.players[2].payoff_array, 2) .== k)
+            max_num_dominated_subsets = sum([binomial(i, k) for i in k:(n-1)])
+            @test sum(g.players[1].payoff_array) <= max_num_dominated_subsets
+            @test all(sum(g.players[2].payoff_array, 2) .== k)
+        end
 
+        @testset "test_seed" begin
+            seed = 0
+            g1 = tournament_game(n, k; seed=seed)
+            g2 = tournament_game(n, k; seed=seed)
+
+            for i in 1:2
+                @test g1.players[i].payoff_array == g2.players[i].payoff_array
+            end
+        end
     end
 
     @testset "unit_vector_game" begin
