@@ -141,7 +141,7 @@ julia> g.players[2]
 ```
 """
 function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
-                     mu::Real)
+                     mu::Real=0)
     d_mean = [mu; mu]
     d_cov = [1 rho; rho 1]
     dist = MVNSampler(d_mean, d_cov)
@@ -172,18 +172,11 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
     g = NormalFormGame(
         [Player(payoff_array) for payoff_array in payoff_arrays]
     )
-
     return g
 end
 
-blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real) =
-    blotto_game(rng, h, t, rho, 0)
-
-blotto_game(h::Integer, t::Integer, rho::Real, mu::Real) =
+blotto_game(h::Integer, t::Integer, rho::Real, mu::Real=0) =
     blotto_game(Base.GLOBAL_RNG, h, t, rho, mu)
-
-blotto_game(h::Integer, t::Integer, rho::Real) =
-    blotto_game(Base.GLOBAL_RNG, h, t, rho, 0)
 
 # ranking_game
 """
@@ -428,7 +421,6 @@ julia> g.players[2]
 ```
 """
 function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
-
     m = zero(Csize_t)
     try
         m = binomial(Csize_t(n), Csize_t(k))
@@ -468,7 +460,6 @@ function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
     end
 
     g = NormalFormGame([Player(R), Player(C)])
-
     return g
 end
 
