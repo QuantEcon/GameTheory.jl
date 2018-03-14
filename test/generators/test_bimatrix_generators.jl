@@ -159,6 +159,11 @@ import Combinatorics: binomial
                 @test g1.players[i].payoff_array == g2.players[i].payoff_array
             end
         end
+
+        @testset "test_throws_argument_error_too_large_inputs" begin
+            n, k = 100, 50
+            @test_throws ArgumentError tournament_game(n, k)
+        end
     end
 
     @testset "unit_vector_game" begin
@@ -197,7 +202,7 @@ import Combinatorics: binomial
             @test length(NEs) == 0
         end
 
-        @testset "test_raises_value_error_avoid_pure_nash_n_1" begin
+        @testset "test_throws_argument_error_avoid_pure_nash_n_1" begin
             n = 1
             @test_throws ArgumentError unit_vector_game(n, avoid_pure_nash=true)
         end

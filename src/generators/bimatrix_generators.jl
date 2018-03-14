@@ -433,7 +433,7 @@ function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
     try
         m = binomial(Csize_t(n), Csize_t(k))
     catch InexactError
-        error("Maximum allowed size exceeded")
+        throw(ArgumentError("Maximum allowed size exceeded"))
     end
 
     R = zeros(Float64, n, m)
