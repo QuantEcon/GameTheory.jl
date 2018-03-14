@@ -8,7 +8,7 @@ This module contains functions that generate NormalFormGame instances of the
 
 * Ranking Games (`ranking_game`): In these games, as studied by Goldberg et al.
   (2013), each player chooses an effort level associated with a cost and a
-  score. The players are ranked according to their scores, nd the player with
+  score. The players are ranked according to their scores, and the player with
   the higher score wins the prize. Each player's payoff is given by the value of
   the prize minus the cost of the effort.
 
