@@ -18,12 +18,12 @@ This module contains functions that generate NormalFormGame instances of the
 
 * Tournament Games (`tournament_game`): These games are constructed by
   Anbalagan et al. (2013) as games that do not have interim epsilon-Nash
-  equilibria with constant cardinaliry supports for epsilon smaller than a
+  equilibria with constant cardinality supports for epsilon smaller than a
   certain threshold.
 
-* Unit vector Games (`unit_vector_game`): These games are games where the payoff
+* Unit Vector Games (`unit_vector_game`): These games are games where the payoff
   matrix of one player consists of unit (column) vectors, used by Savani and von
-  Stengel (2016) to construct instances that are hard, in temrs of computation
+  Stengel (2016) to construct instances that are hard, in terms of computational
   complexity, both for the Lemke-Howson and support enumeration algorithms.
 
 Large part of the code here is based on the C code available at
@@ -188,18 +188,18 @@ associated with a score and a cost which are both increasing functions with
 randomly generated step sizes. The player with the higher score wins the first
 prize, whose value is 1, and the other player obtains the "second prize" of
 value 0; in the case of a tie, the first prize is split and each player receives
-a value 0.5. The payoff of a player is given by the value of the prize minus the
-cost of the effort.
+a value of 0.5. The payoff of a player is given by the value of the prize minus
+the cost of the effort.
 
 # Arguments
 
 - `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 - `n::Integer` : Number of actions, i.e, number of possible effort levels.
-- `steps::Integer=10` : Parameter determining the random step sizes for the
-  scores and costs for each player: The step sizes for the scores are drawn from
-  `1`, ..., `steps`, while those for the costs are multiples of `1/(n*steps)`,
-  where the cost of effort level `1` is 0, and the maximum possible cost of
-  effort level `n` is less than or equal to 1.
+- `steps::Integer=10` : Parameter determining the upper bound for the size of
+  the random steps for the scores and costs for each player: The step sizes for
+  the scores are drawn from `1`, ..., `steps`, while those for the costs are
+  multiples of `1/(n*steps)`, where the cost of effort level `1` is 0, and the
+  maximum possible cost of effort level `n` is less than or equal to 1.
 
 # Returns
 
@@ -370,7 +370,7 @@ choose k actions, each corresponding to a subset of k elements of the set of n
 nodes. Given a randomly generated tournament graph on the n nodes, the payoff
 for player 1 is 1 if, in the tournament, the node chosen by player 1 dominates
 all the nodes in the k-subset chosen by player 2. The payoff for player 2 is 1
-if player 2's k-subset contains player 1's node.
+if player 2's k-subset contains player 1's chosen node.
 
 # Notes
 
