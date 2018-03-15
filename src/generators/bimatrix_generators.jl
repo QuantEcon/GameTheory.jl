@@ -377,7 +377,7 @@ if player 2's k-subset contains player 1's chosen node.
 The actions of player 2 are ordered according to the
 [combinatorial number system]
 (https://en.wikipedia.org/wiki/Combinatorial_number_system),
-different from the order used in the original library in C.
+which is different from the order used in the original library in C.
 
 # Arguments
 
