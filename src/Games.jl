@@ -4,6 +4,7 @@ module Games
 using Clp
 using MathProgBase
 using QuantEcon
+using Combinatorics
 
 # Geometry packages
 using Polyhedra
@@ -58,6 +59,7 @@ include("pure_nash.jl")
 include("repeated_game.jl")
 include("random.jl")
 include("support_enumeration.jl")
+include("generators/Generators.jl")
 
 export
     # Types
