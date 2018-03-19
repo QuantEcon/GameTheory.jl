@@ -285,7 +285,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Exported",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"Games.jl\", \"normal_form_game.jl\"]\nPrivate = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"Games.jl\", \"normal_form_game.jl\"]\nPrivate = false"
 },
 
 {
@@ -309,7 +309,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Internal",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"Games.jl\", \"normal_form_game.jl\"]\nPublic = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"Games.jl\", \"normal_form_game.jl\"]\nPublic = false"
 },
 
 {
@@ -345,11 +345,51 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "lib/game_generators.html#Games.Generators.blotto_game",
+    "page": "Game Generators",
+    "title": "Games.Generators.blotto_game",
+    "category": "function",
+    "text": "blotto_game([rng=GLOBAL_RNG], h, t, rho[, mu=0])\n\nReturn a NormalFormGame instance of a 2-player non-zero sum Colonel Blotto game (Hortala-Vallve and Llorente-Saguer, 2012), where the players have an equal number t of troops to assign to h hills (so that the number of actions for each player is equal to (t+h-1) choose (h-1) = (T+h-1)!/(T!*(h-1)!)). Each player has a value for each hill that he receives if he assigns strictly more troops to the hill than his opponent (ties are broken uniformly at random), where the values are drawn from a multivariate normal distribution with covariance rho. Each player’s payoff is the sum of the values of the hills won by that player.\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nh::Integer : Number of hills.\nt::Integer : Number of troops.\nrho::Real : Covariance of the players\' values of each hill. Must be in [-1, 1].\nmu::Real=0 : Mean of the players\' values of each hill.\n\nReturns\n\ng::NormalFormGame\n\nExamples\n\njulia> rng = MersenneTwister(1234);\n\njulia> g = blotto_game(rng, 2, 3, 0.5)\n4×4 NormalFormGame{2,Float64}\n\njulia> g.players[1]\n4×4 Player{2,Float64}:\n 0.186434  -0.494479  -0.494479  -0.494479\n 0.867347   0.186434  -0.494479  -0.494479\n 0.867347   0.867347   0.186434  -0.494479\n 0.867347   0.867347   0.867347   0.186434\n\njulia> g.players[2]\n4×4 Player{2,Float64}:\n -0.688223  -1.02919   -1.02919   -1.02919\n -0.347259  -0.688223  -1.02919   -1.02919\n -0.347259  -0.347259  -0.688223  -1.02919\n -0.347259  -0.347259  -0.347259  -0.688223\n\n\n\n"
+},
+
+{
+    "location": "lib/game_generators.html#Games.Generators.ranking_game",
+    "page": "Game Generators",
+    "title": "Games.Generators.ranking_game",
+    "category": "function",
+    "text": "ranking_game([rng=GLOBAL_RNG], n[, steps=10])\n\nReturn a NormalFormGame instance of (the 2-player version of) the \"ranking game\" studied by Goldberg et al. (2013), where each player chooses an effort level associated with a score and a cost which are both increasing functions with randomly generated step sizes. The player with the higher score wins the first prize, whose value is 1, and the other player obtains the \"second prize\" of value 0; in the case of a tie, the first prize is split and each player receives a value of 0.5. The payoff of a player is given by the value of the prize minus the cost of the effort.\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nn::Integer : Number of actions, i.e, number of possible effort levels.\nsteps::Integer=10 : Parameter determining the upper bound for the size of the random steps for the scores and costs for each player: The step sizes for the scores are drawn from 1, ..., steps, while those for the costs are multiples of 1/(n*steps), where the cost of effort level 1 is 0, and the maximum possible cost of effort level n is less than or equal to 1.\n\nReturns\n\ng::NormalFormGame\n\nExamples\n\njulia> rng = MersenneTwister(1234);\n\njulia> g = ranking_game(rng, 5)\n5×5 NormalFormGame{2,Float64}\n\njulia> g.players[1].payoff_array\n5×5 Array{Float64,2}:\n 0.5    0.0    0.0    0.0    0.0\n 0.84  -0.16  -0.16  -0.16  -0.16\n 0.8    0.8   -0.2   -0.2   -0.2\n 0.78   0.78   0.78  -0.22  -0.22\n 0.6    0.6    0.6    0.6   -0.4\n\njulia> g.players[2].payoff_array\n5×5 Array{Float64,2}:\n 0.5   0.0    0.0    0.0    0.0\n 0.84  0.84  -0.16  -0.16  -0.16\n 0.7   0.7    0.7   -0.3   -0.3\n 0.5   0.5    0.5    0.5   -0.5\n 0.36  0.36   0.36   0.36   0.36\n\n\n\n"
+},
+
+{
+    "location": "lib/game_generators.html#Games.Generators.sgc_game-Tuple{Integer}",
+    "page": "Game Generators",
+    "title": "Games.Generators.sgc_game",
+    "category": "method",
+    "text": "sgc_game(k)\n\nReturn a NormalFormGame instance of the 2-player game introduced by Sandholm, Gilpin, and Conitzer (2005), which has a unique Nash equilibrium, where each player plays half of the actions with positive probabilities. Payoffs are normalized so that the minimum and the maximum payoffs are 0 and 1, respectively.\n\nArguments\n\nk::Integer : Positive integer determining the number of actions. The returned game will have 4*k-1 actions for each player.\n\nReturns\n\ng::NormalFormGame\n\nExamples\n\njulia> g = sgc_game(2)\n7×7 NormalFormGame{2,Float64}\n\njulia> g.players[1]\n7×7 Player{2,Float64}:\n 0.75  0.5   1.0   0.5   0.5   0.5   0.5\n 1.0   0.75  0.5   0.5   0.5   0.5   0.5\n 0.5   1.0   0.75  0.5   0.5   0.5   0.5\n 0.0   0.0   0.0   0.75  0.0   0.0   0.0\n 0.0   0.0   0.0   0.0   0.75  0.0   0.0\n 0.0   0.0   0.0   0.0   0.0   0.75  0.0\n 0.0   0.0   0.0   0.0   0.0   0.0   0.75\n\njulia> g.players[2]\n7×7 Player{2,Float64}:\n 0.75  0.5   1.0   0.5   0.5   0.5   0.5\n 1.0   0.75  0.5   0.5   0.5   0.5   0.5\n 0.5   1.0   0.75  0.5   0.5   0.5   0.5\n 0.0   0.0   0.0   0.0   0.75  0.0   0.0\n 0.0   0.0   0.0   0.75  0.0   0.0   0.0\n 0.0   0.0   0.0   0.0   0.0   0.0   0.75\n 0.0   0.0   0.0   0.0   0.0   0.75  0.0\n\n\n\n"
+},
+
+{
+    "location": "lib/game_generators.html#Games.Generators.tournament_game-Tuple{Integer,Integer}",
+    "page": "Game Generators",
+    "title": "Games.Generators.tournament_game",
+    "category": "method",
+    "text": "tournament_game(n, k; seed=-1)\n\nReturn a NormalFormGame instance of the 2-player win-lose game, whose payoffs are either 0 or 1, introduced by Anbalagan et al. (2013). Player 1 has n actions, which constitute the set of nodes {1, ..., n}, while player 2 has n choose k actions, each corresponding to a subset of k elements of the set of n nodes. Given a randomly generated tournament graph on the n nodes, the payoff for player 1 is 1 if, in the tournament, the node chosen by player 1 dominates all the nodes in the k-subset chosen by player 2. The payoff for player 2 is 1 if player 2\'s k-subset contains player 1\'s chosen node.\n\nNotes\n\nThe actions of player 2 are ordered according to the combinatorial number system, which is different from the order used in the original library in C.\n\nArguments\n\nn::Integer : Number of nodes in the tournament graph.\nk::Integer : Size of subsets of nodes in the tournament graph.\nseed::Integer=-1: Seed for random number generator. If seed is negative, then Base.GLOBAL_RNG is used.\n\nReturns\n\ng::NormalFormGame\n\nExamples\n\njulia> seed = 1234;\n\njulia> g = tournament_game(5, 2; seed=seed)\n5×10 NormalFormGame{2,Float64}\n\njulia> g.players[1]\n5×10 Player{2,Float64}:\n 0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0  1.0  1.0\n 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0\n 0.0  0.0  0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0\n 0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0\n 0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0\n\njulia> g.players[2]\n10×5 Player{2,Float64}:\n 1.0  1.0  0.0  0.0  0.0\n 1.0  0.0  1.0  0.0  0.0\n 0.0  1.0  1.0  0.0  0.0\n 1.0  0.0  0.0  1.0  0.0\n 0.0  1.0  0.0  1.0  0.0\n 0.0  0.0  1.0  1.0  0.0\n 1.0  0.0  0.0  0.0  1.0\n 0.0  1.0  0.0  0.0  1.0\n 0.0  0.0  1.0  0.0  1.0\n 0.0  0.0  0.0  1.0  1.0\n\n\n\n"
+},
+
+{
+    "location": "lib/game_generators.html#Games.Generators.unit_vector_game-Tuple{AbstractRNG,Integer}",
+    "page": "Game Generators",
+    "title": "Games.Generators.unit_vector_game",
+    "category": "method",
+    "text": "unit_vector_game([rng=GLOBAL_RNG], n; avoid_pure_nash=false)\n\nReturn a NormalFormGame instance of the 2-player game \"unit vector game\" (Savani and von Stengel, 2016). Payoffs for player 2 are chosen randomly from the [0, 1) range. For player 1, each column contains exactly one 1 payoff and the rest is\n\n\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nn::Integer : Number of actions.\navoid_pure_nash::Bool=false : If true, player 1\'s payoffs will be placed in order to avoid pure Nash equilibria. (If necessary, the payoffs for player 2 are redrawn so as not to have a dominant action.)\n\nReturns\n\ng::NormalFormGame\n\nExamples\n\njulia> rng = MersenneTwister(1234);\n\njulia> g = unit_vector_game(rng, 5)\n5×5 NormalFormGame{2,Float64}\n\njulia> g.players[1].payoff_array\n5×5 Array{Float64,2}:\n 0.0  0.0  0.0  0.0  0.0\n 1.0  1.0  0.0  0.0  0.0\n 0.0  0.0  0.0  0.0  1.0\n 0.0  0.0  0.0  0.0  0.0\n 0.0  0.0  1.0  1.0  0.0\n\njulia> g.players[2].payoff_array\n5×5 Array{Float64,2}:\n 0.590845  0.854147  0.648882   0.112486   0.950498\n 0.766797  0.200586  0.0109059  0.276021   0.96467\n 0.566237  0.298614  0.066423   0.651664   0.945775\n 0.460085  0.246837  0.956753   0.0566425  0.789904\n 0.794026  0.579672  0.646691   0.842714   0.82116\n\njulia> pure_nash(g)\n1-element Array{Tuple{Int64,Int64},1}:\n (2, 1)\n\nWith avoid_pure_nash=true:\n\njulia> rng = MersenneTwister(1234);\n\njulia> g = unit_vector_game(rng, 5; avoid_pure_nash=true)\n5×5 NormalFormGame{2,Float64}\n\njulia> g.players[1].payoff_array\n5×5 Array{Float64,2}:\n 0.0  0.0  0.0  1.0  0.0\n 0.0  0.0  0.0  0.0  0.0\n 0.0  1.0  1.0  0.0  1.0\n 0.0  0.0  0.0  0.0  0.0\n 1.0  0.0  0.0  0.0  0.0\n\njulia> g.players[2].payoff_array\n5×5 Array{Float64,2}:\n 0.590845  0.854147  0.648882   0.112486   0.950498\n 0.766797  0.200586  0.0109059  0.276021   0.96467\n 0.566237  0.298614  0.066423   0.651664   0.945775\n 0.460085  0.246837  0.956753   0.0566425  0.789904\n 0.794026  0.579672  0.646691   0.842714   0.82116\n\njulia> pure_nash(g)\n0-element Array{Tuple{Int64,Int64},1}\n\n\n\n"
+},
+
+{
     "location": "lib/game_generators.html#Exported-1",
     "page": "Game Generators",
     "title": "Exported",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"random.jl\"]\nPrivate = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"random.jl\", \"generators/bimatrix_generators.jl\"]\nPrivate = false"
 },
 
 {
@@ -357,7 +397,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Game Generators",
     "title": "Internal",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"random.jl\"]\nPublic = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"random.jl\", \"generators/bimatrix_generators.jl\"]\nPublic = false"
 },
 
 {
@@ -405,7 +445,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Nash Equilibria",
     "title": "Exported",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"pure_nash.jl\", \"support_enumeration.jl\"]\nPrivate = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"pure_nash.jl\", \"support_enumeration.jl\"]\nPrivate = false"
 },
 
 {
@@ -445,7 +485,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Nash Equilibria",
     "title": "Internal",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"pure_nash.jl\", \"support_enumeration.jl\"]\nPublic = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"pure_nash.jl\", \"support_enumeration.jl\"]\nPublic = false"
 },
 
 {
@@ -525,7 +565,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Exported",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"repeated_game_util.jl\", \"repeated_game.jl\"]\nPrivate = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"repeated_game_util.jl\", \"repeated_game.jl\"]\nPrivate = false"
 },
 
 {
@@ -573,7 +613,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Repeated Games",
     "title": "Internal",
     "category": "section",
-    "text": "Modules = [Games]\nPages   = [\"repeated_game_util.jl\", \"repeated_game.jl\"]\nPublic = false"
+    "text": "Modules = [Games, Games.Generators]\nPages   = [\"repeated_game_util.jl\", \"repeated_game.jl\"]\nPublic = false"
 },
 
 {
@@ -589,7 +629,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Index",
     "title": "Index",
     "category": "section",
-    "text": "Modules = [Games]"
+    "text": "Modules = [Games, Games.Generators]"
 },
 
 ]}
