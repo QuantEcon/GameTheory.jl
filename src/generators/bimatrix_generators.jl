@@ -213,16 +213,16 @@ julia> rng = MersenneTwister(1234);
 julia> g = ranking_game(rng, 5)
 5×5 NormalFormGame{2,Float64}
 
-julia> g.players[1].payoff_array
-5×5 Array{Float64,2}:
+julia> g.players[1]
+5×5 Player{2,Float64}:
  0.5    0.0    0.0    0.0    0.0
  0.84  -0.16  -0.16  -0.16  -0.16
  0.8    0.8   -0.2   -0.2   -0.2
  0.78   0.78   0.78  -0.22  -0.22
  0.6    0.6    0.6    0.6   -0.4
 
-julia> g.players[2].payoff_array
-5×5 Array{Float64,2}:
+julia> g.players[2]
+5×5 Player{2,Float64}:
  0.5   0.0    0.0    0.0    0.0
  0.84  0.84  -0.16  -0.16  -0.16
  0.7   0.7    0.7   -0.3   -0.3
@@ -492,16 +492,16 @@ julia> rng = MersenneTwister(1234);
 julia> g = unit_vector_game(rng, 5)
 5×5 NormalFormGame{2,Float64}
 
-julia> g.players[1].payoff_array
-5×5 Array{Float64,2}:
+julia> g.players[1]
+5×5 Player{2,Float64}:
  0.0  0.0  0.0  0.0  0.0
  1.0  1.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  1.0
  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  1.0  1.0  0.0
 
-julia> g.players[2].payoff_array
-5×5 Array{Float64,2}:
+julia> g.players[2]
+5×5 Player{2,Float64}:
  0.590845  0.854147  0.648882   0.112486   0.950498
  0.766797  0.200586  0.0109059  0.276021   0.96467
  0.566237  0.298614  0.066423   0.651664   0.945775
@@ -521,16 +521,16 @@ julia> rng = MersenneTwister(1234);
 julia> g = unit_vector_game(rng, 5; avoid_pure_nash=true)
 5×5 NormalFormGame{2,Float64}
 
-julia> g.players[1].payoff_array
-5×5 Array{Float64,2}:
+julia> g.players[1]
+5×5 Player{2,Float64}:
  0.0  0.0  0.0  1.0  0.0
  0.0  0.0  0.0  0.0  0.0
  0.0  1.0  1.0  0.0  1.0
  0.0  0.0  0.0  0.0  0.0
  1.0  0.0  0.0  0.0  0.0
 
-julia> g.players[2].payoff_array
-5×5 Array{Float64,2}:
+julia> g.players[2]
+5×5 Player{2,Float64}:
  0.590845  0.854147  0.648882   0.112486   0.950498
  0.766797  0.200586  0.0109059  0.276021   0.96467
  0.566237  0.298614  0.066423   0.651664   0.945775
