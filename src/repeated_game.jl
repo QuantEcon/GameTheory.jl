@@ -300,7 +300,7 @@ worst_value_2(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
 """
     outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,
                        verbose=false, nskipprint=50,
-                       plib=getlibraryfor(2, Float64),
+                       plib=default_library(FullDim{2}(), Float64),
                        lp_solver=ClpSolver())
 
 Approximates the set of equilibrium values for a repeated game with the outer
@@ -334,7 +334,7 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 function outerapproximation(
         rpd::RepGame2; nH::Int=32, tol::Float64=1e-8, maxiter::Int=500,
         check_pure_nash::Bool=true, verbose::Bool=false, nskipprint::Int=50,
-        plib::Polyhedra.PolyhedraLibrary=getlibraryfor(Val{2}, Float64),
+        plib::Polyhedra.PolyhedraLibrary=default_library(FullDim{2}(), Float64),
         lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()
     )
     # Long unpacking of stuff
@@ -456,9 +456,9 @@ function outerapproximation(
     # Given the H-representation `(H, C)` of the computed polytope of
     # equilibrium payoff profiles, we obtain its V-representation `vertices`
     # using Polyhedra.jl (it uses `plib` which was chosen for computations)
-    p = polyhedron(SimpleHRepresentation(H, C), plib)
-    vrep = SimpleVRepresentation(p)
-    vertices = vrep.V::Matrix{Float64}
+    p = polyhedron(hrep(H, C), plib)
+    vr = vrep(p)
+    vertices = vr.V::Matrix{Float64}
 
     # Reduce the number of vertices by rounding points to the tolerance
     tol_int = round(Int, abs(log10(tol))) - 1
