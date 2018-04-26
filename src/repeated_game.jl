@@ -456,9 +456,9 @@ function outerapproximation(
     # Given the H-representation `(H, C)` of the computed polytope of
     # equilibrium payoff profiles, we obtain its V-representation `vertices`
     # using Polyhedra.jl (it uses `plib` which was chosen for computations)
-    p = polyhedron(SimpleHRepresentation(H, C), plib)
-    vrep = SimpleVRepresentation(p)
-    vertices = vrep.V::Matrix{Float64}
+    p = polyhedron(hrep(H, C), plib)
+    vr = vrep(p)
+    vertices = vr.V::Matrix{Float64}
 
     # Reduce the number of vertices by rounding points to the tolerance
     tol_int = round(Int, abs(log10(tol))) - 1
