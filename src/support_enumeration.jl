@@ -118,9 +118,9 @@ function _support_enumeration_producer(c::Channel,
                         put!(c, out)
                     end
                 end
-                _next_k_array!(supps[2])
+                next_k_array!(supps[2])
             end
-            _next_k_array!(supps[1])
+            next_k_array!(supps[1])
         end
     end
 
@@ -229,7 +229,7 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
 end
 
 """
-    _next_k_combination(x)
+    k_array_rank(x)
 
 Find the next k-combination, as described by an integer in binary
 representation with the k set bits, by "Gosper's hack".
@@ -244,7 +244,7 @@ Copy-paste from en.wikipedia.org/wiki/Combinatorial_number_system
 
 - `::Int`: Smallest integer > x with k set bits.
 """
-function _next_k_combination(x::Int)
+function k_array_rank(x::Int)
 
     u = x & -x
     v = u + x
@@ -253,7 +253,7 @@ function _next_k_combination(x::Int)
 end
 
 """
-    _next_k_array!(a)
+    next_k_array!(a)
 
 Given an array `a` of k distinct nonnegative integers, return the
 next k-array in lexicographic ordering of the descending sequences
@@ -280,7 +280,7 @@ julia> a = collect(1:k)
 
 julia> while a[end] < n + 1
            @show a
-           _next_k_array!(a)
+           next_k_array!(a)
        end
 a = [1,2]
 a = [1,3]
@@ -290,7 +290,7 @@ a = [2,4]
 a = [3,4]
 ```
 """
-function _next_k_array!(a::Vector{Int})
+function next_k_array!(a::Vector{Int})
 
     k = length(a)
     if k == 0
@@ -302,7 +302,7 @@ function _next_k_array!(a::Vector{Int})
         x += (1 << (a[i] - 1))
     end
 
-    x = _next_k_combination(x)
+    x = k_array_rank(x)
 
     pos = 0
     for i = 1:k
