@@ -118,9 +118,9 @@ function _support_enumeration_producer(c::Channel,
                         put!(c, out)
                     end
                 end
-                _next_k_array!(supps[2])
+                next_k_array!(supps[2])
             end
-            _next_k_array!(supps[1])
+            next_k_array!(supps[1])
         end
     end
 
