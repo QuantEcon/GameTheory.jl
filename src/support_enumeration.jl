@@ -12,7 +12,7 @@ B. von Stengel, "Equilibrium Computation for Two-Player Games in
 Strategic and Extensive Form," Chapter 3, N. Nisan, T. Roughgarden, E.
 Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 =#
-
+import QuantEcon: next_k_array!
 """
     support_enumeration(g)
 
@@ -226,94 +226,4 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     end
 
     return true
-end
-
-"""
-    _next_k_combination(x)
-
-Find the next k-combination, as described by an integer in binary
-representation with the k set bits, by "Gosper's hack".
-
-Copy-paste from en.wikipedia.org/wiki/Combinatorial_number_system
-
-# Arguments
-
-- `x::Int`: Integer with k set bits.
-
-# Returns
-
-- `::Int`: Smallest integer > x with k set bits.
-"""
-function _next_k_combination(x::Int)
-
-    u = x & -x
-    v = u + x
-    return v + (fld((v ⊻ x), u) >> 2)
-
-end
-
-"""
-    _next_k_array!(a)
-
-Given an array `a` of k distinct nonnegative integers, return the
-next k-array in lexicographic ordering of the descending sequences
-of the elements. `a` is modified in place.
-
-# Arguments
-
-- `a::Vector{Int}`: Array of length k.
-
-# Returns
-
-- `::Vector{Int}`: Next k-array of `a`.
-
-# Examples
-
-```julia
-julia> n, k = 4, 2
-(4,2)
-
-julia> a = collect(1:k)
-2-element Array{Int64,1}:
- 1
- 2
-
-julia> while a[end] < n + 1
-           @show a
-           _next_k_array!(a)
-       end
-a = [1,2]
-a = [1,3]
-a = [2,3]
-a = [1,4]
-a = [2,4]
-a = [3,4]
-```
-"""
-function _next_k_array!(a::Vector{Int})
-
-    k = length(a)
-    if k == 0
-        return a
-    end
-
-    x = 0
-    for i = 1:k
-        x += (1 << (a[i] - 1))
-    end
-
-    x = _next_k_combination(x)
-
-    pos = 0
-    for i = 1:k
-        while x & 1 == 0
-            x = x >> 1
-            pos += 1
-        end
-        a[i] = pos + 1
-        x = x >> 1
-        pos += 1
-    end
-
-    return a
 end
