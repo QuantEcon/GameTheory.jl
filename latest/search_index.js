@@ -457,22 +457,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria.html#Games._next_k_array!-Tuple{Array{Int64,1}}",
-    "page": "Computing Nash Equilibria",
-    "title": "Games._next_k_array!",
-    "category": "method",
-    "text": "_next_k_array!(a)\n\nGiven an array a of k distinct nonnegative integers, return the next k-array in lexicographic ordering of the descending sequences of the elements. a is modified in place.\n\nArguments\n\na::Vector{Int}: Array of length k.\n\nReturns\n\n::Vector{Int}: Next k-array of a.\n\nExamples\n\njulia> n, k = 4, 2\n(4,2)\n\njulia> a = collect(1:k)\n2-element Array{Int64,1}:\n 1\n 2\n\njulia> while a[end] < n + 1\n           @show a\n           _next_k_array!(a)\n       end\na = [1,2]\na = [1,3]\na = [2,3]\na = [1,4]\na = [2,4]\na = [3,4]\n\n\n\n"
-},
-
-{
-    "location": "lib/computing_nash_equilibria.html#Games._next_k_combination-Tuple{Int64}",
-    "page": "Computing Nash Equilibria",
-    "title": "Games._next_k_combination",
-    "category": "method",
-    "text": "_next_k_combination(x)\n\nFind the next k-combination, as described by an integer in binary representation with the k set bits, by \"Gosper\'s hack\".\n\nCopy-paste from en.wikipedia.org/wiki/Combinatorial_number_system\n\nArguments\n\nx::Int: Integer with k set bits.\n\nReturns\n\n::Int: Smallest integer > x with k set bits.\n\n\n\n"
-},
-
-{
     "location": "lib/computing_nash_equilibria.html#Games._support_enumeration_producer-Union{Tuple{Channel,Tuple{Array{T,2},Array{T,2}}}, Tuple{T}} where T<:Real",
     "page": "Computing Nash Equilibria",
     "title": "Games._support_enumeration_producer",
