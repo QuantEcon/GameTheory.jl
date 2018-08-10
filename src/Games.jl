@@ -24,6 +24,7 @@ using Compat.LinearAlgebra
 using Compat.Random
 import Compat.argmax
 import Compat.CartesianIndices
+import Compat.findall
 import Compat.Nothing
 
 """

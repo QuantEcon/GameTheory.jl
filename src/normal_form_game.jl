@@ -262,7 +262,7 @@ function best_responses(player::Player,
                         tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
-    best_responses = find(x -> x >= payoff_max - tol, payoffs)
+    best_responses = findall(x -> x >= payoff_max - tol, payoffs)
     return best_responses
 end
 
