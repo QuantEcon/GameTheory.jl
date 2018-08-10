@@ -1,3 +1,4 @@
+using Compat.LinearAlgebra
 using Compat.Random
 import Combinatorics: binomial
 
