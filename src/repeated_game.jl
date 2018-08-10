@@ -82,7 +82,7 @@ flow_u(rpd::RepGame2, a1::Int, a2::Int) =
 
 # Computes each players best deviation given an opponent's action
 best_dev_i(rpd::RepGame2, i::Int, aj::Int) =
-    indmax(rpd.sg.players[i].payoff_array[:, aj])
+    argmax(rpd.sg.players[i].payoff_array[:, aj])
 best_dev_1(rpd::RepGame2, a2::Int) = best_dev_i(rpd, 1, a2)
 best_dev_2(rpd::RepGame2, a1::Int) = best_dev_i(rpd, 2, a1)
 
@@ -419,7 +419,7 @@ function outerapproximation(
             end
 
             # Action which pushes furthest in direction h_i
-            astar = indmax(Cia)
+            astar = argmax(Cia)
             a1star, a2star = AS[astar, :]
 
             # Get hyperplane level and continuation value

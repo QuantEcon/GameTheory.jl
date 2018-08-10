@@ -291,7 +291,7 @@ function best_response(player::Player,
                        tol::Float64=1e-8)
     if tie_breaking == "smallest"
         payoffs = payoff_vector(player, opponents_actions)
-        return indmax(payoffs)
+        return argmax(payoffs)
     elseif tie_breaking == "random"
         brs = best_responses(player, opponents_actions; tol=tol)
         return rand(brs)
@@ -329,7 +329,7 @@ function best_response(player::Player,
         ))
 
     payoffs = payoff_vector(player, opponents_actions) + payoff_perturbation
-    return indmax(payoffs)
+    return argmax(payoffs)
 end
 
 
