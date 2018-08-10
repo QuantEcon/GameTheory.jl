@@ -5,10 +5,10 @@ os:
   - osx
 julia:
   - 0.6
-  - nightly
+  - 0.7
 matrix:
   allow_failures:
-    - julia: nightly
+    - julia: 0.7
 addons:
   apt_packages:
     - libgmp-dev
@@ -16,9 +16,11 @@ addons:
 notifications:
   email: false
 # uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia -e 'Pkg.clone(pwd()); Pkg.build("Games"); Pkg.test("Games"; coverage=true)'
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia -e 'Pkg.clone("https://github.com/QuantEcon/QuantEcon.jl"); Pkg.build("QuantEcon")'
+  - julia -e 'Pkg.clone("https://github.com/JuliaPolyhedra/Polyhedra.jl"); Pkg.build("Polyhedra")'
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("Games"); Pkg.test("Games"; coverage=true)'
 after_success:
   - julia -e 'Pkg.add("Documenter")'
   - julia -e 'cd(Pkg.dir("Games")); ENV["DOCUMENTER_DEBUG"] = "true"; include(joinpath("docs", "make.jl"))'
