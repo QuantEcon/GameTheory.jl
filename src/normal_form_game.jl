@@ -651,7 +651,7 @@ for (f, op) = ((:is_pareto_efficient, pareto_inferior_to),
     @eval function $(f)(g::NormalFormGame,
                         action_profile::PureActionProfile)
         payoff_profile0 = g[action_profile...]
-        for profile in CartesianRange(g.nums_actions)
+        for profile in CartesianIndices(g.nums_actions)
             if CartesianIndex(action_profile) != profile
                 if ($(op)(payoff_profile0, g[profile]))
                     return false

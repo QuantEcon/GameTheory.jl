@@ -22,6 +22,7 @@ const PureAction = Integer
 using Compat
 using Compat.LinearAlgebra
 using Compat.Random
+import Compat.CartesianIndices
 import Compat.Nothing
 
 """
