@@ -191,10 +191,10 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     for j in 1:k, i in 1:k
         A[i, j] = payoff_matrix[own_supp[i], opp_supp[j]]
     end
-    A[1:end-1, end] = -one(T)
-    A[end, 1:end-1] = one(T)
+    A[1:end-1, end] .= -one(T)
+    A[end, 1:end-1] .= one(T)
     A[end, end] = zero(T)
-    b[1:end-1] = zero(T)
+    b[1:end-1] .= zero(T)
     b[end] = one(T)
 
     r = _solve!(A, b)
@@ -212,7 +212,7 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     end
 
     own_supp_flags = falses(m)
-    own_supp_flags[own_supp] = true
+    own_supp_flags[own_supp] .= true
 
     for i = 1:m
         if !own_supp_flags[i]
