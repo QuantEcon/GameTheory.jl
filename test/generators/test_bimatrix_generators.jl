@@ -1,3 +1,4 @@
+using Compat.Random
 import Combinatorics: binomial
 
 @testset "bimatrix_generators.jl" begin

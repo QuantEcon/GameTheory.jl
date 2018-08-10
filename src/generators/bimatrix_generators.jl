@@ -176,7 +176,7 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
 end
 
 blotto_game(h::Integer, t::Integer, rho::Real, mu::Real=0) =
-    blotto_game(Base.GLOBAL_RNG, h, t, rho, mu)
+    blotto_game(Random.GLOBAL_RNG, h, t, rho, mu)
 
 # ranking_game
 """
@@ -267,7 +267,7 @@ function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
 end
 
 ranking_game(n::Integer, steps::Integer=10) =
-    ranking_game(Base.GLOBAL_RNG, n, steps)
+    ranking_game(Random.GLOBAL_RNG, n, steps)
 
 # sgc_game
 """
@@ -384,7 +384,7 @@ which is different from the order used in the original library in C.
 - `n::Integer` : Number of nodes in the tournament graph.
 - `k::Integer` : Size of subsets of nodes in the tournament graph.
 - `seed::Integer=-1`: Seed for random number generator. If seed is negative,
-  then `Base.GLOBAL_RNG` is used.
+  then `GLOBAL_RNG` is used.
 
 # Returns
 
@@ -581,4 +581,4 @@ function unit_vector_game(rng::AbstractRNG, n::Integer;
 end
 
 unit_vector_game(n::Integer; avoid_pure_nash::Bool=false) =
-    unit_vector_game(Base.GLOBAL_RNG, n, avoid_pure_nash=avoid_pure_nash)
+    unit_vector_game(Random.GLOBAL_RNG, n, avoid_pure_nash=avoid_pure_nash)

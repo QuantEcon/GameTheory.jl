@@ -37,8 +37,8 @@ function random_game(rng::AbstractRNG, nums_actions::NTuple{N,Int}) where N
     return NormalFormGame(players)
 end
 
-random_game(nums_actions::NTuple{N,Int}) where {N} = 
-    random_game(Base.GLOBAL_RNG, nums_actions)
+random_game(nums_actions::NTuple{N,Int}) where {N} =
+    random_game(Random.GLOBAL_RNG, nums_actions)
 
 #
 # Covariance Games Generating
@@ -94,4 +94,4 @@ function covariance_game(rng::AbstractRNG, nums_actions::NTuple{N,Int},
 end
 
 covariance_game(nums_actions::NTuple{N,Int}, rho::Real) where {N} =
-    covariance_game(Base.GLOBAL_RNG, nums_actions, rho)
+    covariance_game(Random.GLOBAL_RNG, nums_actions, rho)
