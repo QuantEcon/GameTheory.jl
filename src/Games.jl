@@ -21,6 +21,7 @@ const PureAction = Integer
 # 0.6/0.7 compatibility
 using Compat
 using Compat.Random
+import Compat.Nothing
 
 """
     MixedAction{T}

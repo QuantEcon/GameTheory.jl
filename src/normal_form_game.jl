@@ -6,7 +6,7 @@ Authors: Daisuke Oyama
 =#
 
 const opponents_actions_docstring = """
-`opponents_actions::Union{Action,ActionProfile,Void}` : Profile of N-1
+`opponents_actions::Union{Action,ActionProfile,Nothing}` : Profile of N-1
   opponents' actions. If N=2, then it must be a vector of reals (in which case
   it is treated as the opponent's mixed action) or a scalar of integer (in which
   case it is treated as the opponent's pure action). If N>2, then it must be a
@@ -158,13 +158,13 @@ one for each own action.
 # Arguments
 
 - `player::Player` : Player instance.
-- `opponent_action::Void`
+- `opponent_action::Nothing`
 
 # Returns
 
 - `::Vector` : Payoff vector.
 """
-function payoff_vector(player::Player{1}, opponent_action::Void)
+function payoff_vector(player::Player{1}, opponent_action::Nothing)
     return player.payoff_array
 end
 
@@ -206,7 +206,7 @@ Return True if `own_action` is a best response to `opponents_actions`.
 """
 function is_best_response(player::Player,
                           own_action::PureAction,
-                          opponents_actions::Union{Action,ActionProfile,Void};
+                          opponents_actions::Union{Action,ActionProfile,Nothing};
                           tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -232,7 +232,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 """
 function is_best_response(player::Player,
                           own_action::MixedAction,
-                          opponents_actions::Union{Action,ActionProfile,Void};
+                          opponents_actions::Union{Action,ActionProfile,Nothing};
                           tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -258,7 +258,7 @@ Return all the best response actions to `opponents_actions`.
   actions.
 """
 function best_responses(player::Player,
-                        opponents_actions::Union{Action,ActionProfile,Void};
+                        opponents_actions::Union{Action,ActionProfile,Nothing};
                         tol::Float64=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
@@ -286,7 +286,7 @@ Return a best response action to `opponents_actions`.
   chosen from the best response actions.
 """
 function best_response(player::Player,
-                       opponents_actions::Union{Action,ActionProfile,Void};
+                       opponents_actions::Union{Action,ActionProfile,Nothing};
                        tie_breaking::AbstractString="smallest",
                        tol::Float64=1e-8)
     if tie_breaking == "smallest"
@@ -321,7 +321,7 @@ Return the perturbed best response to `opponents_actions`.
 - `::Int` : Best response action.
 """
 function best_response(player::Player,
-                       opponents_actions::Union{Action,ActionProfile,Void},
+                       opponents_actions::Union{Action,ActionProfile,Nothing},
                        payoff_perturbation::Vector{Float64})
     length(payoff_perturbation) != num_actions(player) &&
         throw(ArgumentError(
