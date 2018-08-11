@@ -170,7 +170,7 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
@@ -261,7 +261,7 @@ function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
@@ -354,7 +354,7 @@ function sgc_game(k::Integer)
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
@@ -575,7 +575,7 @@ function unit_vector_game(rng::AbstractRNG, n::Integer;
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
