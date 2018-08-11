@@ -1,5 +1,7 @@
 using Compat.LinearAlgebra
 using Compat.Random
+using Compat.Unicode
+using Compat.DelimitedFiles
 import Combinatorics: binomial
 
 @testset "bimatrix_generators.jl" begin
@@ -77,7 +79,7 @@ import Combinatorics: binomial
             0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.500 0.000 0.000
             0.000 0.000 0.000 0.750 0.000 0.000 0.750 0.500 0.000 0.500 0.000
             0.500 0.000 0.000 0.000 0.000 0.000 0.000 0.750 0.750 0.000"
-        payoffs = readdlm(IOBuffer(normalize_string(s, stripcc=true)))
+        payoffs = readdlm(IOBuffer(Unicode.normalize(s, stripcc=true)))
         payoffs = reshape(payoffs, (2, n^2))
         payoff_matrices = [reshape(payoffs[i, :], (n, n)) for i in 1:2]
         payoff_matrices[2] = transpose(payoff_matrices[2])
