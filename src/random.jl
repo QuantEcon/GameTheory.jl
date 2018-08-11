@@ -30,8 +30,8 @@ function random_game(rng::AbstractRNG, nums_actions::NTuple{N,Int}) where N
     end
 
     players::NTuple{N,Player{N,Float64}} =
-        ntuple(i -> Player(rand(rng, tuple(nums_actions[i:end]...,
-                                      nums_actions[1:i-1]...))),
+        ntuple(i -> Player(rand(rng, Float64, tuple(nums_actions[i:end]...,
+                                                    nums_actions[1:i-1]...))),
                N)
 
     return NormalFormGame(players)

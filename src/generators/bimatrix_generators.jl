@@ -543,7 +543,7 @@ julia> pure_nash(g)
 """
 function unit_vector_game(rng::AbstractRNG, n::Integer;
                           avoid_pure_nash::Bool=false)
-    payoff_arrays = [zeros(Float64, n, n), rand(rng, (n, n))]
+    payoff_arrays = [zeros(Float64, n, n), rand(rng, Float64, (n, n))]
 
     if !avoid_pure_nash
         ones_ind = rand(rng, 1:n, n)
