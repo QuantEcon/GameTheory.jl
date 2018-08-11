@@ -170,13 +170,13 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
 
 blotto_game(h::Integer, t::Integer, rho::Real, mu::Real=0) =
-    blotto_game(Base.GLOBAL_RNG, h, t, rho, mu)
+    blotto_game(Random.GLOBAL_RNG, h, t, rho, mu)
 
 # ranking_game
 """
@@ -261,13 +261,13 @@ function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
 
 ranking_game(n::Integer, steps::Integer=10) =
-    ranking_game(Base.GLOBAL_RNG, n, steps)
+    ranking_game(Random.GLOBAL_RNG, n, steps)
 
 # sgc_game
 """
@@ -354,7 +354,7 @@ function sgc_game(k::Integer)
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
@@ -384,7 +384,7 @@ which is different from the order used in the original library in C.
 - `n::Integer` : Number of nodes in the tournament graph.
 - `k::Integer` : Size of subsets of nodes in the tournament graph.
 - `seed::Integer=-1`: Seed for random number generator. If seed is negative,
-  then `Base.GLOBAL_RNG` is used.
+  then `GLOBAL_RNG` is used.
 
 # Returns
 
@@ -543,7 +543,7 @@ julia> pure_nash(g)
 """
 function unit_vector_game(rng::AbstractRNG, n::Integer;
                           avoid_pure_nash::Bool=false)
-    payoff_arrays = [zeros(Float64, n, n), rand(rng, (n, n))]
+    payoff_arrays = [zeros(Float64, n, n), rand(rng, Float64, (n, n))]
 
     if !avoid_pure_nash
         ones_ind = rand(rng, 1:n, n)
@@ -575,10 +575,10 @@ function unit_vector_game(rng::AbstractRNG, n::Integer;
     end
 
     g = NormalFormGame(
-        [Player(payoff_array) for payoff_array in payoff_arrays]
+        [Player(payoff_array) for payoff_array::Array in payoff_arrays]
     )
     return g
 end
 
 unit_vector_game(n::Integer; avoid_pure_nash::Bool=false) =
-    unit_vector_game(Base.GLOBAL_RNG, n, avoid_pure_nash=avoid_pure_nash)
+    unit_vector_game(Random.GLOBAL_RNG, n, avoid_pure_nash=avoid_pure_nash)

@@ -167,7 +167,10 @@
 
     @testset "NormalFormGame invalid nonsquare matrix" begin
         @test_throws ArgumentError g = NormalFormGame(zeros((2, 3)))
-        @test_throws ArgumentError g = NormalFormGame(transpose([0 1 1]))
+
+        A = [0, 1, 1]
+        A = reshape(A, (size(A)..., 1))
+        @test_throws ArgumentError g = NormalFormGame(A)
     end
 
     @testset "NormalFormGame invalid payoff profiles" begin

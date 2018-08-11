@@ -5,3 +5,4 @@ QuantEcon 0.14.1
 Polyhedra 0.3.0
 LightGraphs 0.12.0
 Combinatorics
+Compat 0.50.0

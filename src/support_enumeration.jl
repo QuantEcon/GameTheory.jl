@@ -12,6 +12,7 @@ B. von Stengel, "Equilibrium Computation for Two-Player Games in
 Strategic and Extensive Form," Chapter 3, N. Nisan, T. Roughgarden, E.
 Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 =#
+import Compat.LinearAlgebra: LAPACKException, SingularException
 import QuantEcon: next_k_array!
 """
     support_enumeration(g)
@@ -130,7 +131,7 @@ function _solve!(A::Matrix{T}, b::Vector{T}) where T <: Union{Float64,Float32}
     r = 0
     try
         LAPACK.gesv!(A, b)
-    catch LinAlg.LAPACKException
+    catch LAPACKException
         r = 1
     end
     return r
@@ -141,7 +142,7 @@ end
     r = 0
     try
         b[:] = A_ldiv_B!(lufact!(A), b)
-    catch LinAlg.SingularException
+    catch SingularException
         r = 1
     end
     return r
@@ -190,10 +191,10 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     for j in 1:k, i in 1:k
         A[i, j] = payoff_matrix[own_supp[i], opp_supp[j]]
     end
-    A[1:end-1, end] = -one(T)
-    A[end, 1:end-1] = one(T)
+    A[1:end-1, end] .= -one(T)
+    A[end, 1:end-1] .= one(T)
     A[end, end] = zero(T)
-    b[1:end-1] = zero(T)
+    b[1:end-1] .= zero(T)
     b[end] = one(T)
 
     r = _solve!(A, b)
@@ -211,7 +212,7 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     end
 
     own_supp_flags = falses(m)
-    own_supp_flags[own_supp] = true
+    own_supp_flags[own_supp] .= true
 
     for i = 1:m
         if !own_supp_flags[i]

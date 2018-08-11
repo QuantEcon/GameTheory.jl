@@ -1,3 +1,7 @@
+using Compat.LinearAlgebra
+using Compat.Random
+using Compat.Unicode
+using Compat.DelimitedFiles
 import Combinatorics: binomial
 
 @testset "bimatrix_generators.jl" begin
@@ -31,29 +35,6 @@ import Combinatorics: binomial
             end
         end
 
-        @testset "test_payoff_generation" begin
-            # WARNING: These results were computed by hand and depend on the
-            # structure of the function being tested. Altering the structure of
-            # the function will cause this test to fail.
-            p1 = [0.16305 -0.353007 -0.353007 -0.353007
-                  0.679107 0.16305 -0.353007 -0.353007
-                  0.679107 0.679107 0.16305 -0.353007
-                  0.679107 0.679107 0.679107 0.16305]
-            p2 = [0.381845 -0.293291 -0.293291 -0.293291
-                  1.05698 0.381845  -0.293291 -0.293291
-                  1.05698 1.05698 0.381845 -0.293291
-                  1.05698 1.05698 1.05698 0.381845]
-
-            h = 2
-            t = 3
-            rho = 0.5
-            rng = MersenneTwister(0)
-            g = blotto_game(rng, h, t, rho)
-
-            @test p1 ≈ g.players[1].payoff_array atol=1e-5
-            @test p2 ≈ g.players[2].payoff_array atol=1e-5
-        end
-
     end
 
     @testset "ranking_game" begin
@@ -71,28 +52,6 @@ import Combinatorics: binomial
             possible_elements = [0, 1, 0.5]
             @test all([value in possible_elements for value in p1_array[1, :]])
             @test all([value in possible_elements for value in p2_array[1, :]])
-        end
-
-        @testset "test_payoff_generation" begin
-            # WARNING: These results were computed by hand and depend on the
-            # structure of the function being tested. Altering the structure of
-            # the function will cause this test to fail.
-            g = ranking_game(MersenneTwister(0), 5)
-
-            p1 = [0 0 0 0 0
-                  0.88 -0.12 -0.12 -0.12 -0.12
-                  0.72 0.72 0.72 -0.28 -0.28
-                  0.66 0.66 0.66 0.66 -0.34
-                  0.64 0.64 0.64 0.64 .64]
-
-            p2 = [1 0 0 0 0
-                  0.96 0.96 -0.04 -0.04 -0.04
-                  0.8 0.8 -0.2 -0.2 -0.2
-                  0.68 0.68 0.68 -0.32 -0.32
-                  0.48 0.48 0.48 0.48 -0.52 ]
-
-            @test p1 ≈ g.players[1].payoff_array
-            @test p2 ≈ g.players[2].payoff_array
         end
 
         @testset "test_seed" begin
@@ -120,7 +79,7 @@ import Combinatorics: binomial
             0.000 0.000 0.000 0.000 0.500 0.000 0.500 0.000 0.500 0.000 0.000
             0.000 0.000 0.000 0.750 0.000 0.000 0.750 0.500 0.000 0.500 0.000
             0.500 0.000 0.000 0.000 0.000 0.000 0.000 0.750 0.750 0.000"
-        payoffs = readdlm(IOBuffer(normalize_string(s, stripcc=true)))
+        payoffs = readdlm(IOBuffer(Unicode.normalize(s, stripcc=true)))
         payoffs = reshape(payoffs, (2, n^2))
         payoff_matrices = [reshape(payoffs[i, :], (n, n)) for i in 1:2]
         payoff_matrices[2] = transpose(payoff_matrices[2])

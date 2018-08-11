@@ -1,3 +1,5 @@
+import Compat.CartesianIndices
+
 @testset "Testing Random Games Generating" begin
 
     @testset "test random game" begin
@@ -17,7 +19,7 @@
 
         rho = 1
         g = covariance_game(nums_actions, rho)
-        for a in CartesianRange(nums_actions)
+        for a in CartesianIndices(nums_actions)
             payoff_profile = g[a]
             for i in 1:(N-1)
                 @test payoff_profile[i] ≈ payoff_profile[end]
@@ -26,7 +28,7 @@
 
         rho = -1/(N-1)
         g = covariance_game(nums_actions, rho)
-        for a in CartesianRange(nums_actions)
+        for a in CartesianIndices(nums_actions)
             payoff_profile = g[a]
             @test sum(payoff_profile) ≈ 0 atol=1e-10
         end

@@ -30,15 +30,15 @@ function random_game(rng::AbstractRNG, nums_actions::NTuple{N,Int}) where N
     end
 
     players::NTuple{N,Player{N,Float64}} =
-        ntuple(i -> Player(rand(rng, tuple(nums_actions[i:end]...,
-                                      nums_actions[1:i-1]...))),
+        ntuple(i -> Player(rand(rng, Float64, tuple(nums_actions[i:end]...,
+                                                    nums_actions[1:i-1]...))),
                N)
 
     return NormalFormGame(players)
 end
 
-random_game(nums_actions::NTuple{N,Int}) where {N} = 
-    random_game(Base.GLOBAL_RNG, nums_actions)
+random_game(nums_actions::NTuple{N,Int}) where {N} =
+    random_game(Random.GLOBAL_RNG, nums_actions)
 
 #
 # Covariance Games Generating
@@ -87,11 +87,13 @@ function covariance_game(rng::AbstractRNG, nums_actions::NTuple{N,Int},
     d = MVNSampler(mu, Sigma)
     x = rand(rng, d, prod(nums_actions))
 
+    x_T = Matrix{eltype(x)}(prod(nums_actions), N)
+    transpose!(x_T, x)
     payoff_profile_array =
-        reshape(transpose(x), (nums_actions..., N))
+        reshape(x_T, (nums_actions..., N))
 
     return NormalFormGame(payoff_profile_array)
 end
 
 covariance_game(nums_actions::NTuple{N,Int}, rho::Real) where {N} =
-    covariance_game(Base.GLOBAL_RNG, nums_actions, rho)
+    covariance_game(Random.GLOBAL_RNG, nums_actions, rho)
