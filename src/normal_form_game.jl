@@ -5,6 +5,15 @@ Authors: Daisuke Oyama
 
 =#
 
+# 0.6/0.7 compatibiity
+@static if !isdefined(Base, :print_array)
+    print_array(io::IO, X::AbstractArray) =
+        Base.showarray(io, X, false, header=false)
+else
+    const print_array = Base.print_array
+end
+
+
 const opponents_actions_docstring = """
 `opponents_actions::Union{Action,ActionProfile,Nothing}` : Profile of N-1
   opponents' actions. If N=2, then it must be a vector of reals (in which case
@@ -41,7 +50,7 @@ Base.summary(player::Player) =
 function Base.show(io::IO, player::Player)
     print(io, summary(player))
     println(io, ":")
-    Base.showarray(io, player.payoff_array, false, header=false)
+    print_array(io, player.payoff_array)
 end
 
 # payoff_vector
