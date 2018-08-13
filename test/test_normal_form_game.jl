@@ -49,6 +49,17 @@
         @test_throws MethodError best_response(player, (1, [1/2, 1/2]))
     end
 
+    @testset "repr(Player)" begin
+        A = [1 2; 3 4]
+        player = Player(A)
+        r = repr("text/plain", A)
+        @test repr(player) ==
+            replace(r, string(typeof(A)) =>
+                       split(string(typeof(player)), ".")[end])
+    end
+
+    # NormalFormGame #
+
     @testset "symmetric NormalFormGame with 2 players" begin
         coordination_game_matrix = [4 0; 3 2]
         g = @inferred(NormalFormGame(coordination_game_matrix))
@@ -60,8 +71,6 @@
         @test @inferred is_nash(g, (1, 1))
         @test @inferred is_nash(g, ([2/3, 1/3], [2/3, 1/3]))
     end
-
-    # NormalFormGame #
 
     @testset "asymmetric NormalFormGame with 2 players" begin
         matching_pennies_bimatrix = Array{Float64}(2, 2, 2)
