@@ -150,9 +150,9 @@ function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
     actions = simplex_grid(h, t)
     n = size(actions)[2]
 
-    payoff_arrays = [Array{Float64}(n, n) for i in 1:2]
+    payoff_arrays = [Array{Float64}(undef, n, n) for i in 1:2]
 
-    payoffs = Array{Float64}(2)
+    payoffs = Array{Float64}(undef, 2)
     @inbounds for i = 1:n, j = 1:n
         fill!(payoffs, 0)
         for k = 1:h
@@ -231,12 +231,12 @@ julia> g.players[2]
 ```
 """
 function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
-    payoff_arrays = [Array{Float64}(n, n) for i in 1:2]
+    payoff_arrays = [Array{Float64}(undef, n, n) for i in 1:2]
 
     scores = rand(rng, 1:steps, (n, 2))
     cumsum!(scores, scores, 1)
 
-    costs = Array{Float64}(n-1, 2)
+    costs = Array{Float64}(undef, n-1, 2)
     rand!(rng, costs, 1:steps)
     cumsum!(costs, costs, 1)
     costs ./= n * steps
@@ -317,7 +317,7 @@ julia> g.players[2]
 """
 function sgc_game(k::Integer)
     n, m = 4*k-1, 2*k-1
-    payoff_arrays = [Array{Float64}(n, n) for i in 1:2]
+    payoff_arrays = [Array{Float64}(undef, n, n) for i in 1:2]
 
     for payoff_array in payoff_arrays
         for j in 1:m
@@ -436,13 +436,13 @@ function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
     # populate matrix C
     X = collect(1:k)
     for j = 1:m
-        C[j, X] = 1.
+        C[j, X] .= 1.
         next_k_array!(X)
     end
 
     # populate matrix R
     # continue to use array `X` to store indices
-    a = Vector{Int}(k)
+    a = Vector{Int}(undef, k)
     for i = 1:n
         d = length(fadjlist[i])
         if d >= k

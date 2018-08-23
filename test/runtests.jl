@@ -1,4 +1,5 @@
 using Games
+using Compat
 using Base.Test
 
 include("test_pure_nash.jl")

@@ -24,7 +24,7 @@ function pure_nash(nfg::NormalFormGame; ntofind=Inf, tol::Float64=1e-8)
     na = nfg.nums_actions
 
     # Holder for all NE
-    ne = Array{PureActionProfile{np,Int}}(0)
+    ne = Array{PureActionProfile{np,Int}}(undef, 0)
 
     # For each action profile check whether it is NE
     as = CartesianIndices(na)

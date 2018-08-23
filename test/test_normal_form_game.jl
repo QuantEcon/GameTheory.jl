@@ -33,7 +33,7 @@
     end
 
     @testset "Player with 2 opponents" begin
-        payoffs_2opponents = Array{Int64}(2, 2, 2)
+        payoffs_2opponents = Array{Int64}(undef, 2, 2, 2)
         payoffs_2opponents[:, 1, 1] = [3, 1]
         payoffs_2opponents[:, 1, 2] = [6, 0]
         payoffs_2opponents[:, 2, 1] = [4, 5]
@@ -73,7 +73,7 @@
     end
 
     @testset "asymmetric NormalFormGame with 2 players" begin
-        matching_pennies_bimatrix = Array{Float64}(2, 2, 2)
+        matching_pennies_bimatrix = Array{Float64}(undef, 2, 2, 2)
         matching_pennies_bimatrix[:, 1, 1] = [1, -1]
         matching_pennies_bimatrix[:, 1, 2] = [-1, 1]
         matching_pennies_bimatrix[:, 2, 1] = [-1, 1]
@@ -86,7 +86,7 @@
     end
 
     @testset "asymmetric NormalFormGame with 3 players" begin
-        payoffs_2opponents = Array{Int64}(2, 2, 2)
+        payoffs_2opponents = Array{Int64}(undef, 2, 2, 2)
         payoffs_2opponents[:, 1, 1] = [3, 1]
         payoffs_2opponents[:, 1, 2] = [6, 0]
         payoffs_2opponents[:, 2, 1] = [4, 5]
@@ -210,13 +210,13 @@
         coordination_game_matrix = [4 0;
                                     3 2]
 
-        equal_po_p1_bimatrix = Array{Float64}(2, 2, 2)
+        equal_po_p1_bimatrix = Array{Float64}(undef, 2, 2, 2)
         equal_po_p1_bimatrix[1, 1, :] = [1, -1]
         equal_po_p1_bimatrix[1, 2, :] = [1, 1]
         equal_po_p1_bimatrix[2, 1, :] = [1, 1]
         equal_po_p1_bimatrix[2, 2, :] = [1, -1]
 
-        three_p_equal_po_array = Array{Int64}((2, 2, 2))
+        three_p_equal_po_array = Array{Int64}(undef, 2, 2, 2)
         three_p_equal_po_array[:, :, 1] = [2 0; 0 2]
         three_p_equal_po_array[:, :, 2] = [2 0; 0 2]
 

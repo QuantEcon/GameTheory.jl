@@ -97,10 +97,10 @@ function _support_enumeration_producer(c::Channel,
     S = typeof(zero(T)/one(T))
 
     for k = 1:n_min
-        supps = (collect(1:k), Vector{Int}(k))
-        actions = (Vector{S}(k), Vector{S}(k))
-        A = Matrix{S}(k+1, k+1)
-        b = Vector{S}(k+1)
+        supps = (collect(1:k), Vector{Int}(undef, k))
+        actions = (Vector{S}(undef, k), Vector{S}(undef, k))
+        A = Matrix{S}(undef, k+1, k+1)
+        b = Vector{S}(undef, k+1)
         while supps[1][end] <= nums_actions[1]
             supps[2][:] = collect(1:k)
             while supps[2][end] <= nums_actions[2]
