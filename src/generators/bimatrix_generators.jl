@@ -234,11 +234,11 @@ function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
     payoff_arrays = [Array{Float64}(undef, n, n) for i in 1:2]
 
     scores = rand(rng, 1:steps, (n, 2))
-    cumsum!(scores, scores, 1)
+    cumsum!(scores, scores, dims=1)
 
     costs = Array{Float64}(undef, n-1, 2)
     rand!(rng, costs, 1:steps)
-    cumsum!(costs, costs, 1)
+    cumsum!(costs, costs, dims=1)
     costs ./= n * steps
 
     for (p, payoff_array) in enumerate(payoff_arrays)
@@ -552,9 +552,9 @@ function unit_vector_game(rng::AbstractRNG, n::Integer;
         end
     else
         n == 1 && throw(ArgumentError("Cannot avoid pure Nash with n=1"))
-        maxes = maximum(payoff_arrays[2], 1)
+        maxes = maximum(payoff_arrays[2], dims=1)
         is_subotimal = payoff_arrays[2] .< maxes
-        nums_suboptimal = sum(is_subotimal, 2)
+        nums_suboptimal = sum(is_subotimal, dims=2)
 
         while any(nums_suboptimal .== 0)
             rand!(rng, payoff_arrays[2])

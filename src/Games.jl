@@ -27,6 +27,7 @@ import Compat.CartesianIndices
 import Compat.copyto!
 import Compat.findall
 import Compat.Nothing
+import Compat.sum
 
 """
     MixedAction{T}
