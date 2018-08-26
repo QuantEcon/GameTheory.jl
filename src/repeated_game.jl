@@ -375,7 +375,7 @@ function outerapproximation(
         _w2 = worst_value_2(rpd, H, C, lp_solver)
 
         # Update all set constraints -- Copies elements 1:nH of C into b
-        copy!(b, 1, C, 1, nH)
+        copyto!(b, 1, C, 1, nH)
 
         # Iterate over all subgradients
         for ih=1:nH
@@ -449,7 +449,7 @@ function outerapproximation(
         end
 
         # Update hyperplane levels
-        copy!(C, Cnew)
+        copyto!(C, Cnew)
     end
 
 
