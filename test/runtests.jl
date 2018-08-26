@@ -1,6 +1,6 @@
 using Games
 using Compat
-using Base.Test
+using Compat.Test
 
 include("test_pure_nash.jl")
 if VERSION >= v"0.7-"
