@@ -160,7 +160,7 @@ function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     end
 
     # Corresponding hyperplane levels
-    C = squeeze(sum(HT .* Z, dims=1), 1)
+    C = dropdims(sum(HT .* Z, dims=1), dims=1)
 
     return C, H, Z
 end

@@ -25,6 +25,7 @@ using Compat.Random
 import Compat.argmax
 import Compat.CartesianIndices
 import Compat.copyto!
+import Compat.dropdims
 import Compat.findall
 import Compat.Nothing
 import Compat.sum
