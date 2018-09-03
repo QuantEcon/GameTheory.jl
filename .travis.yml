@@ -18,7 +18,9 @@ notifications:
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone("https://github.com/QuantEcon/QuantEcon.jl"); Pkg.build("QuantEcon")'
+  - julia -e 'Pkg.add("QuantEcon");
+              VERSION < v"0.7-" && Pkg.pin("QuantEcon", v"0.14.3");
+              Pkg.build("QuantEcon")'
   - julia -e 'Pkg.clone("https://github.com/JuliaPolyhedra/Polyhedra.jl"); Pkg.build("Polyhedra")'
   - julia -e 'Pkg.clone(pwd()); Pkg.build("Games"); Pkg.test("Games"; coverage=true)'
 after_success:
