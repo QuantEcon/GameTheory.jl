@@ -421,7 +421,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Nash Equilibria",
     "title": "Games.pure_nash",
     "category": "method",
-    "text": "pure_nash(nfg; ntofind=Inf, tol=1e-8)\n\nFinds all pure action Nash equilibria for a normal form game. It returns an empty array if there is no pure action Nash.\n\nCurrently uses a brute force algorithm, but that hopefully will change in the future.\n\nArguments\n\nnfg::NormalFormGame: Instance of N-player NormalFormGame.\nntofind::Inf: Maximal number of pure action Nash equilibria to be found; default is Inf.\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nne::Vector{NTuple{N,Int}}: Vector of pure action Nash equilibria.\n\n\n\n"
+    "text": "pure_nash(nfg; ntofind=Inf, tol=1e-8)\n\nFinds all pure action Nash equilibria for a normal form game. It returns an empty array if there is no pure action Nash.\n\nCurrently uses a brute force algorithm, but that hopefully will change in the future.\n\nArguments\n\nnfg::NormalFormGame: Instance of N-player NormalFormGame.\nntofind::Inf: Maximal number of pure action Nash equilibria to be found; default is prod(nfg.nums_actions).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nne::Vector{NTuple{N,Int}}: Vector of pure action Nash equilibria.\n\n\n\n"
 },
 
 {
