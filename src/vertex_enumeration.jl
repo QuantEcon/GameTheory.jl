@@ -1,5 +1,3 @@
-import Polyhedra: hyperplane
-
 function vertex_enumeration(g::NormalFormGame{2};
                             plib=SimplePolyhedraLibrary{Float64}())
 
@@ -25,25 +23,36 @@ function vertex_enumeration_task(c::Channel,
 
 end
 
-function _vertex_enumeration_producer{T}(c::Channel,
-                                         g::NormalFormGame{2, T},
-                                         plib)
+function _vertex_enumeration_producer(c::Channel,
+                                      g::NormalFormGame{2, T},
+                                      plib)
 
     n, m = size(g.players[1].payoff_array)
 
     # create Representation for player 1
-    H1, V1, H2, V2 = construction_BRP(g, plib)
+    p1, p2 = construction_BRP(g, plib)
+    V1 = points(p1)
+    simplex1 = []
+    for pidx in eachindex(points(p1))
+        push!(simplex1, [idx.value for idx in incidenthalfspaceindices(p1, pidx)])
+    end
+    
+    V2 = points(p2)
+    simplex2 = []
+    for pidx in eachindex(points(p2))
+        push!(simplex2, [idx.value for idx in incidenthalfspaceindices(p2, pidx)])
+    end
 
     ZERO_LABELING_BITS = (1 << (n+m)) - (1 << m)
     COMPLETE_LABELING_BITS = 1 << (n+m) - 1
-
-    for v1 in points(V1)
-        labelings_bits1 = labelings_bits(v1, H1)
+    
+    for (i, v1) in enumerate(V1)
+        labelings_bits1 = labelings_bits(simplex1[i])
         if labelings_bits1 == ZERO_LABELING_BITS
             continue
         end
-        for v2 in points(V2)
-            labelings_bits2 = labelings_bits(v2, H2)
+        for (j, v2) in enumerate(V2)
+            labelings_bits2 = labelings_bits(simplex2[j])
             if xor(labelings_bits1, labelings_bits2) == COMPLETE_LABELING_BITS
                 put!(c, (_get_mixed_action(v1),
                          _get_mixed_action(v2)))
@@ -53,7 +62,7 @@ function _vertex_enumeration_producer{T}(c::Channel,
 
 end
 
-function construction_BRP{T}(g::NormalFormGame{2, T}, plib)
+function construction_BRP(g::NormalFormGame{2, T}, plib)
 
     n, m = size(g.players[1].payoff_array)
 
@@ -66,7 +75,6 @@ function construction_BRP{T}(g::NormalFormGame{2, T}, plib)
     b1[m+1:end] = zero(T)
     H1 = hrep(C, b1)
     p1 = polyhedron(H1, plib)
-    V1 = vrep(p1)
 
     # create Representation for player 2
     D = Matrix{T}(n+m, m)
@@ -77,22 +85,18 @@ function construction_BRP{T}(g::NormalFormGame{2, T}, plib)
     b2[m+1:end] = one(T)
     H2 = hrep(D, b2)
     p2 = polyhedron(H2, plib)
-    V2 = vrep(p2)
 
-    return H1, V1, H2, V2
+    return p1, p2
 end
 
-function labelings_bits(v::VRepElement, p::HRep)
+function labelings_bits(inchalfindices::Vector{T}) where T <: Integer
     b = 0
-    for (i, h) in enumerate(halfspaces(p))
-        if v in hyperplane(h)
-            b += 1 << (i-1)
-        end
+    for i in inchalfindices
+        b += 1 << (i-1)
     end
     return b
 end
 
-function _get_mixed_action(a::Vector)
+function _get_mixed_action(a::Vector{T})
     return a ./ sum(a)
 end
-
