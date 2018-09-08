@@ -87,7 +87,7 @@ function covariance_game(rng::AbstractRNG, nums_actions::NTuple{N,Int},
     d = MVNSampler(mu, Sigma)
     x = rand(rng, d, prod(nums_actions))
 
-    x_T = Matrix{eltype(x)}(prod(nums_actions), N)
+    x_T = Matrix{eltype(x)}(undef, prod(nums_actions), N)
     transpose!(x_T, x)
     payoff_profile_array =
         reshape(x_T, (nums_actions..., N))

@@ -116,7 +116,7 @@ function unitcircle(npts::Int)
     degrees = 0.0:incr:2π
 
     # Points on circle
-    pts = Array{Float64}(npts, 2)
+    pts = Array{Float64}(undef, npts, 2)
     for i=1:npts
         x = degrees[i]
         pts[i, 1] = cos(x)
@@ -151,7 +151,7 @@ function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     HT = H'
 
     # Choose origin and radius for big approximation
-    Z = Array{Float64}(2, nH)
+    Z = Array{Float64}(undef, 2, nH)
     for i=1:nH
         # We know that players can ever get worse than their
         # lowest punishment, so ignore anything below that
@@ -160,7 +160,7 @@ function initialize_sg_hpl(nH::Int, o::Vector{Float64}, r::Float64)
     end
 
     # Corresponding hyperplane levels
-    C = squeeze(sum(HT .* Z, 1), 1)
+    C = dropdims(sum(HT .* Z, dims=1), dims=1)
 
     return C, H, Z
 end
@@ -237,7 +237,7 @@ function initialize_LP_matrices(rpd::RepGame2, H::Matrix{Float64})
     A = vcat(A_H, A_IC_1, A_IC_2)
 
     # Create the b vector (constraints)
-    b = Array{Float64}(nH + 2)
+    b = Array{Float64}(undef, nH + 2)
 
     return c, A, b
 end
@@ -375,7 +375,7 @@ function outerapproximation(
         _w2 = worst_value_2(rpd, H, C, lp_solver)
 
         # Update all set constraints -- Copies elements 1:nH of C into b
-        copy!(b, 1, C, 1, nH)
+        copyto!(b, 1, C, 1, nH)
 
         # Iterate over all subgradients
         for ih=1:nH
@@ -389,8 +389,8 @@ function outerapproximation(
             c[2] = -h2
 
             # Allocate space to store all solutions
-            Cia = Array{Float64}(nAS)
-            Wia = Array{Float64}(2, nAS)
+            Cia = Array{Float64}(undef, nAS)
+            Wia = Array{Float64}(undef, 2, nAS)
             for ia=1:nAS
                 #
                 # Action specific instruction
@@ -449,7 +449,7 @@ function outerapproximation(
         end
 
         # Update hyperplane levels
-        copy!(C, Cnew)
+        copyto!(C, Cnew)
     end
 
 

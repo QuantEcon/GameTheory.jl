@@ -509,7 +509,7 @@ function Base.getindex(g::NormalFormGame{N,T},
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
 
-    payoff_profile = Array{T}(N)
+    payoff_profile = Array{T}(undef, N)
     for (i, player) in enumerate(g.players)
         payoff_profile[i] =
             player.payoff_array[(index[i:end]..., index[1:i-1]...)...]

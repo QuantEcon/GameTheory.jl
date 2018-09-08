@@ -57,7 +57,7 @@ using Combinatorics
         for k in 2:N-2
             for ind in combinations(1:N, k)
                 a = fill(1, N)
-                a[ind] = 2
+                a[ind] .= 2
                 push!(Unanimity_NE, tuple(a...))
             end
         end

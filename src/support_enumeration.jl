@@ -14,6 +14,16 @@ Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 =#
 import Compat.LinearAlgebra: LAPACKException, SingularException
 import QuantEcon: next_k_array!
+
+# For v0.6 compatibility
+@static if !isdefined(Compat.LinearAlgebra, :lu!)
+    lu!(A::StridedMatrix) = lufact!(A)
+end
+
+@static if !isdefined(Compat.LinearAlgebra, :ldiv!)
+    ldiv!(A::LU{<:Any, <:StridedMatrix}, B::StridedVecOrMat) = A_ldiv_B!(A, B)
+end
+
 """
     support_enumeration(g)
 
@@ -97,10 +107,10 @@ function _support_enumeration_producer(c::Channel,
     S = typeof(zero(T)/one(T))
 
     for k = 1:n_min
-        supps = (collect(1:k), Vector{Int}(k))
-        actions = (Vector{S}(k), Vector{S}(k))
-        A = Matrix{S}(k+1, k+1)
-        b = Vector{S}(k+1)
+        supps = (collect(1:k), Vector{Int}(undef, k))
+        actions = (Vector{S}(undef, k), Vector{S}(undef, k))
+        A = Matrix{S}(undef, k+1, k+1)
+        b = Vector{S}(undef, k+1)
         while supps[1][end] <= nums_actions[1]
             supps[2][:] = collect(1:k)
             while supps[2][end] <= nums_actions[2]
@@ -141,7 +151,7 @@ end
                          b::Vector{Rational{T}}) where T <: Integer
     r = 0
     try
-        b[:] = A_ldiv_B!(lufact!(A), b)
+        b[:] = ldiv!(lu!(A), b)
     catch SingularException
         r = 1
     end

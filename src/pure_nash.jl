@@ -12,36 +12,30 @@ will change in the future.
 
 - `nfg::NormalFormGame`: Instance of N-player NormalFormGame.
 - `ntofind::Inf`: Maximal number of pure action Nash equilibria to be
-  found; default is `Inf`.
+  found; default is `prod(nfg.nums_actions)`.
 - `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 - `ne::Vector{NTuple{N,Int}}`: Vector of pure action Nash equilibria.
 """
-function pure_nash(nfg::NormalFormGame; ntofind=Inf, tol::Float64=1e-8)
+function pure_nash(nfg::NormalFormGame; ntofind=prod(nfg.nums_actions),
+                   tol::Float64=1e-8)
     # Get number of players and their actions
     np = num_players(nfg)
     na = nfg.nums_actions
 
     # Holder for all NE
-    ne = Array{PureActionProfile{np,Int}}(0)
+    ne = Array{PureActionProfile{np,Int}}(undef, 0)
 
-    # For each action profile check whether it is NE
-    as = CartesianIndices(na)
-
-    # Create counter for how many to find and iterator for actions
+    # Create counter for how many to find
     nfound = 0
-    state = start(as)
 
-    while (nfound < ntofind) & !done(as, state)
-        # Get next action pair
-        a, state = next(as, state)
-        _a = a.I
-
-        if is_nash(nfg, _a, tol=tol)
-            push!(ne, _a)
+    for _a in CartesianIndices(na)
+        if is_nash(nfg, _a.I, tol=tol)
+            push!(ne, _a.I)
             nfound = nfound + 1
         end
+        nfound >= ntofind && break
     end
 
     return ne
