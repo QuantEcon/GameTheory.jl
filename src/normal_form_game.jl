@@ -187,7 +187,7 @@ for (S, ex_mat_action) in ((PureAction, :(A[:, action])),
     @eval function _reduce_ith_opponent(payoff_array::Array{T,N},
                                         i::Int, action::$S) where {N,T}
         shape = size(payoff_array)
-        A = reshape(payoff_array, (prod(shape[1:i]), shape[i+1]))
+        A = reshape(payoff_array, (prod(shape[1:i]), shape[i+1]))::Matrix{T}
         out = $(ex_mat_action)
         shape_new = tuple(shape[1:i]..., ones(Int, N-i)...)::NTuple{N,Int}
         return reshape(out, shape_new)
