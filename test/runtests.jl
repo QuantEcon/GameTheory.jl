@@ -1,6 +1,5 @@
 using Games
-using Compat
-using Compat.Test
+using Test
 
 include("test_pure_nash.jl")
 include("test_repeated_game.jl")

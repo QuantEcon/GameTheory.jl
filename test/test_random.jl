@@ -1,5 +1,3 @@
-import Compat.CartesianIndices
-
 @testset "Testing Random Games Generating" begin
 
     @testset "test random game" begin
@@ -61,6 +59,5 @@ import Compat.CartesianIndices
         @test_throws ArgumentError covariance_game(nums_actions, rho)
 
     end
-
 
 end
