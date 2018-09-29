@@ -6,7 +6,7 @@ docs using `Documenter.jl`.
 
 =#
 
-path = Pkg.dir("Games")
+path = replace(pathof(Games), "src/Games.jl" => "")
 
 # read the basic structures
 order = SubString{String}[]
@@ -14,7 +14,7 @@ sections_names = SubString{String}[]
 sections = Dict{SubString{String}, Vector{SubString{String}}}()
 re = r"(.*): (.*)\n"
 open(joinpath(path, "docs/Structure")) do f
-    for match in eachmatch(re, readstring(f))
+    for match in eachmatch(re, String(read(f)))
         list = map(i -> strip(i), split(match.captures[2], ","))
         if list ==[""]
             continue
@@ -37,16 +37,16 @@ re = r"include\(\"(.*)\.jl\"\)"
 files = String[]
 
 open(joinpath(path, "src/Games.jl")) do f
-    for match in eachmatch(re, readstring(f))
+    for match in eachmatch(re, String(read(f)))
         # check if it is a submodule
-        if contains(match.captures[1], "/")
+        if occursin("/", match.captures[1])
             submodule_path = match.captures[1]
             submodule_dir, submodule_name = split(submodule_path, "/")
             # add submodule name to modules
             push!(modules, "Games.$submodule_name")
             # find all files used in submodules
             open(joinpath(path, "src/$submodule_path.jl")) do f_submodule
-                for match_sub in eachmatch(re, readstring(f_submodule))
+                for match_sub in eachmatch(re, String(read(f_submodule)))
                     file = match_sub.captures[1]
                     push!(files, "$submodule_dir/$file")
                 end
@@ -60,9 +60,8 @@ end
 module_names = join(modules, ", ")
 
 files_names = Dict{String, String}(
-                file => replace(join(map(ucfirst, split(file, "_")), " "),
-                                "Util",
-                                "Utilities")
+                file => replace(join(map(uppercasefirst, split(file, "_")), " "),
+                                "Util" => "Utilities")
                 for file in files
                 )
 
@@ -114,7 +113,7 @@ for section_name in sections_names
     end
 
     section_files = sections[section_name]
-    section_name_lower = replace(lowercase(section_name), " ", "_")
+    section_name_lower = replace(lowercase(section_name), " " => "_")
     section_file_list = join(map(i -> string("\"", i, ".jl\""),
                              section_files), ", ")
     # include "Games.jl" in "Base Types and Methods"
@@ -160,7 +159,7 @@ end
 open(joinpath(path, "docs/src/index.md"), "a") do f
     for page in order
         if page in keys(sections)
-            section_name_lower = replace(lowercase(page), " ", "_")
+            section_name_lower = replace(lowercase(page), " " => "_")
             write(f, "* [$page](@ref $section_name_lower)\n\n")
         else
             file = page
@@ -170,7 +169,7 @@ open(joinpath(path, "docs/src/index.md"), "a") do f
     end
 end
 
-pages_names = map(i -> replace(lowercase(i), " ", "_"), order)
+pages_names = map(i -> replace(lowercase(i), " " => "_"), order)
 
 PAGES = ["Home" => "index.md",
          "Library" => push!(
