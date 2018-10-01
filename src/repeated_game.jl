@@ -464,7 +464,7 @@ function outerapproximation(
     tol_int = round(Int, abs(log10(tol))) - 1
 
     # Find vertices that are unique within tolerance level
-    vertices = unique(round.(vertices, tol_int), 1)
+    vertices = unique(round.(vertices, digits=tol_int), dims=1)
 
     return vertices
 end

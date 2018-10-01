@@ -1,7 +1,4 @@
-using Compat.LinearAlgebra
-using Compat.Random
-using Compat.Unicode
-using Compat.DelimitedFiles
+using LinearAlgebra, Random, Unicode, DelimitedFiles
 import Combinatorics: binomial
 
 @testset "bimatrix_generators.jl" begin
@@ -106,7 +103,7 @@ import Combinatorics: binomial
 
             max_num_dominated_subsets = sum([binomial(i, k) for i in k:(n-1)])
             @test sum(g.players[1].payoff_array) <= max_num_dominated_subsets
-            @test all(Compat.sum(g.players[2].payoff_array, dims=2) .== k)
+            @test all(sum(g.players[2].payoff_array, dims=2) .== k)
         end
 
         @testset "test_seed" begin
@@ -134,7 +131,7 @@ import Combinatorics: binomial
         end
 
         @testset "test_payoff_values" begin
-            @test all(Compat.sum(g.players[1].payoff_array, dims=1) .== 1.)
+            @test all(sum(g.players[1].payoff_array, dims=1) .== 1.)
         end
 
         @testset "test_avoid_pure_nash" begin

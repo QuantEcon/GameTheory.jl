@@ -1,5 +1,8 @@
 module Games
 
+# stdlib
+using LinearAlgebra, Random
+
 # Packages
 using Clp
 using MathProgBase
@@ -17,18 +20,6 @@ using Polyhedra
 Alias for `Integer`.
 """
 const PureAction = Integer
-
-# 0.6/0.7 compatibility
-using Compat
-using Compat.LinearAlgebra
-using Compat.Random
-import Compat.argmax
-import Compat.CartesianIndices
-import Compat.copyto!
-import Compat.dropdims
-import Compat.findall
-import Compat.Nothing
-import Compat.sum
 
 """
     MixedAction{T}
