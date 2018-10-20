@@ -317,10 +317,10 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 - `verbose::Bool` : Whether to display updates about iterations and distance.
 - `nskipprint::Int` : Number of iterations between printing information
   (assuming verbose=true).
-- `plib::PolyhedraLibrary`: Allows users to choose a particular package for
+- `plib::Polyhedra.Library`: Allows users to choose a particular package for
   the geometry computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use `SimplePolyhedraLibrary`.
+  docs for more info). By default, it chooses to use `Polyhedra.DefaultLibrary`.
 - `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
   solver for linear programming problems. Options include ClpSolver(),
   CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
@@ -334,7 +334,7 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 function outerapproximation(
         rpd::RepGame2; nH::Int=32, tol::Float64=1e-8, maxiter::Int=500,
         check_pure_nash::Bool=true, verbose::Bool=false, nskipprint::Int=50,
-        plib::Polyhedra.PolyhedraLibrary=default_library(2, Float64),
+        plib::Polyhedra.Library=default_library(2, Float64),
         lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()
     )
     # Long unpacking of stuff
