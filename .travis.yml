@@ -11,8 +11,6 @@ matrix:
     - julia: 1.0
 notifications:
   email: false
-before_script:
-  - julia -e 'using Pkg; Pkg.add(PackageSpec(name="Polyhedra", rev="master"))'
 after_success:
   - julia -e 'using Pkg; Pkg.add("Documenter")'
   - julia -e 'using Pkg; using Games; cd(joinpath(dirname(pathof(Games)), "..")); ENV["DOCUMENTER_DEBUG"] = "true"; include(joinpath("docs", "make.jl"))'
