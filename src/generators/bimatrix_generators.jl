@@ -85,8 +85,8 @@ References
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import QuantEcon: MVNSampler, simplex_grid, next_k_array!, k_array_rank
-import LightGraphs: random_tournament_digraph
+using QuantEcon: MVNSampler, simplex_grid, next_k_array!, k_array_rank
+using LightGraphs: random_tournament_digraph
 
 
 # blotto_game

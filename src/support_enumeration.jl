@@ -13,8 +13,8 @@ Strategic and Extensive Form," Chapter 3, N. Nisan, T. Roughgarden, E.
 Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 =#
 
-import LinearAlgebra: LAPACKException, SingularException
-import QuantEcon: next_k_array!
+using LinearAlgebra: LAPACKException, SingularException
+using QuantEcon: next_k_array!
 
 """
     support_enumeration(g)

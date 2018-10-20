@@ -1,5 +1,5 @@
 using LinearAlgebra, Random, Unicode, DelimitedFiles
-import Combinatorics: binomial
+using Combinatorics: binomial
 
 @testset "bimatrix_generators.jl" begin
 
