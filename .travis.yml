@@ -15,5 +15,5 @@ before_script:
   - julia -e 'using Pkg; Pkg.add(PackageSpec(name="Polyhedra", rev="master"))'
 after_success:
   - julia -e 'using Pkg; Pkg.add("Documenter")'
-  - julia -e 'using Pkg; import Games; cd(joinpath(dirname(pathof(Games)), "..")); ENV["DOCUMENTER_DEBUG"] = "true"; include(joinpath("docs", "make.jl"))'
-  - julia -e 'using Pkg; import Games; cd(joinpath(dirname(pathof(Games)), "..")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
+  - julia -e 'using Pkg; using Games; cd(joinpath(dirname(pathof(Games)), "..")); ENV["DOCUMENTER_DEBUG"] = "true"; include(joinpath("docs", "make.jl"))'
+  - julia -e 'using Pkg; using Games; cd(joinpath(dirname(pathof(Games)), "..")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
