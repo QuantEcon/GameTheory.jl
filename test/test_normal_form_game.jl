@@ -141,6 +141,8 @@
         @test @inferred(payoff_vector(player, nothing)) == [0, 1]
         @test @inferred is_best_response(player, 2, nothing)
         @test @inferred(best_response(player, nothing)) == 2
+        @test is_dominated(player, 1) == true
+        @test is_dominated(player, 2) == false
     end
 
     @testset "NormalFormGame with 1 player" begin
@@ -259,6 +261,45 @@
                                     output_dict[i][j]
                 end
             end
+        end
+
+        @testset "Test is_dominated" begin
+            coordination_game_matrix = [4 0; 3 2]
+            player = Player(coordination_game_matrix)
+            for action = 1:num_actions(player)
+                @test is_dominated(player, action) == false
+            end
+
+            payoffs_2opponents = Array{Int64}(undef, 2, 2, 2)
+            payoffs_2opponents[:, 1, 1] = [3, 1]
+            payoffs_2opponents[:, 1, 2] = [6, 0]
+            payoffs_2opponents[:, 2, 1] = [4, 5]
+            payoffs_2opponents[:, 2, 2] = [2, 7]
+            player = Player(payoffs_2opponents)
+
+            for i = 1:num_actions(player)
+                @test is_dominated(player, i) == false
+            end
+
+        end
+
+        @testset "Test player corner cases" begin
+            n, m = 3, 4
+            player = Player(zeros((n, m)))
+            for action = 1:n
+                @test is_best_response(player, action, ones(m) * 1/m) == true
+                @test is_dominated(player, action) == false
+            end
+
+            e = 1e-8
+            player = Player([-e -e;
+                             1 -1;
+                             -1 1])
+            action = 1
+            @test is_best_response(player, action, [1/2, 1/2], tol=e) == true
+            @test is_best_response(player, action, [1/2, 1/2], tol=e/2) == false
+            @test is_dominated(player, action, tol=e) == false
+            @test is_dominated(player, action, tol=e/2) == true
         end
     end
 

@@ -691,3 +691,77 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 
 * `::Bool`
 """ is_pareto_dominant
+
+# is_dominated
+
+"""
+    is_domiated(player, action[, tol=1e-8, lp_solver=ClpSolver()])
+
+Determine whether `action` is strictly dominated by some mixed
+action.
+
+# Arguments
+
+- `player::Player` : Player instance.
+
+- `action::PureAction` : Integer representing a pure action.
+
+- `tol::Float64` : Tolerance to be used.
+
+- `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
+  solver for linear programming problems. Options include ClpSolver(),
+  CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
+  ClpSolver().
+
+# Returns
+
+- `::Bool` : True if `action` is strictly dominated by some mixed action;
+  False otherwise.
+
+"""
+function is_dominated(player::Player, action::PureAction;
+                      tol::Float64=1e-8,
+                      lp_solver::MathProgBase.AbstractMathProgSolver=
+                      ClpSolver())
+    payoff_array = player.payoff_array
+
+    if num_opponents(player) == 0
+        return maximum(payoff_array) > payoff_array[action] + tol
+    end
+
+    ind = trues(num_actions(player))
+    ind[action] = false
+    D = copy(selectdim(payoff_array, 1, ind))
+    D .-= selectdim(payoff_array, 1, action:action)
+
+    if num_opponents(player) >= 2
+        D = reshape(D, (size(D)[1], prod(size(D)[2:end])))
+    end
+
+    m, n = size(D)
+
+    A = Array{Float64}(undef, n+2, m+1)
+    A[1:n, 1:m] = -transpose(D)
+    A[1:n, end] .= 1.
+    A[n+1, 1:m] .= 1.
+    A[n+2, 1:m] .= -1.
+    A[n+1:end, end] .= 0.
+
+    b = Array{Float64}(undef, n+2)
+    b[1:n] .= 0.
+    b[n+1] .= 1.
+    b[n+2] .= -1.
+
+    c = zeros(m+1)
+    c[end] = -1.
+
+    res = linprog(c, A, '<', b, lp_solver)
+
+    if res.status == :Optimal
+        return res.sol[end] > tol
+    elseif res.status == :Infeasible
+        return false
+    else
+        throw(ErrorException("Error: solution status $(res.status)"))
+    end
+end
