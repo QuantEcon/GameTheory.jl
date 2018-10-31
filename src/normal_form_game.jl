@@ -729,33 +729,31 @@ function is_dominated(player::Player, action::PureAction;
         return maximum(payoff_array) > payoff_array[action] + tol
     end
 
+    m, n = size(payoff_array, 1) - 1, prod(size(player.payoff_array)[2:end])
+
     ind = trues(num_actions(player))
     ind[action] = false
-    D = copy(selectdim(payoff_array, 1, ind))
-    D .-= selectdim(payoff_array, 1, action:action)
 
-    if num_opponents(player) >= 2
-        D = reshape(D, (size(D)[1], prod(size(D)[2:end])))
-    end
-
-    m, n = size(D)
-
-    A = Array{Float64}(undef, n+2, m+1)
-    A[1:n, 1:m] = -transpose(D)
-    A[1:n, end] .= 1.
+    A = Array{Float64}(undef, n+1, m+1)
+    A[1:n, 1:m] = transpose(reshape(-selectdim(payoff_array, 1, ind) .+
+                                    selectdim(payoff_array, 1, action:action),
+                                    (m, n)))
+    A[1:n, m+1] .= 1.
     A[n+1, 1:m] .= 1.
-    A[n+2, 1:m] .= -1.
-    A[n+1:end, end] .= 0.
+    A[n+1, m+1] = 0.
 
-    b = Array{Float64}(undef, n+2)
+    b = Array{Float64}(undef, n+1)
     b[1:n] .= 0.
-    b[n+1] .= 1.
-    b[n+2] .= -1.
+    b[n+1] = 1.
 
     c = zeros(m+1)
     c[end] = -1.
 
-    res = linprog(c, A, '<', b, lp_solver)
+    sense = Array{Char}(undef, n+1)
+    sense[1:n] .= '<'
+    sense[n+1] = '='
+
+    res = linprog(c, A, sense, b, lp_solver)
 
     if res.status == :Optimal
         return res.sol[end] > tol
