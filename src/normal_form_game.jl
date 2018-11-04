@@ -28,7 +28,16 @@ Type representing a player in an N-player normal form game.
 """
 struct Player{N,T<:Real}
     payoff_array::Array{T,N}
+
+    function Player{N,T}(payoff_array::Array{T,N}) where {N,T<:Real}
+        if prod(size(payoff_array)) == 0
+            throw(ArgumentError("every player must have at least one action"))
+        end
+        return new(payoff_array)
+    end
 end
+
+Player(payoff_array::Array{T,N}) where {T<:Real,N} = Player{N,T}(payoff_array)
 
 num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents(::Player{N}) where {N} = N - 1

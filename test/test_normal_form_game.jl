@@ -162,6 +162,10 @@
 
     # Invalid inputs #
 
+    @testset "Player 0 actions" begin
+        @test_throws ArgumentError p = Player(Float64[])
+    end
+
     @testset "NormalFormGame invalid players shape inconsistent" begin
         p1 = Player(zeros((2, 3)))
         p2 = Player(zeros((2, 3)))
@@ -188,6 +192,10 @@
 
     @testset "NormalFormGame empty tuple" begin
         @test_throws ArgumentError g = NormalFormGame(tuple())
+    end
+
+    @testset "NormalFormGame 0 actions" begin
+        @test_throws ArgumentError g = NormalFormGame((0, 2))
     end
 
     @testset "payoff_vector empty tuple" begin
