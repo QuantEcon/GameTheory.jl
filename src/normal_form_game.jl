@@ -764,3 +764,33 @@ function is_dominated(player::Player{1}, action::PureAction;
         payoff_array = player.payoff_array
         return maximum(payoff_array) > payoff_array[action] + tol
 end
+
+"""
+    dominated_actions(player[, tol=1e-8])
+
+Return a list of actions that are strictly dominated by some
+mixed actions.
+
+# Arguments
+
+- `player::Player` : Player instance.
+- `tol::Float64` : Tolerance level used in determining domination.
+
+# Returns
+
+- `out::Vector{Integer}` : Vector of integers representing pure actions, each of
+  which is strictly dominated by some mixed action.
+
+"""
+function dominated_actions(player::Player; tol=1e-8,
+                           lp_solver::MathProgBase.AbstractMathProgSolver=
+                           ClpSolver())
+    out = Vector{Integer}(undef, 0)
+    for action = 1:num_actions(player)
+        if is_dominated(player, action, tol=tol, lp_solver=lp_solver)
+            append!(out, action);
+        end
+    end
+
+    return out
+end

@@ -30,6 +30,9 @@
         # Perturbed best response
         @test best_response(player, [2/3, 1/3], [0., 0.1]) == 2
         @test best_response(player, [2, 1], [0., 0.1]) == 2
+
+        # Dominated actions
+        @test dominated_actions(player) == Vector{Integer}(undef, 0)
     end
 
     @testset "Player with 2 opponents" begin
@@ -47,6 +50,8 @@
               sort([1, 2])
 
         @test_throws MethodError best_response(player, (1, [1/2, 1/2]))
+
+        @test dominated_actions(player) == Vector{Integer}(undef, 0)
     end
 
     @testset "repr(Player)" begin
@@ -143,6 +148,12 @@
         @test @inferred(best_response(player, nothing)) == 2
         @test is_dominated(player, 1)
         @test !is_dominated(player, 2)
+
+        payoffs = [0, 1, -1]
+        player = Player(payoffs)
+        dom_actions = [1, 3]
+        @test dominated_actions(player) == dom_actions
+
     end
 
     @testset "NormalFormGame with 1 player" begin
@@ -299,7 +310,10 @@
             @test is_best_response(player, action, [1/2, 1/2], tol=e)
             @test !is_best_response(player, action, [1/2, 1/2], tol=e/2)
             @test !is_dominated(player, action, tol=e+1e-16)
+            @test dominated_actions(player, tol=e+1e-16) ==
+                  Vector{Integer}(undef, 0)
             @test is_dominated(player, action, tol=e/2)
+            @test dominated_actions(player, tol=e/2) == [action]
         end
     end
 
