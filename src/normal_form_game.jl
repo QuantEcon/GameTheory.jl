@@ -703,11 +703,8 @@ action.
 # Arguments
 
 - `player::Player` : Player instance.
-
 - `action::PureAction` : Integer representing a pure action.
-
 - `tol::Float64` : Tolerance to be used.
-
 - `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
   solver for linear programming problems. Options include ClpSolver(),
   CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
@@ -724,10 +721,6 @@ function is_dominated(player::Player, action::PureAction;
                       lp_solver::MathProgBase.AbstractMathProgSolver=
                       ClpSolver())
     payoff_array = player.payoff_array
-
-    if num_opponents(player) == 0
-        return maximum(payoff_array) > payoff_array[action] + tol
-    end
 
     m, n = size(payoff_array, 1) - 1, prod(size(player.payoff_array)[2:end])
 
@@ -762,4 +755,12 @@ function is_dominated(player::Player, action::PureAction;
     else
         throw(ErrorException("Error: solution status $(res.status)"))
     end
+end
+
+function is_dominated(player::Player{1}, action::PureAction;
+                      tol::Float64=1e-8,
+                      lp_solver::MathProgBase.AbstractMathProgSolver=
+                      ClpSolver())
+        payoff_array = player.payoff_array
+        return maximum(payoff_array) > payoff_array[action] + tol
 end
