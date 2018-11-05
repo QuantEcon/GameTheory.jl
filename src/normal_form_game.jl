@@ -721,13 +721,18 @@ function is_dominated(player::Player, action::PureAction;
                       lp_solver::MathProgBase.AbstractMathProgSolver=
                       ClpSolver())
     payoff_array = player.payoff_array
+    if eltype(player.payoff_array) == Rational
+        input_game_type = Rational
+    else
+        input_game_type = Float64
+    end
 
     m, n = size(payoff_array, 1) - 1, prod(size(player.payoff_array)[2:end])
 
     ind = trues(num_actions(player))
     ind[action] = false
 
-    A = Array{Float64}(undef, n+1, m+1)
+    A = Array{input_game_type}(undef, n+1, m+1)
     A[1:n, 1:m] = transpose(reshape(-selectdim(payoff_array, 1, ind) .+
                                     selectdim(payoff_array, 1, action:action),
                                     (m, n)))
@@ -735,11 +740,11 @@ function is_dominated(player::Player, action::PureAction;
     A[n+1, 1:m] .= 1.
     A[n+1, m+1] = 0.
 
-    b = Array{Float64}(undef, n+1)
+    b = Array{input_game_type}(undef, n+1)
     b[1:n] .= 0.
     b[n+1] = 1.
 
-    c = zeros(m+1)
+    c = zeros(input_game_type, m+1)
     c[end] = -1.
 
     sense = Array{Char}(undef, n+1)
