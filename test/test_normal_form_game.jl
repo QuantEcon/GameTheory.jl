@@ -6,6 +6,10 @@
 #       that multiple times for the same function if we have particular reason
 #       to believe there might be a type stability with that function.
 
+using Clp
+using GLPKMathProgInterface
+
+
 @testset "Testing normal_form_game.jl" begin
 
     # Player #
@@ -208,6 +212,13 @@
         @test_throws ArgumentError payoff_vector(p1, tuple())
     end
 
+    @testset "is_dominated linprog error" begin
+        player = Player([1. 1.; 0. -1.; -1. 0.])
+        lp_solver = ClpSolver(MaximumIterations=1)
+        @test_throws ErrorException is_dominated(player, 1,
+                                                 lp_solver=lp_solver)
+    end
+
     # Utility functions #
 
     @testset "pure2mixed" begin
@@ -314,6 +325,17 @@
                   Vector{Integer}(undef, 0)
             @test is_dominated(player, action, tol=e/2)
             @test dominated_actions(player, tol=e/2) == [action]
+        end
+
+        @testset "Test rational input game" begin
+            game_matrix = [2//3 1//3;
+                           1//3 2//3]
+            player = Player(game_matrix)
+
+            lp_solver = GLPKSolverLP(method=:Exact)
+
+            @test dominated_actions(player, lp_solver=lp_solver) ==
+                  Vector{Integer}(undef, 0)
         end
     end
 

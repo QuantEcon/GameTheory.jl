@@ -695,7 +695,7 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 # is_dominated
 
 """
-    is_domiated(player, action[, tol=1e-8, lp_solver=ClpSolver()])
+    is_dominated(player, action[, tol=1e-8, lp_solver=ClpSolver()])
 
 Determine whether `action` is strictly dominated by some mixed
 action.
@@ -770,11 +770,12 @@ function is_dominated(player::Player{1}, action::PureAction;
         return maximum(payoff_array) > payoff_array[action] + tol
 end
 
+# dominated_actions
+
 """
     dominated_actions(player[, tol=1e-8])
 
-Return a list of actions that are strictly dominated by some
-mixed actions.
+Return a vector of actions that are strictly dominated by some mixed actions.
 
 # Arguments
 
@@ -783,8 +784,8 @@ mixed actions.
 
 # Returns
 
-- `out::Vector{Integer}` : Vector of integers representing pure actions, each of
-  which is strictly dominated by some mixed action.
+- `out::Vector{Integer}` : Vector of integers representing pure actions, each
+  of which is strictly dominated by some mixed action.
 
 """
 function dominated_actions(player::Player; tol=1e-8,
