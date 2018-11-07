@@ -6,6 +6,7 @@ using LinearAlgebra, Random
 # Packages
 using Clp
 using MathProgBase
+using GLPKMathProgInterface
 using QuantEcon
 using Combinatorics
 
