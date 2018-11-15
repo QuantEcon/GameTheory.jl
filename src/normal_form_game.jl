@@ -704,7 +704,7 @@ action.
 
 - `player::Player` : Player instance.
 - `action::PureAction` : Integer representing a pure action.
-- `tol::Float64` : Tolerance to be used.
+- `tol::Real` : Tolerance to be used.
 - `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
   solver for linear programming problems. Options include ClpSolver(),
   CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
@@ -716,16 +716,12 @@ action.
   False otherwise.
 
 """
-function is_dominated(player::Player, action::PureAction;
-                      tol::Float64=1e-8,
+function is_dominated(player::Player{N,T}, action::PureAction;
+                      tol::Real=1e-8,
                       lp_solver::MathProgBase.AbstractMathProgSolver=
-                      ClpSolver())
+                      ClpSolver()) where {N,T<:Real}
     payoff_array = player.payoff_array
-    if eltype(player.payoff_array) == Rational
-        input_game_type = Rational
-    else
-        input_game_type = Float64
-    end
+    input_game_type = typeof(zero(T)/one(T))
 
     m, n = size(payoff_array, 1) - 1, prod(size(player.payoff_array)[2:end])
 
@@ -763,7 +759,7 @@ function is_dominated(player::Player, action::PureAction;
 end
 
 function is_dominated(player::Player{1}, action::PureAction;
-                      tol::Float64=1e-8,
+                      tol::Real=1e-8,
                       lp_solver::MathProgBase.AbstractMathProgSolver=
                       ClpSolver())
         payoff_array = player.payoff_array
@@ -780,7 +776,7 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 # Arguments
 
 - `player::Player` : Player instance.
-- `tol::Float64` : Tolerance level used in determining domination.
+- `tol::Real` : Tolerance level used in determining domination.
 
 # Returns
 
@@ -788,7 +784,7 @@ Return a vector of actions that are strictly dominated by some mixed actions.
   of which is strictly dominated by some mixed action.
 
 """
-function dominated_actions(player::Player; tol=1e-8,
+function dominated_actions(player::Player; tol::Real=1e-8,
                            lp_solver::MathProgBase.AbstractMathProgSolver=
                            ClpSolver())
     out = Vector{Integer}(undef, 0)
