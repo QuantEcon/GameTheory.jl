@@ -5,4 +5,4 @@ QuantEcon
 Polyhedra
 LightGraphs
 Combinatorics
-GLPKMathProgInterface
+CDDLib

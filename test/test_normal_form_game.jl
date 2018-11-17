@@ -7,7 +7,7 @@
 #       to believe there might be a type stability with that function.
 
 using Clp
-using GLPKMathProgInterface
+using CDDLib
 
 
 @testset "Testing normal_form_game.jl" begin
@@ -36,7 +36,7 @@ using GLPKMathProgInterface
         @test best_response(player, [2, 1], [0., 0.1]) == 2
 
         # Dominated actions
-        @test dominated_actions(player) == Vector{Integer}(undef, 0)
+        @test dominated_actions(player) == Int[]
     end
 
     @testset "Player with 2 opponents" begin
@@ -55,7 +55,7 @@ using GLPKMathProgInterface
 
         @test_throws MethodError best_response(player, (1, [1/2, 1/2]))
 
-        @test dominated_actions(player) == Vector{Integer}(undef, 0)
+        @test dominated_actions(player) == Int[]
     end
 
     @testset "repr(Player)" begin
@@ -292,7 +292,7 @@ using GLPKMathProgInterface
                 @test !is_dominated(player, action)
             end
 
-            payoffs_2opponents = Array{Int64}(undef, 2, 2, 2)
+            payoffs_2opponents = Array{Int}(undef, 2, 2, 2)
             payoffs_2opponents[:, 1, 1] = [3, 1]
             payoffs_2opponents[:, 1, 2] = [6, 0]
             payoffs_2opponents[:, 2, 1] = [4, 5]
@@ -321,22 +321,21 @@ using GLPKMathProgInterface
             @test is_best_response(player, action, [1/2, 1/2], tol=e)
             @test !is_best_response(player, action, [1/2, 1/2], tol=e/2)
             @test !is_dominated(player, action, tol=e+1e-16)
-            @test dominated_actions(player, tol=e+1e-16) ==
-                  Vector{Integer}(undef, 0)
+            @test dominated_actions(player, tol=e+1e-16) == Int[]
             @test is_dominated(player, action, tol=e/2)
             @test dominated_actions(player, tol=e/2) == [action]
         end
 
         @testset "Test rational input game" begin
-            lp_solver = GLPKSolverLP(method=:Exact)
+            lp_solver = CDDSolver(exact=true)
 
-            e = 1//10^8
+            e = 1 // 1
             player = Player([-e -e;
-                             1//1 -1//1;
-                             -1//1 1//1])
+                             10^8//1 -10^8//1;
+                             -10^8//1 10^8//1])
 
             action = 1
-            @test !is_dominated(player, action, tol=e+1//10^15,
+            @test !is_dominated(player, action, tol=e,
                                 lp_solver=lp_solver)
             @test is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
 
@@ -344,8 +343,7 @@ using GLPKMathProgInterface
                            1//3 2//3]
             player = Player(game_matrix)
 
-            @test dominated_actions(player, lp_solver=lp_solver) ==
-                  Vector{Integer}(undef, 0)
+            @test dominated_actions(player, lp_solver=lp_solver) == Int[]
         end
     end
 

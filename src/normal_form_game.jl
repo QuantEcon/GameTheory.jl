@@ -721,27 +721,26 @@ function is_dominated(player::Player{N,T}, action::PureAction;
                       lp_solver::MathProgBase.AbstractMathProgSolver=
                       ClpSolver()) where {N,T<:Real}
     payoff_array = player.payoff_array
-    input_game_type = typeof(zero(T)/one(T))
+    S = typeof(zero(T)/one(T))
 
     m, n = size(payoff_array, 1) - 1, prod(size(player.payoff_array)[2:end])
 
     ind = trues(num_actions(player))
     ind[action] = false
 
-    A = Array{input_game_type}(undef, n+1, m+1)
+    A = Array{S}(undef, n+1, m+1)
     A[1:n, 1:m] = transpose(reshape(-selectdim(payoff_array, 1, ind) .+
                                     selectdim(payoff_array, 1, action:action),
                                     (m, n)))
-    A[1:n, m+1] .= 1.
-    A[n+1, 1:m] .= 1.
-    A[n+1, m+1] = 0.
+    A[1:n, m+1] .= 1
+    A[n+1, 1:m] .= 1
+    A[n+1, m+1] = 0
 
-    b = Array{input_game_type}(undef, n+1)
-    b[1:n] .= 0.
-    b[n+1] = 1.
+    b = zeros(S, n+1)
+    b[end] = 1
 
-    c = zeros(input_game_type, m+1)
-    c[end] = -1.
+    c = zeros(S, m+1)
+    c[end] = -1
 
     sense = Array{Char}(undef, n+1)
     sense[1:n] .= '<'
@@ -780,14 +779,14 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 # Returns
 
-- `out::Vector{Integer}` : Vector of integers representing pure actions, each
+- `out::Vector{Int}` : Vector of integers representing pure actions, each
   of which is strictly dominated by some mixed action.
 
 """
 function dominated_actions(player::Player; tol::Real=1e-8,
                            lp_solver::MathProgBase.AbstractMathProgSolver=
                            ClpSolver())
-    out = Vector{Integer}(undef, 0)
+    out = Vector{Int}(undef, 0)
     for action = 1:num_actions(player)
         if is_dominated(player, action, tol=tol, lp_solver=lp_solver)
             append!(out, action);
