@@ -768,7 +768,7 @@ end
 # dominated_actions
 
 """
-    dominated_actions(player[, tol=1e-8])
+    dominated_actions(player[, tol=1e-8, lp_solver=ClpSolver()])
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 

@@ -329,16 +329,28 @@ using CDDLib
         @testset "Test rational input game" begin
             lp_solver = CDDSolver(exact=true)
 
-            e = 1 // 1
+            # Corner cases
+            e = 1//1
             player = Player([-e -e;
                              10^8//1 -10^8//1;
                              -10^8//1 10^8//1])
 
             action = 1
-            @test !is_dominated(player, action, tol=e,
-                                lp_solver=lp_solver)
+            @test !is_dominated(player, action, tol=e, lp_solver=lp_solver)
             @test is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
 
+            e = 0//1
+            player = Player([-e -e;
+                             1//1 -1//1;
+                             -1//1 1//1])
+
+            @test !is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
+
+            e = 1//(10^8)
+            player.payoff_array[1, 1:2] .= -e;
+            @test is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
+
+            # Simple game
             game_matrix = [2//3 1//3;
                            1//3 2//3]
             player = Player(game_matrix)
