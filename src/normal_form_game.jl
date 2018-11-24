@@ -743,7 +743,9 @@ function is_dominated(player::Player{N,T}, action::PureAction;
     c[end] = -1
 
     sense = Array{Char}(undef, n+1)
-    sense[1:n] .= '<'
+    for i in 1:n
+      sense[i] = '<'
+    end
     sense[n+1] = '='
 
     res = linprog(c, A, sense, b, lp_solver)
@@ -776,6 +778,7 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 - `player::Player` : Player instance.
 - `tol::Real` : Tolerance level used in determining domination.
+- `lp_solver::AbstractMathProgSolver` : See `is_dominated`.
 
 # Returns
 

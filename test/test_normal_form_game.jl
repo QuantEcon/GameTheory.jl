@@ -330,25 +330,18 @@ using CDDLib
             lp_solver = CDDSolver(exact=true)
 
             # Corner cases
-            e = 1//1
-            player = Player([-e -e;
-                             10^8//1 -10^8//1;
-                             -10^8//1 10^8//1])
-
-            action = 1
-            @test !is_dominated(player, action, tol=e, lp_solver=lp_solver)
-            @test is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
-
-            e = 0//1
+            e = 1//(2^25)
             player = Player([-e -e;
                              1//1 -1//1;
                              -1//1 1//1])
 
-            @test !is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
+            action = 1
+            @test !is_dominated(player, action, tol=e, lp_solver=lp_solver)
+            @test is_dominated(player, action, tol=e//2, lp_solver=lp_solver)
 
-            e = 1//(10^8)
-            player.payoff_array[1, 1:2] .= -e;
-            @test is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
+            player.payoff_array[1, 1:2] .= 0;
+
+            @test !is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
 
             # Simple game
             game_matrix = [2//3 1//3;
