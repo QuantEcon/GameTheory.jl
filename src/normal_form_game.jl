@@ -700,3 +700,110 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 
 * `::Bool`
 """ is_pareto_dominant
+
+# is_dominated
+
+"""
+    is_dominated(player, action[, tol=1e-8, lp_solver=ClpSolver()])
+
+Determine whether `action` is strictly dominated by some mixed
+action.
+
+# Arguments
+
+- `player::Player` : Player instance.
+- `action::PureAction` : Integer representing a pure action.
+- `tol::Real` : Tolerance to be used.
+- `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
+  solver for linear programming problems. Options include ClpSolver(),
+  CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
+  ClpSolver().
+
+# Returns
+
+- `::Bool` : True if `action` is strictly dominated by some mixed action;
+  False otherwise.
+
+"""
+function is_dominated(player::Player{N,T}, action::PureAction;
+                      tol::Real=1e-8,
+                      lp_solver::MathProgBase.AbstractMathProgSolver=
+                      ClpSolver()) where {N,T<:Real}
+    payoff_array = player.payoff_array
+    S = typeof(zero(T)/one(T))
+
+    m, n = size(payoff_array, 1) - 1, prod(size(player.payoff_array)[2:end])
+
+    ind = trues(num_actions(player))
+    ind[action] = false
+
+    A = Array{S}(undef, n+1, m+1)
+    A[1:n, 1:m] = transpose(reshape(-selectdim(payoff_array, 1, ind) .+
+                                    selectdim(payoff_array, 1, action:action),
+                                    (m, n)))
+    A[1:n, m+1] .= 1
+    A[n+1, 1:m] .= 1
+    A[n+1, m+1] = 0
+
+    b = zeros(S, n+1)
+    b[end] = 1
+
+    c = zeros(S, m+1)
+    c[end] = -1
+
+    sense = Array{Char}(undef, n+1)
+    for i in 1:n
+      sense[i] = '<'
+    end
+    sense[n+1] = '='
+
+    res = linprog(c, A, sense, b, lp_solver)
+
+    if res.status == :Optimal
+        return res.sol[end] > tol
+    elseif res.status == :Infeasible
+        return false
+    else
+        throw(ErrorException("Error: solution status $(res.status)"))
+    end
+end
+
+function is_dominated(player::Player{1}, action::PureAction;
+                      tol::Real=1e-8,
+                      lp_solver::MathProgBase.AbstractMathProgSolver=
+                      ClpSolver())
+        payoff_array = player.payoff_array
+        return maximum(payoff_array) > payoff_array[action] + tol
+end
+
+# dominated_actions
+
+"""
+    dominated_actions(player[, tol=1e-8, lp_solver=ClpSolver()])
+
+Return a vector of actions that are strictly dominated by some mixed actions.
+
+# Arguments
+
+- `player::Player` : Player instance.
+- `tol::Real` : Tolerance level used in determining domination.
+- `lp_solver::AbstractMathProgSolver` : See `is_dominated`.
+
+# Returns
+
+- `out::Vector{Int}` : Vector of integers representing pure actions, each
+  of which is strictly dominated by some mixed action.
+
+"""
+function dominated_actions(player::Player; tol::Real=1e-8,
+                           lp_solver::MathProgBase.AbstractMathProgSolver=
+                           ClpSolver())
+    out = Vector{Int}(undef, 0)
+    for action = 1:num_actions(player)
+        if is_dominated(player, action, tol=tol, lp_solver=lp_solver)
+            append!(out, action);
+        end
+    end
+
+    return out
+end

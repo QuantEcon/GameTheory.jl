@@ -6,6 +6,10 @@
 #       that multiple times for the same function if we have particular reason
 #       to believe there might be a type stability with that function.
 
+using Clp
+using CDDLib
+
+
 @testset "Testing normal_form_game.jl" begin
 
     # Player #
@@ -30,10 +34,13 @@
         # Perturbed best response
         @test best_response(player, [2/3, 1/3], [0., 0.1]) == 2
         @test best_response(player, [2, 1], [0., 0.1]) == 2
+
+        # Dominated actions
+        @test dominated_actions(player) == Int[]
     end
 
     @testset "Player with 2 opponents" begin
-        payoffs_2opponents = Array{Int64}(undef, 2, 2, 2)
+        payoffs_2opponents = Array{Int}(undef, 2, 2, 2)
         payoffs_2opponents[:, 1, 1] = [3, 1]
         payoffs_2opponents[:, 1, 2] = [6, 0]
         payoffs_2opponents[:, 2, 1] = [4, 5]
@@ -47,6 +54,8 @@
               sort([1, 2])
 
         @test_throws MethodError best_response(player, (1, [1/2, 1/2]))
+
+        @test dominated_actions(player) == Int[]
     end
 
     @testset "repr(Player)" begin
@@ -86,7 +95,7 @@
     end
 
     @testset "asymmetric NormalFormGame with 3 players" begin
-        payoffs_2opponents = Array{Int64}(undef, 2, 2, 2)
+        payoffs_2opponents = Array{Int}(undef, 2, 2, 2)
         payoffs_2opponents[:, 1, 1] = [3, 1]
         payoffs_2opponents[:, 1, 2] = [6, 0]
         payoffs_2opponents[:, 2, 1] = [4, 5]
@@ -141,6 +150,14 @@
         @test @inferred(payoff_vector(player, nothing)) == [0, 1]
         @test @inferred is_best_response(player, 2, nothing)
         @test @inferred(best_response(player, nothing)) == 2
+        @test is_dominated(player, 1)
+        @test !is_dominated(player, 2)
+
+        payoffs = [0, 1, -1]
+        player = Player(payoffs)
+        dom_actions = [1, 3]
+        @test dominated_actions(player) == dom_actions
+
     end
 
     @testset "NormalFormGame with 1 player" begin
@@ -203,6 +220,13 @@
         @test_throws ArgumentError payoff_vector(p1, tuple())
     end
 
+    @testset "is_dominated linprog error" begin
+        player = Player([1. 1.; 0. -1.; -1. 0.])
+        lp_solver = ClpSolver(MaximumIterations=1)
+        @test_throws ErrorException is_dominated(player, 1,
+                                                 lp_solver=lp_solver)
+    end
+
     # Utility functions #
 
     @testset "pure2mixed" begin
@@ -224,7 +248,7 @@
         equal_po_p1_bimatrix[2, 1, :] = [1, 1]
         equal_po_p1_bimatrix[2, 2, :] = [1, -1]
 
-        three_p_equal_po_array = Array{Int64}(undef, 2, 2, 2)
+        three_p_equal_po_array = Array{Int}(undef, 2, 2, 2)
         three_p_equal_po_array[:, :, 1] = [2 0; 0 2]
         three_p_equal_po_array[:, :, 2] = [2 0; 0 2]
 
@@ -267,6 +291,72 @@
                                     output_dict[i][j]
                 end
             end
+        end
+
+        @testset "Test is_dominated" begin
+            coordination_game_matrix = [4 0; 3 2]
+            player = Player(coordination_game_matrix)
+            for action = 1:num_actions(player)
+                @test !is_dominated(player, action)
+            end
+
+            payoffs_2opponents = Array{Int}(undef, 2, 2, 2)
+            payoffs_2opponents[:, 1, 1] = [3, 1]
+            payoffs_2opponents[:, 1, 2] = [6, 0]
+            payoffs_2opponents[:, 2, 1] = [4, 5]
+            payoffs_2opponents[:, 2, 2] = [2, 7]
+            player = Player(payoffs_2opponents)
+
+            for i = 1:num_actions(player)
+                @test !is_dominated(player, i)
+            end
+
+        end
+
+        @testset "Test player corner cases" begin
+            n, m = 3, 4
+            player = Player(zeros((n, m)))
+            for action = 1:n
+                @test is_best_response(player, action, ones(m) * 1/m)
+                @test !is_dominated(player, action)
+            end
+
+            e = 1e-8
+            player = Player([-e -e;
+                             1 -1;
+                             -1 1])
+            action = 1
+            @test is_best_response(player, action, [1/2, 1/2], tol=e)
+            @test !is_best_response(player, action, [1/2, 1/2], tol=e/2)
+            @test !is_dominated(player, action, tol=e+1e-16)
+            @test dominated_actions(player, tol=e+1e-16) == Int[]
+            @test is_dominated(player, action, tol=e/2)
+            @test dominated_actions(player, tol=e/2) == [action]
+        end
+
+        @testset "Test rational input game" begin
+            lp_solver = CDDSolver(exact=true)
+
+            # Corner cases
+            e = 1//(2^25)
+            player = Player([-e -e;
+                             1//1 -1//1;
+                             -1//1 1//1])
+
+            action = 1
+            @test !is_dominated(player, action, tol=e, lp_solver=lp_solver)
+            @test is_dominated(player, action, tol=e//2, lp_solver=lp_solver)
+
+            player.payoff_array[1, 1:2] .= 0;
+
+            @test !is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
+
+            # Simple game
+            game_matrix = [2//3 1//3;
+                           1//3 2//3]
+            player = Player(game_matrix)
+
+            @test dominated_actions(player, lp_solver=lp_solver) == Int[]
         end
     end
 
