@@ -67,6 +67,14 @@ using CDDLib
                        split(string(typeof(player)), ".")[end])
     end
 
+    @testset "Tests on delete_action for Player" begin
+        shapley_game = [0 1 0; 0 0 1; 1 0 0]
+        player = @inferred Player(shapley_game)
+
+        @test @inferred(delete_action(player, 1, 1)) = Player([0 0 1; 1 0 0])
+        @test @inferred(delete_action(player, [1, 2], 1)) = Player([1 0 0])
+    end
+
     # NormalFormGame #
 
     @testset "symmetric NormalFormGame with 2 players" begin
@@ -102,6 +110,10 @@ using CDDLib
         payoffs_2opponents[:, 2, 2] = [2, 7]
         player = @inferred Player(payoffs_2opponents)
         g = @inferred NormalFormGame(tuple([player for i in 1:3]...))
+
+        example = Array{Int64}(undef, 1, 2, 2)
+        example[:, :, 1] = [1 5]
+        example[:, :, 2] = [0 7]
 
         @test @inferred(getindex(g, 1, 1, 2)) == [6, 4, 1]
         @test @inferred(getindex(g, CartesianIndex(1, 1, 2))) == [6, 4, 1]
@@ -141,6 +153,14 @@ using CDDLib
         @test is_nash(g, (2, 2))
     end
 
+    @testset "Tests on delete_action for NormalFormGame" begin
+        shapley_game = [0 1 0; 0 0 1; 1 0 0]
+        g = @inferred NormalFormGame(shapley_game)
+
+        @test @inferred(delete_action(g, 1, 1)) == NormalFormGame([0 0 1; 1 0 0])
+        @test @inferred(delete_action(g, [1, 2], 1)) == NormalFormGame([1 0 0])
+    end
+
     # Trivial cases with one player #
 
     @testset "Player with 0 opponents" begin
@@ -171,6 +191,7 @@ using CDDLib
         @test is_nash(g, [0, 1/2, 1/2])
 
         g = NormalFormGame((2,))
+
         @test num_players(g) == 1
         @test g.players[1].payoff_array == zeros(2)
         g[1] = 10

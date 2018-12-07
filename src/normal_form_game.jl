@@ -53,6 +53,67 @@ function Base.show(io::IO, player::Player)
     Base.print_array(io, player.payoff_array)
 end
 
+# delete_action
+
+"""
+    delete_action(player, action, player_idx)
+
+Return a new Player instance with the action specified by
+`action` deleted from the action set of the player specified by
+`player_idx`. Deletion is not performed in place.
+
+# Arguments
+
+- `player::Player` : Player instance.
+- `action::PureAction`: the action to be deleted.
+- `player_idx::Int` : Index of the player to delete action for.
+
+# Returns
+
+- `::Player` : Copy of `Player` with the action deleted as specified.
+
+# Reference
+
+https://stackoverflow.com/questions/53637511/how-to-delete-the-specific-row-of-n-dimensional-array-in-julia
+"""
+
+function delete_action(player::Player{N}, action::PureAction, player_idx::Int) where N
+    sel = Any[Colon() for i in 1:N]
+    sel[player_idx] = setdiff(axes(player.payoff_array, player_idx), action)
+    payoff_array_new = player.payoff_array[sel...]
+    return Player(payoff_array_new)
+end
+
+
+"""
+    delete_action(player, action, player_idx)
+
+Return a new Player instance with the actions specified by
+`action` deleted from the action set of the player specified by
+`player_idx`. Deletion is not performed in place.
+
+# Arguments
+
+- `player::Player` : Player instance.
+- `action::AbstractVector{PureAction`: the actions to be deleted
+- `player_idx::Int` : Index of the player to delete actions for.
+
+# Returns
+
+- `::Player` : Copy of `Player` with the actions deleted as specified.
+
+#Reference
+
+https://stackoverflow.com/questions/53637511/how-to-delete-the-specific-row-of-n-dimensional-array-in-julia
+"""
+
+function delete_action(player::Player, action::AbstractVector{PureAction}, player_idx::Int)
+    sel = Any[Colon() for i in 1:ndims(player.payoff_array)]
+    sel[player_idx] = setdiff(axes(player.payoff_array, player_idx), action)
+    payoff_array_new = player.payoff_array[sel...]
+    return Player(payoff_array_new)
+end
+
 # payoff_vector
 
 # To resolve definition ambiguity
@@ -498,6 +559,47 @@ Base.summary(g::NormalFormGame) =
     string(Base.dims2string(g.nums_actions),
            " ",
            split(string(typeof(g)), ".")[end])
+
+# delete_action
+
+"""
+    delete_action(g::NormalFormGame, action::PureAction, player_idx::Int)
+
+Return a new `NormalFormGame` instance with the action(s)
+specified by `action` deleted from the action set of the player
+specified by `player_idx`. Deletion is not performed in place.
+
+# Arguments
+
+- `g::NormalFormGame` : `NormalFormGame` instance
+- `action::PureAction` : the action to be deleted
+- `player_idx::Int` : index of the player to delete action for
+"""
+
+function delete_action(g::NormalFormGame, action::PureAction, player_idx::Int)
+  players_new = [delete_action(player, action, player_idx-i) for (i, player) in enumerate(g.players)]
+  return NormalFormGame(players_new)
+end
+
+"""
+    delete_action(g::NormalFormGame, action::PureActionProfile, player_idx::Int)
+
+Return a new `NormalFormGame` instance with the action(s)
+specified by `action` deleted from the action set of the player
+specified by `player_idx`. Deletion is not performed in place.
+
+# Arguments
+
+- `g::NormalFormGame` : `NormalFormGame` instance
+- `action::PureActionProfile` : the actions to be deleted
+- `player_idx::Int` : index of the player to delete action for
+"""
+
+function delete_action(g::NormalFormGame, action::PureActionProfile, player_idx::Int)
+  players_new = [delete_action(player, action, player_idx-i) for (i, player) in enumerate(g.players)]
+  return NormalFormGame(players_new)
+end
+
 
 # TODO: add printout of payoff arrays
 function Base.show(io::IO, g::NormalFormGame)
