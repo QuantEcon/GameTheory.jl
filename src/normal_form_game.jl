@@ -589,8 +589,7 @@ specified by `player_idx`.
 """
 
 function delete_action(g::NormalFormGame, action::PureAction, player_idx::Int)
-  players_new
-    = [delete_action(player, action, player_idx-i+1) for (i, player) in enumerate(g.players)]
+  players_new = [delete_action(player, action, player_idx-i+1) for (i, player) in enumerate(g.players)]
   return NormalFormGame(players_new)
 end
 
@@ -614,8 +613,7 @@ specified by `player_idx`.
 
 function delete_action(g::NormalFormGame,
                         action::AbstractVector{<:PureAction}, player_idx::Int)
-  players_new 
-    = [delete_action(player, action, player_idx-i+1) for (i, player) in enumerate(g.players)]
+  players_new  = [delete_action(player, action, player_idx-i+1) for (i, player) in enumerate(g.players)]
   return NormalFormGame(players_new)
 end
 
