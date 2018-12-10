@@ -71,9 +71,9 @@ using CDDLib
         shapley_game = [0 1 0; 0 0 1; 1 0 0]
         player = @inferred Player(shapley_game)
 
-        @test delete_action(player, 1, 1).payoff_array == 
+        @test delete_action(player, 1, 1).payoff_array ==
             Player([0 0 1; 1 0 0]).payoff_array
-        @test delete_action(player, [1, 2], 1).payoff_array == 
+        @test delete_action(player, [1, 2], 1).payoff_array ==
             Player([1 0 0]).payoff_array
     end
 
@@ -217,7 +217,6 @@ using CDDLib
         @test is_nash(g, [0, 1/2, 1/2])
 
         g = NormalFormGame((2,))
-
         @test num_players(g) == 1
         @test g.players[1].payoff_array == zeros(2)
         g[1] = 10
