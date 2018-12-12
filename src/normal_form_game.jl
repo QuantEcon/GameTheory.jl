@@ -70,7 +70,7 @@ Return a new Player instance with the actions specified by
 
 # Returns
 
-- `::Player` : Copy of `Player` with the actions deleted as specified.
+- `::Player` : `Player` instance with the actions deleted as specified.
 
 #Reference
 
@@ -552,7 +552,7 @@ specified by `player_idx`.
 
 # Returns
 
-- `::NormalFormGame` : Copy of `NormalFormGame` with the actions deleted as specified.
+- `::NormalFormGame` : `NormalFormGame` instance with the actions deleted as specified.
 """
 
 function delete_action(g::NormalFormGame{N},
