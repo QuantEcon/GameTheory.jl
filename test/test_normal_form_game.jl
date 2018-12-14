@@ -69,12 +69,12 @@ using CDDLib
 
     @testset "Tests on delete_action for Player" begin
         shapley_game = [0 1 0; 0 0 1; 1 0 0]
-        player = @inferred Player(shapley_game)
+        player = Player(shapley_game)
 
-        @test delete_action(player, 1, 1).payoff_array ==
-            Player([0 0 1; 1 0 0]).payoff_array
-        @test delete_action(player, [1, 2], 1).payoff_array ==
-            Player([1 0 0]).payoff_array
+        player_new_1 = @inferred delete_action(player, 1, 1)
+        player_new_2 = @inferred delete_action(player, [1, 2], 1)
+        @test player_new_1.payoff_array == Player([0 0 1; 1 0 0]).payoff_array
+        @test player_new_2.payoff_array == Player([1 0 0]).payoff_array
     end
 
     # NormalFormGame #
@@ -159,7 +159,7 @@ using CDDLib
         shapley_game[:, 1, 2] = [0, 1, 0]
         shapley_game[:, 2, 2] = [0, 0, 1]
         shapley_game[:, 3, 2] = [1, 0, 0]
-        g = @inferred NormalFormGame(shapley_game)
+        g = NormalFormGame(shapley_game)
 
         deleted_game_1 = Array{Int}(undef, 2, 3, 2)
         deleted_game_1[:, 1, 1] = [0, 1]
@@ -177,13 +177,15 @@ using CDDLib
         deleted_game_2[1, 2, 2] = 1
         deleted_game_2[1, 3, 2] = 0
 
-        @test delete_action(g, 1, 1).players[1].payoff_array ==
+        g_new_1 = @inferred delete_action(g, 1, 1)
+        g_new_2 = @inferred delete_action(g, [1, 2], 1)
+        @test g_new_1.players[1].payoff_array ==
             NormalFormGame(deleted_game_1).players[1].payoff_array
-        @test delete_action(g, 1, 1).players[2].payoff_array ==
+        @test g_new_1.players[2].payoff_array ==
             NormalFormGame(deleted_game_1).players[2].payoff_array
-        @test delete_action(g, [1, 2], 1).players[1].payoff_array ==
+        @test g_new_2.players[1].payoff_array ==
             NormalFormGame(deleted_game_2).players[1].payoff_array
-        @test delete_action(g, [1, 2], 1).players[2].payoff_array ==
+        @test g_new_2.players[2].payoff_array ==
             NormalFormGame(deleted_game_2).players[2].payoff_array
     end
 
