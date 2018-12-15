@@ -56,7 +56,7 @@ end
 # delete_action
 
 """
-    delete_action(player, action, player_idx)
+    delete_action(player, action[, player_idx=1])
 
 Return a new Player instance with the action(s) specified by `action`
 deleted from the action set of the player specified by `player_idx`.
@@ -75,30 +75,25 @@ deleted from the action set of the player specified by `player_idx`.
 # Example
 
 julia> player = Player([3 0; 0 3; 1 1])
-julia> player.payoff_array
-3×2 Array{Int64,2}:
+3×2 Player{2,Int64}:
  3  0
  0  3
- 1  0
-julia> player_delete1 = delete_action(player, 3, 1)
-julia> player_delete1.payoff_array
-2×2 Array{Int64,2}:
+ 1  1
+
+julia> delete_action(player, 3)
+2×2 Player{2,Int64}:
  3  0
  0  3
-julia> player_delete2 = delete_action(player, 1, 2)
-julia> player_delete2.payoff_array
-3×1 Array{Int64,2}:
+
+julia> delete_action(player, 1, 2)
+3×1 Player{2,Int64}:
  0
  3
  1
 
 """
-
-# Reference
-# https://stackoverflow.com/questions/53637511/how-to-delete-the-specific-row-of-n-dimensional-array-in-julia
-
 function delete_action(player::Player{N,T}, action::AbstractVector{<:PureAction},
-                  player_idx::Integer=1) where {N,T}
+                       player_idx::Integer=1) where {N,T}
     sel = Any[Colon() for i in 1:N]
     sel[player_idx] = setdiff(axes(player.payoff_array, player_idx), action)
     payoff_array_new = player.payoff_array[sel...]::Array{T,N}
@@ -107,6 +102,9 @@ end
 
 delete_action(player::Player, action::PureAction, player_idx::Integer=1) =
     delete_action(player, [action], player_idx)
+
+# Reference
+# https://stackoverflow.com/questions/53637511/how-to-delete-the-specific-row-of-n-dimensional-array-in-julia
 
 # payoff_vector
 
@@ -557,9 +555,9 @@ Base.summary(g::NormalFormGame) =
 # delete_action
 
 """
-    delete_action(g, action, player_idx)
+    delete_action(g, action[, player_idx=1])
 
-Return a new `NormalFormGame` instance with the actions specified by `action`
+Return a new `NormalFormGame` instance with the action(s) specified by `action`
 deleted from the action set of the player specified by `player_idx`.
 
 # Arguments
@@ -574,7 +572,6 @@ deleted from the action set of the player specified by `player_idx`.
 - `::NormalFormGame` : `NormalFormGame` instance with the action(s) deleted as
   specified.
 """
-
 function delete_action(g::NormalFormGame{N},
                        action::AbstractVector{<:PureAction},
                        player_idx::Integer=1) where N
