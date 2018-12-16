@@ -581,7 +581,7 @@ function delete_action(g::NormalFormGame{N},
     return NormalFormGame(players_new)
 end
 
-delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer=1) =
+delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
     delete_action(g, [action], player_idx)
 
 
