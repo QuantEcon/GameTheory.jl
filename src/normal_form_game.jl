@@ -555,7 +555,7 @@ Base.summary(g::NormalFormGame) =
 # delete_action
 
 """
-    delete_action(g, action[, player_idx=1])
+    delete_action(g, action, player_idx)
 
 Return a new `NormalFormGame` instance with the action(s) specified by `action`
 deleted from the action set of the player specified by `player_idx`.
@@ -574,7 +574,7 @@ deleted from the action set of the player specified by `player_idx`.
 """
 function delete_action(g::NormalFormGame{N},
                        action::AbstractVector{<:PureAction},
-                       player_idx::Integer=1) where N
+                       player_idx::Integer) where N
     players_new  = [delete_action(player, action,
                     player_idx-i+1>0 ? player_idx-i+1 : player_idx-i+1+N)
                     for (i, player) in enumerate(g.players)]
