@@ -197,7 +197,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.delete_action",
     "category": "method",
-    "text": "delete_action(player, action[, player_idx=1])\n\nReturn a new Player instance with the action(s) specified by action deleted from the action set of the player specified by player_idx.\n\nArguments\n\nplayer::Player : Player instance.\naction::Union{PureAction,AbstractVector{<:PureAction}}: The action(s) to be deleted.\nplayer_idx::Integer : Index of the player to delete action(s) for.\n\nReturns\n\n::Player : Player instance with the action(s) deleted as specified.\n\nExample\n\njulia> player = Player([3 0; 0 3; 1 1]) 3×2 Player{2,Int64}:  3  0  0  3  1  1\n\njulia> delete_action(player, 3) 2×2 Player{2,Int64}:  3  0  0  3\n\njulia> delete_action(player, 1, 2) 3×1 Player{2,Int64}:  0  3  1\n\n\n\n\n\n"
+    "text": "delete_action(player, action[, player_idx=1])\n\nReturn a new Player instance with the action(s) specified by action deleted from the action set of the player specified by player_idx.\n\nArguments\n\nplayer::Player : Player instance.\naction::Union{PureAction,AbstractVector{<:PureAction}}: The action(s) to be deleted.\nplayer_idx::Integer : Index of the player to delete action(s) for.\n\nReturns\n\n::Player : Player instance with the action(s) deleted as specified.\n\nExamples\n\njulia> player = Player([3 0; 0 3; 1 1])\n3×2 Player{2,Int64}:\n 3  0\n 0  3\n 1  1\n\njulia> delete_action(player, 3)\n2×2 Player{2,Int64}:\n 3  0\n 0  3\n\njulia> delete_action(player, 1, 2)\n3×1 Player{2,Int64}:\n 0\n 3\n 1\n\n\n\n\n\n"
 },
 
 {
