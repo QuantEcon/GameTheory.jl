@@ -72,8 +72,9 @@ deleted from the action set of the player specified by `player_idx`.
 
 - `::Player` : `Player` instance with the action(s) deleted as specified.
 
-# Example
+# Examples
 
+```julia
 julia> player = Player([3 0; 0 3; 1 1])
 3×2 Player{2,Int64}:
  3  0
@@ -90,7 +91,7 @@ julia> delete_action(player, 1, 2)
  0
  3
  1
-
+```
 """
 function delete_action(player::Player{N,T}, action::AbstractVector{<:PureAction},
                        player_idx::Integer=1) where {N,T}
