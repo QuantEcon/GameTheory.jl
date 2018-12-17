@@ -67,6 +67,16 @@ using CDDLib
                        split(string(typeof(player)), ".")[end])
     end
 
+    @testset "Tests on delete_action for Player" begin
+        shapley_game = [0 1 0; 0 0 1; 1 0 0]
+        player = Player(shapley_game)
+
+        player_new_1 = @inferred delete_action(player, 1, 1)
+        player_new_2 = @inferred delete_action(player, [1, 2], 1)
+        @test player_new_1.payoff_array == Player([0 0 1; 1 0 0]).payoff_array
+        @test player_new_2.payoff_array == Player([1 0 0]).payoff_array
+    end
+
     # NormalFormGame #
 
     @testset "symmetric NormalFormGame with 2 players" begin
@@ -139,6 +149,44 @@ using CDDLib
         @test is_nash(g, (1, 2))
         @test is_nash(g, (2, 1))
         @test is_nash(g, (2, 2))
+    end
+
+    @testset "Tests on delete_action for NormalFormGame" begin
+        shapley_game = Array{Int}(undef, 3, 3, 2)
+        shapley_game[:, 1, 1] = [0, 0, 1]
+        shapley_game[:, 2, 1] = [1, 0, 0]
+        shapley_game[:, 3, 1] = [0, 1, 0]
+        shapley_game[:, 1, 2] = [0, 1, 0]
+        shapley_game[:, 2, 2] = [0, 0, 1]
+        shapley_game[:, 3, 2] = [1, 0, 0]
+        g = NormalFormGame(shapley_game)
+
+        deleted_game_1 = Array{Int}(undef, 2, 3, 2)
+        deleted_game_1[:, 1, 1] = [0, 1]
+        deleted_game_1[:, 2, 1] = [0, 0]
+        deleted_game_1[:, 3, 1] = [1, 0]
+        deleted_game_1[:, 1, 2] = [1, 0]
+        deleted_game_1[:, 2, 2] = [0, 1]
+        deleted_game_1[:, 3, 2] = [0, 0]
+
+        deleted_game_2 = Array{Int}(undef, 1, 3, 2)
+        deleted_game_2[1, 1, 1] = 1
+        deleted_game_2[1, 2, 1] = 0
+        deleted_game_2[1, 3, 1] = 0
+        deleted_game_2[1, 1, 2] = 0
+        deleted_game_2[1, 2, 2] = 1
+        deleted_game_2[1, 3, 2] = 0
+
+        g_new_1 = @inferred delete_action(g, 1, 1)
+        g_new_2 = @inferred delete_action(g, [1, 2], 1)
+        @test g_new_1.players[1].payoff_array ==
+            NormalFormGame(deleted_game_1).players[1].payoff_array
+        @test g_new_1.players[2].payoff_array ==
+            NormalFormGame(deleted_game_1).players[2].payoff_array
+        @test g_new_2.players[1].payoff_array ==
+            NormalFormGame(deleted_game_2).players[1].payoff_array
+        @test g_new_2.players[2].payoff_array ==
+            NormalFormGame(deleted_game_2).players[2].payoff_array
     end
 
     # Trivial cases with one player #

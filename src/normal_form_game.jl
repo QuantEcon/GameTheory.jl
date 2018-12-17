@@ -53,6 +53,59 @@ function Base.show(io::IO, player::Player)
     Base.print_array(io, player.payoff_array)
 end
 
+# delete_action
+
+"""
+    delete_action(player, action[, player_idx=1])
+
+Return a new Player instance with the action(s) specified by `action`
+deleted from the action set of the player specified by `player_idx`.
+
+# Arguments
+
+- `player::Player` : Player instance.
+- `action::Union{PureAction,AbstractVector{<:PureAction}}`: The action(s) to be
+  deleted.
+- `player_idx::Integer` : Index of the player to delete action(s) for.
+
+# Returns
+
+- `::Player` : `Player` instance with the action(s) deleted as specified.
+
+# Example
+
+julia> player = Player([3 0; 0 3; 1 1])
+3×2 Player{2,Int64}:
+ 3  0
+ 0  3
+ 1  1
+
+julia> delete_action(player, 3)
+2×2 Player{2,Int64}:
+ 3  0
+ 0  3
+
+julia> delete_action(player, 1, 2)
+3×1 Player{2,Int64}:
+ 0
+ 3
+ 1
+
+"""
+function delete_action(player::Player{N,T}, action::AbstractVector{<:PureAction},
+                       player_idx::Integer=1) where {N,T}
+    sel = Any[Colon() for i in 1:N]
+    sel[player_idx] = setdiff(axes(player.payoff_array, player_idx), action)
+    payoff_array_new = player.payoff_array[sel...]::Array{T,N}
+    return Player(payoff_array_new)
+end
+
+delete_action(player::Player, action::PureAction, player_idx::Integer=1) =
+    delete_action(player, [action], player_idx)
+
+# Reference
+# https://stackoverflow.com/questions/53637511/how-to-delete-the-specific-row-of-n-dimensional-array-in-julia
+
 # payoff_vector
 
 # To resolve definition ambiguity
@@ -498,6 +551,39 @@ Base.summary(g::NormalFormGame) =
     string(Base.dims2string(g.nums_actions),
            " ",
            split(string(typeof(g)), ".")[end])
+
+# delete_action
+
+"""
+    delete_action(g, action, player_idx)
+
+Return a new `NormalFormGame` instance with the action(s) specified by `action`
+deleted from the action set of the player specified by `player_idx`.
+
+# Arguments
+
+- `g::NormalFormGame` : `NormalFormGame` instance.
+- `action::Union{PureAction, AbstractVector{<:PureAction}}` : The action(s) to be
+  deleted.
+- `player_idx::Integer` : Index of the player to delete action(s) for.
+
+# Returns
+
+- `::NormalFormGame` : `NormalFormGame` instance with the action(s) deleted as
+  specified.
+"""
+function delete_action(g::NormalFormGame{N},
+                       action::AbstractVector{<:PureAction},
+                       player_idx::Integer) where N
+    players_new  = [delete_action(player, action,
+                    player_idx-i+1>0 ? player_idx-i+1 : player_idx-i+1+N)
+                    for (i, player) in enumerate(g.players)]
+    return NormalFormGame(players_new)
+end
+
+delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
+    delete_action(g, [action], player_idx)
+
 
 # TODO: add printout of payoff arrays
 function Base.show(io::IO, g::NormalFormGame)
