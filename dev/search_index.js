@@ -185,6 +185,22 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "lib/base_types_and_methods/#Games.delete_action-Union{Tuple{N}, Tuple{NormalFormGame{N,T} where T<:Real,AbstractArray{#s15,1} where #s15<:Integer,Integer}} where N",
+    "page": "Base Types and Methods",
+    "title": "Games.delete_action",
+    "category": "method",
+    "text": "delete_action(g, action, player_idx)\n\nReturn a new NormalFormGame instance with the action(s) specified by action deleted from the action set of the player specified by player_idx.\n\nArguments\n\ng::NormalFormGame : NormalFormGame instance.\naction::Union{PureAction, AbstractVector{<:PureAction}} : The action(s) to be deleted.\nplayer_idx::Integer : Index of the player to delete action(s) for.\n\nReturns\n\n::NormalFormGame : NormalFormGame instance with the action(s) deleted as specified.\n\n\n\n\n\n"
+},
+
+{
+    "location": "lib/base_types_and_methods/#Games.delete_action-Union{Tuple{T}, Tuple{N}, Tuple{Player{N,T},AbstractArray{#s17,1} where #s17<:Integer}, Tuple{Player{N,T},AbstractArray{#s18,1} where #s18<:Integer,Integer}} where T where N",
+    "page": "Base Types and Methods",
+    "title": "Games.delete_action",
+    "category": "method",
+    "text": "delete_action(player, action[, player_idx=1])\n\nReturn a new Player instance with the action(s) specified by action deleted from the action set of the player specified by player_idx.\n\nArguments\n\nplayer::Player : Player instance.\naction::Union{PureAction,AbstractVector{<:PureAction}}: The action(s) to be deleted.\nplayer_idx::Integer : Index of the player to delete action(s) for.\n\nReturns\n\n::Player : Player instance with the action(s) deleted as specified.\n\nExample\n\njulia> player = Player([3 0; 0 3; 1 1]) 3×2 Player{2,Int64}:  3  0  0  3  1  1\n\njulia> delete_action(player, 3) 2×2 Player{2,Int64}:  3  0  0  3\n\njulia> delete_action(player, 1, 2) 3×1 Player{2,Int64}:  0  3  1\n\n\n\n\n\n"
+},
+
+{
     "location": "lib/base_types_and_methods/#Games.dominated_actions-Tuple{Player}",
     "page": "Base Types and Methods",
     "title": "Games.dominated_actions",
