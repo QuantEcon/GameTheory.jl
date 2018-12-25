@@ -39,6 +39,12 @@ end
 
 Player(payoff_array::Array{T,N}) where {T<:Real,N} = Player{N,T}(payoff_array)
 
+Player{N,T}(player::Player{N,S}) where {N,T,S} =
+    Player(Array{T}(player.payoff_array))
+
+Base.convert(::Type{T}, player::Player) where {T<:Player} =
+    player isa T ? player : T(player)
+
 num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents(::Player{N}) where {N} = N - 1
 
@@ -547,6 +553,14 @@ function NormalFormGame(payoffs::Matrix{T}) where T<:Real
     player = Player(payoffs)
     return NormalFormGame(player, player)
 end
+
+function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
+    players_new = ntuple(i -> Player{N,T}(g.players[i]), Val(N))
+    return NormalFormGame(players_new)
+end
+
+Base.convert(::Type{T}, g::NormalFormGame) where {T<:NormalFormGame} =
+    g isa T ? g : T(g)
 
 Base.summary(g::NormalFormGame) =
     string(Base.dims2string(g.nums_actions),

@@ -58,6 +58,31 @@ using CDDLib
         @test dominated_actions(player) == Int[]
     end
 
+    @testset "convert for Player" begin
+        T1 = Int
+        T2 = Float64
+        player = Player(T1[1 2; 3 4])
+        N = ndims(player.payoff_array)
+
+        for T in [T1, T2]
+            player_new = Player{N,T}(player)
+            @test eltype(player_new.payoff_array) == T
+            @test player_new.payoff_array == player.payoff_array
+
+            # Constructor always makes a copy
+            @test player_new.payoff_array !== player.payoff_array
+        end
+
+        for T in [T1, T2]
+            player_new = convert(Player{N,T}, player)
+            @test eltype(player_new.payoff_array) == T
+            @test player_new.payoff_array == player.payoff_array
+
+            @test (player_new.payoff_array === player.payoff_array) ==
+                  (T == T1)
+        end
+    end
+
     @testset "repr(Player)" begin
         A = [1 2; 3 4]
         player = Player(A)
@@ -149,6 +174,36 @@ using CDDLib
         @test is_nash(g, (1, 2))
         @test is_nash(g, (2, 1))
         @test is_nash(g, (2, 2))
+    end
+
+    @testset "convert for NormalFormGame" begin
+        T1 = Int
+        T2 = Float64
+        players = (Player(T1[1 2 3; 4 5 6]), Player(T1[7 8; 9 10; 11 12]))
+        g = NormalFormGame(players)
+        N = num_players(g)
+
+        for T in [T1, T2]
+            g_new = @inferred NormalFormGame{N,T}(g)
+            for (player_new, player) in zip(g_new.players, players)
+                @test eltype(player_new.payoff_array) == T
+                @test player_new.payoff_array == player.payoff_array
+
+                # Constructor always makes a copy
+                @test player_new.payoff_array !== player.payoff_array
+            end
+        end
+
+        for T in [T1, T2]
+            g_new = @inferred convert(NormalFormGame{N,T}, g)
+            for (player_new, player) in zip(g_new.players, players)
+                @test eltype(player_new.payoff_array) == T
+                @test player_new.payoff_array == player.payoff_array
+
+                @test (player_new.payoff_array === player.payoff_array) ===
+                      (T == T1)
+            end
+        end
     end
 
     @testset "Tests on delete_action for NormalFormGame" begin
