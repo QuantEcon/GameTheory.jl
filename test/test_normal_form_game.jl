@@ -58,6 +58,31 @@ using CDDLib
         @test dominated_actions(player) == Int[]
     end
 
+    @testset "convert for Player" begin
+        T1 = Int
+        T2 = Float64
+        player = Player(T1[1 2; 3 4])
+        N = ndims(player.payoff_array)
+
+        for T in [T1, T2]
+            player_new = Player{N,T}(player)
+            @test eltype(player_new.payoff_array) == T
+            @test player_new.payoff_array == player.payoff_array
+
+            # Constructor always makes a copy
+            @test player_new.payoff_array !== player.payoff_array
+        end
+
+        for T in [T1, T2]
+            player_new = convert(Player{N,T}, player)
+            @test eltype(player_new.payoff_array) == T
+            @test player_new.payoff_array == player.payoff_array
+
+            @test (player_new.payoff_array === player.payoff_array) ==
+                  (T == T1)
+        end
+    end
+
     @testset "repr(Player)" begin
         A = [1 2; 3 4]
         player = Player(A)

@@ -39,6 +39,12 @@ end
 
 Player(payoff_array::Array{T,N}) where {T<:Real,N} = Player{N,T}(payoff_array)
 
+Player{N,T}(player::Player{N,S}) where {N,T,S} =
+    Player(Array{T}(player.payoff_array))
+
+Base.convert(::Type{T}, player::Player) where {T<:Player} =
+    player isa T ? player : T(player)
+
 num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents(::Player{N}) where {N} = N - 1
 
