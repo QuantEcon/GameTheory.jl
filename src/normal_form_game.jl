@@ -336,7 +336,7 @@ function best_responses(player::Player,
 end
 
 """
-    best_response(player, opponents_actions; tie_breaking="smallest", tol=1e-8)
+    best_response(player, opponents_actions; tie_breaking=:smallest, tol=1e-8)
 
 Return a best response action to `opponents_actions`.
 
@@ -344,29 +344,28 @@ Return a best response action to `opponents_actions`.
 
 - `player::Player` : Player instance.
 - $(opponents_actions_docstring)
-- `tie_breaking::AbstractString("smallest")` : Control how to break a tie (see
-  Returns for details).
+- `tie_breaking::Symbol` : Control how to break a tie (see Returns for details).
 - `tol::Float64` : Tolerance to be used to determine best response actions.
 
 # Returns
 
-- `::Int` : If tie_breaking="smallest", returns the best response action with
-  the smallest index; if tie_breaking="random", returns an action randomly
+- `::Int` : If `tie_breaking=:smallest`, returns the best response action with
+  the smallest index; if `tie_breaking=:random`, returns an action randomly
   chosen from the best response actions.
 """
 function best_response(player::Player,
                        opponents_actions::Union{Action,ActionProfile,Nothing};
-                       tie_breaking::AbstractString="smallest",
+                       tie_breaking::Symbol=:smallest,
                        tol::Float64=1e-8)
-    if tie_breaking == "smallest"
+    if tie_breaking == :smallest
         payoffs = payoff_vector(player, opponents_actions)
         return argmax(payoffs)
-    elseif tie_breaking == "random"
+    elseif tie_breaking == :random
         brs = best_responses(player, opponents_actions; tol=tol)
         return rand(brs)
     else
         throw(ArgumentError(
-            "tie_breaking must be one of 'smallest' or 'random'"
+            "tie_breaking must be one of `:smallest` or `:random`"
         ))
     end
 end

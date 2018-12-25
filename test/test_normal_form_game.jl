@@ -23,10 +23,10 @@ using CDDLib
         @test sort(@inferred(best_responses(player, [2/3, 1/3]))) ==
               sort([1, 2])
         @test best_response(
-            player, [2/3, 1/3], tie_breaking="random"
+            player, [2/3, 1/3], tie_breaking=:random
             ) in [1, 2]
         @test_throws ArgumentError best_response(
-            player, [2/3, 1/3], tie_breaking="0"
+            player, [2/3, 1/3], tie_breaking=:invalid_symbol
             )
         @test @inferred(is_best_response(player, 1, 1))
         @test @inferred(is_best_response(player, [1/2, 1/2], [2/3, 1/3]))
