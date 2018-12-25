@@ -554,6 +554,14 @@ function NormalFormGame(payoffs::Matrix{T}) where T<:Real
     return NormalFormGame(player, player)
 end
 
+function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
+    players_new = ntuple(i -> Player{N,T}(g.players[i]), Val(N))
+    return NormalFormGame(players_new)
+end
+
+Base.convert(::Type{T}, g::NormalFormGame) where {T<:NormalFormGame} =
+    g isa T ? g : T(g)
+
 Base.summary(g::NormalFormGame) =
     string(Base.dims2string(g.nums_actions),
            " ",
