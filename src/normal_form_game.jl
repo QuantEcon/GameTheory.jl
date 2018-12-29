@@ -436,16 +436,31 @@ Constructor of an N-player NormalFormGame, consisting of payoffs all 0.
 - `nums_actions::NTuple{N,Int}` : Numbers of actions of the N players.
 """
 function NormalFormGame(T::Type, nums_actions::NTuple{N,Int}) where N
-    # TODO: can we still get inference to work but avoid the `::NTuple` below?
-    players::NTuple{N,Player{N,T}} =
-        ntuple(i -> Player(zeros(tuple(nums_actions[i:end]...,
-                                       nums_actions[1:i-1]...))),
-               N)
-    return NormalFormGame{N,T}(players, nums_actions)
+    players = Vector{Player{N,T}}(undef, N)
+    for i in 1:N
+        sz = ntuple(j -> nums_actions[i-1+j <= N ? i-1+j : i-1+j-N], N)
+        players[i] = Player(zeros(T, sz))
+    end
+    return NormalFormGame(players)
 end
 
 NormalFormGame(nums_actions::NTuple{N,Int}) where {N} =
     NormalFormGame(Float64, nums_actions)
+
+# Check that the shapes of the payoff arrays are consistent
+function is_consistent(players::NTuple{N,Player{N,T}}) where {N,T}
+    shape_1 = size(players[1].payoff_array)
+    for i in 2:N
+        shape = size(players[i].payoff_array)
+        for j in 1:(N-i+1)
+            shape[j] == shape_1[i-1+j] || return false
+        end
+        for j in (N-i+2):N
+            shape[j] == shape_1[j-(N-i+1)] || return false
+        end
+    end
+    return true
+end
 
 """
     NormalFormGame(players)
@@ -457,17 +472,9 @@ Constructor of an N-player NormalFormGame with a tuple of N Player instances.
 - `players::NTuple{N,Player}` : Tuple of Player instances.
 """
 function NormalFormGame(players::NTuple{N,Player{N,T}}) where {N,T}
-    # Check that the shapes of the payoff arrays are consistent
-    shape_1 = size(players[1].payoff_array)
-    for i in 2:N
-        shape = size(players[i].payoff_array)
-        if shape != tuple(shape_1[i:end]..., shape_1[1:i-1]...)
-            throw(ArgumentError("shapes of payoff arrays must be consistent"))
-        end
-    end
-
-    nums_actions::NTuple{N,Int} =
-        tuple([num_actions(player) for player in players]...)
+    is_consistent(players) ||
+        throw(ArgumentError("shapes of payoff arrays must be consistent"))
+    nums_actions = ntuple(i -> num_actions(players[i]), N)
     return NormalFormGame{N,T}(players, nums_actions)
 end
 
@@ -481,7 +488,7 @@ Constructor of an N-player NormalFormGame with a vector of N Player instances.
 - `players::Vector{Player}` : Vector of Player instances.
 """
 NormalFormGame(players::Vector{Player{N,T}}) where {N,T} =
-    NormalFormGame(tuple(players...)::NTuple{N,Player{N,T}})
+    NormalFormGame(ntuple(i -> players[i], N))
 
 """
     NormalFormGame(players...)
@@ -518,19 +525,19 @@ payoff values.
 function NormalFormGame(payoffs::Array{T,M}) where {T<:Real,M}
     N = M - 1
     dims = Base.front(size(payoffs))
-    colons = Base.front(ntuple(j -> Colon(), M)::NTuple{M,Colon})
+    colons = Base.front(ntuple(j -> Colon(), M))
 
     size(payoffs)[end] != N && throw(ArgumentError(
         "length of the array in the last axis must be equal to
          the number of players"
     ))
 
-    players = [
-        Player(permutedims(view(payoffs, colons..., i),
-                           (i:N..., 1:i-1...)::typeof(dims))
-        ) for i in 1:N
-    ]
-    # Call NormalFormGame{N,T}(players::Vector{Player{N,T}})
+    players = ntuple(
+        i -> Player(permutedims(view(payoffs, colons..., i),
+                                     (i:N..., 1:i-1...)::typeof(dims))
+                   ),
+        Val(N)
+    )
     NormalFormGame(players)
 end
 
