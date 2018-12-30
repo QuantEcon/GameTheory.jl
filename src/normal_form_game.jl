@@ -867,7 +867,7 @@ function is_dominated(player::Player{N,T}, action::PureAction;
     res = linprog(c, A, sense, b, lp_solver)
 
     if res.status == :Optimal
-        return res.sol[end] > tol
+        return (res.sol[end] > tol)::Bool
     elseif res.status == :Infeasible
         return false
     else
