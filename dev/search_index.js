@@ -205,7 +205,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.dominated_actions",
     "category": "method",
-    "text": "dominated_actions(player[, tol=1e-8, lp_solver=ClpSolver()])\n\nReturn a vector of actions that are strictly dominated by some mixed actions.\n\nArguments\n\nplayer::Player : Player instance.\ntol::Real : Tolerance level used in determining domination.\nlp_solver::AbstractMathProgSolver : See is_dominated.\n\nReturns\n\nout::Vector{Int} : Vector of integers representing pure actions, each of which is strictly dominated by some mixed action.\n\n\n\n\n\n"
+    "text": "dominated_actions(player; tol=1e-8, lp_solver=ClpSolver())\n\nReturn a vector of actions that are strictly dominated by some mixed actions.\n\nArguments\n\nplayer::Player : Player instance.\ntol::Real : Tolerance level used in determining domination.\nlp_solver::AbstractMathProgSolver : See is_dominated.\n\nReturns\n\nout::Vector{Int} : Vector of integers representing pure actions, each of which is strictly dominated by some mixed action.\n\n\n\n\n\n"
 },
 
 {
@@ -221,7 +221,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "method",
-    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn True if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n\n\n"
+    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n\n\n"
 },
 
 {
@@ -229,7 +229,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_dominated",
     "category": "method",
-    "text": "is_dominated(player, action[, tol=1e-8, lp_solver=ClpSolver()])\n\nDetermine whether action is strictly dominated by some mixed action.\n\nArguments\n\nplayer::Player : Player instance.\naction::PureAction : Integer representing a pure action.\ntol::Real : Tolerance to be used.\nlp_solver::AbstractMathProgSolver : Allows users to choose a particular solver for linear programming problems. Options include ClpSolver(), CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().\n\nReturns\n\n::Bool : True if action is strictly dominated by some mixed action; False otherwise.\n\n\n\n\n\n"
+    "text": "is_dominated(player, action; tol=1e-8, lp_solver=ClpSolver())\n\nDetermine whether action is strictly dominated by some mixed action.\n\nArguments\n\nplayer::Player : Player instance.\naction::PureAction : Integer representing a pure action.\ntol::Real : Tolerance to be used.\nlp_solver::AbstractMathProgSolver : Allows users to choose a particular solver for linear programming problems. Options include ClpSolver(), CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses ClpSolver().\n\nReturns\n\n::Bool : True if action is strictly dominated by some mixed action; false otherwise.\n\n\n\n\n\n"
 },
 
 {
@@ -245,7 +245,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_nash",
     "category": "method",
-    "text": "is_nash(g, action; tol=1e-8)\n\nReturn true if action is a Nash equilibrium of a trivial game with 1 player.\n\nArguments\n\ng::NormalFormGame : Instance of 1-player NormalFormGame.\naction::Action : Integer (pure action) or vector of reals (mixed action).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool\n\n\n\n\n\n"
+    "text": "is_nash(g, action; tol=1e-8)\n\nReturn true if action is a Nash equilibrium of a trivial game with 1 player.\n\nArguments\n\ng::NormalFormGame{1} : Instance of 1-player NormalFormGame.\naction::Action : Integer (pure action) or vector of reals (mixed action).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool\n\n\n\n\n\n"
 },
 
 {
@@ -277,7 +277,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
-    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a trivial game with 1 player, one for each own action.\n\nArguments\n\nplayer::Player : Player instance.\nopponent_action::Nothing\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n\n\n"
+    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a trivial game with 1 player, one for each own action.\n\nArguments\n\nplayer::Player{1} : Player instance.\nopponent_action::Nothing\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n\n\n"
 },
 
 {
@@ -285,7 +285,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
-    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent\'s mixed action.\n\nArguments\n\nplayer::Player : Player instance.\nopponent_action::MixedAction : Opponent\'s mixed action (vector of reals).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n\n\n"
+    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent\'s mixed action.\n\nArguments\n\nplayer::Player{2} : Player instance.\nopponent_action::MixedAction : Opponent\'s mixed action (vector of reals).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n\n\n"
 },
 
 {
@@ -293,7 +293,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
-    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent\'s pure action.\n\nArguments\n\nplayer::Player : Player instance.\nopponent_action::PureAction : Opponent\'s pure action (integer).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n\n\n"
+    "text": "payoff_vector(player, opponent_action)\n\nReturn a vector of payoff values for a Player in a 2-player game, one for each own action, given the opponent\'s pure action.\n\nArguments\n\nplayer::Player{2} : Player instance.\nopponent_action::PureAction : Opponent\'s pure action (integer).\n\nReturns\n\n::Vector : Payoff vector.\n\n\n\n\n\n"
 },
 
 {
