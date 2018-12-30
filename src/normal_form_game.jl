@@ -64,8 +64,8 @@ end
 """
     delete_action(player, action[, player_idx=1])
 
-Return a new Player instance with the action(s) specified by `action`
-deleted from the action set of the player specified by `player_idx`.
+Return a new Player instance with the action(s) specified by `action` deleted
+from the action set of the player specified by `player_idx`.
 
 # Arguments
 
@@ -129,8 +129,7 @@ each own action, given a tuple of the opponents' pure actions.
 # Arguments
 
 - `player::Player` : Player instance.
-- `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure
-  actions.
+- `opponents_actions::PureActionProfile` : Tuple of N-1 opponents' pure actions.
 
 # Returns
 
@@ -186,7 +185,7 @@ own action, given the opponent's pure action.
 
 # Arguments
 
-- `player::Player` : Player instance.
+- `player::Player{2}` : Player instance.
 - `opponent_action::PureAction` : Opponent's pure action (integer).
 
 # Returns
@@ -205,7 +204,7 @@ own action, given the opponent's mixed action.
 
 # Arguments
 
-- `player::Player` : Player instance.
+- `player::Player{2}` : Player instance.
 - `opponent_action::MixedAction` : Opponent's mixed action (vector of reals).
 
 # Returns
@@ -226,7 +225,7 @@ one for each own action.
 
 # Arguments
 
-- `player::Player` : Player instance.
+- `player::Player{1}` : Player instance.
 - `opponent_action::Nothing`
 
 # Returns
@@ -259,7 +258,7 @@ end
 """
     is_best_response(player, own_action, opponents_actions; tol=1e-8)
 
-Return True if `own_action` is a best response to `opponents_actions`.
+Return true if `own_action` is a best response to `opponents_actions`.
 
 # Arguments
 
@@ -584,8 +583,8 @@ deleted from the action set of the player specified by `player_idx`.
 # Arguments
 
 - `g::NormalFormGame` : `NormalFormGame` instance.
-- `action::Union{PureAction, AbstractVector{<:PureAction}}` : The action(s) to be
-  deleted.
+- `action::Union{PureAction, AbstractVector{<:PureAction}}` : The action(s) to
+  be deleted.
 - `player_idx::Integer` : Index of the player to delete action(s) for.
 
 # Returns
@@ -711,7 +710,7 @@ Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 
 # Arguments
 
-- `g::NormalFormGame` : Instance of 1-player NormalFormGame.
+- `g::NormalFormGame{1}` : Instance of 1-player NormalFormGame.
 - `action::Action` : Integer (pure action) or vector of reals (mixed action).
 - `tol::Float64` : Tolerance to be used to determine best response actions.
 
@@ -741,8 +740,8 @@ Convert a pure action to the corresponding mixed action.
 
 # Returns
 
-- `mixed_action::Vector{Float64}` : The mixed action representation of the
-  given pure action.
+- `mixed_action::Vector{Float64}` : The mixed action representation of the given
+  pure action.
 """
 function pure2mixed(num_actions::Integer, action::PureAction)
     mixed_action = zeros(num_actions)
@@ -785,12 +784,12 @@ Return true if `action_profile` is Pareto efficient for game `g`.
 
 # Arguments
 
-* `g::NormalFormGame` : Instance of N-player NormalFormGame.
-* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+- `g::NormalFormGame` : Instance of N-player NormalFormGame.
+- `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
 
 # Returns
 
-* `::Bool`
+- `::Bool`
 """ is_pareto_efficient
 
 @doc """
@@ -800,21 +799,20 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 
 # Arguments
 
-* `g::NormalFormGame` : Instance of N-player NormalFormGame.
-* `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
+- `g::NormalFormGame` : Instance of N-player NormalFormGame.
+- `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
 
 # Returns
 
-* `::Bool`
+- `::Bool`
 """ is_pareto_dominant
 
 # is_dominated
 
 """
-    is_dominated(player, action[, tol=1e-8, lp_solver=ClpSolver()])
+    is_dominated(player, action; tol=1e-8, lp_solver=ClpSolver())
 
-Determine whether `action` is strictly dominated by some mixed
-action.
+Determine whether `action` is strictly dominated by some mixed action.
 
 # Arguments
 
@@ -828,8 +826,8 @@ action.
 
 # Returns
 
-- `::Bool` : True if `action` is strictly dominated by some mixed action;
-  False otherwise.
+- `::Bool` : True if `action` is strictly dominated by some mixed action; false
+  otherwise.
 
 """
 function is_dominated(player::Player{N,T}, action::PureAction;
@@ -886,7 +884,7 @@ end
 # dominated_actions
 
 """
-    dominated_actions(player[, tol=1e-8, lp_solver=ClpSolver()])
+    dominated_actions(player; tol=1e-8, lp_solver=ClpSolver())
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 
