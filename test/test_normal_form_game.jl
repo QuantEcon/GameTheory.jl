@@ -36,7 +36,8 @@ using CDDLib
         @test best_response(player, [2, 1], [0., 0.1]) == 2
 
         # Dominated actions
-        @test dominated_actions(player) == Int[]
+        @test !(@inferred(is_dominated(player, 1)))
+        @test @inferred(dominated_actions(player)) == Int[]
     end
 
     @testset "Player with 2 opponents" begin
@@ -55,7 +56,8 @@ using CDDLib
 
         @test_throws MethodError best_response(player, (1, [1/2, 1/2]))
 
-        @test dominated_actions(player) == Int[]
+        @test !(@inferred(is_dominated(player, 1)))
+        @test @inferred(dominated_actions(player)) == Int[]
     end
 
     @testset "convert for Player" begin
@@ -253,13 +255,13 @@ using CDDLib
         @test @inferred(payoff_vector(player, nothing)) == [0, 1]
         @test @inferred is_best_response(player, 2, nothing)
         @test @inferred(best_response(player, nothing)) == 2
-        @test is_dominated(player, 1)
+        @test @inferred is_dominated(player, 1)
         @test !is_dominated(player, 2)
 
         payoffs = [0, 1, -1]
         player = Player(payoffs)
         dom_actions = [1, 3]
-        @test dominated_actions(player) == dom_actions
+        @test @inferred(dominated_actions(player)) == dom_actions
 
     end
 
