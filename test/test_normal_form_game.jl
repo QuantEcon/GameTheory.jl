@@ -20,10 +20,14 @@ using CDDLib
 
         @test @inferred(best_response(player, 2)) == 2
         @test @inferred(best_response(player, [1/2, 1/2])) == 2
+        @test @inferred(best_response(player, [1/2, 1/2], BROptions())) == 2
         @test sort(@inferred(best_responses(player, [2/3, 1/3]))) ==
               sort([1, 2])
         @test best_response(
             player, [2/3, 1/3], tie_breaking=:random
+            ) in [1, 2]
+        @test best_response(
+            player, [2/3, 1/3], BROptions(tol=1e-5, tie_breaking=:random)
             ) in [1, 2]
         @test_throws ArgumentError best_response(
             player, [2/3, 1/3], tie_breaking=:invalid_symbol

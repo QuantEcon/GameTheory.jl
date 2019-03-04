@@ -265,7 +265,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 - `player::Player` : Player instance.
 - `own_action::PureAction` : Own pure action (integer).
 - $(opponents_actions_docstring)
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -275,7 +275,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 function is_best_response(player::Player,
                           own_action::PureAction,
                           opponents_actions::Union{Action,ActionProfile,Nothing};
-                          tol::Float64=1e-8)
+                          tol::Real=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
     return payoffs[own_action] >= payoff_max - tol
@@ -291,7 +291,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 - `player::Player` : Player instance.
 - `own_action::MixedAction` : Own mixed action (vector of reals).
 - $(opponents_actions_docstring)
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -301,7 +301,7 @@ Return true if `own_action` is a best response to `opponents_actions`.
 function is_best_response(player::Player,
                           own_action::MixedAction,
                           opponents_actions::Union{Action,ActionProfile,Nothing};
-                          tol::Float64=1e-8)
+                          tol::Real=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
     return dot(own_action, payoffs) >= payoff_max - tol
@@ -318,7 +318,7 @@ Return all the best response actions to `opponents_actions`.
 
 - `player::Player` : Player instance.
 - $(opponents_actions_docstring)
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -327,7 +327,7 @@ Return all the best response actions to `opponents_actions`.
 """
 function best_responses(player::Player,
                         opponents_actions::Union{Action,ActionProfile,Nothing};
-                        tol::Float64=1e-8)
+                        tol::Real=1e-8)
     payoffs = payoff_vector(player, opponents_actions)
     payoff_max = maximum(payoffs)
     best_responses = findall(x -> x >= payoff_max - tol, payoffs)
@@ -335,16 +335,19 @@ function best_responses(player::Player,
 end
 
 """
-    best_response(player, opponents_actions; tie_breaking=:smallest, tol=1e-8)
+    best_response([rng=GLOBAL_RNG], player, opponents_actions;
+                  tie_breaking=:smallest, tol=1e-8)
 
 Return a best response action to `opponents_actions`.
 
 # Arguments
 
+- `rng::AbstractRNG=GLOBAL_RNG` : Random number generator; relevant only with
+  `tie_breaking=:random`.
 - `player::Player` : Player instance.
 - $(opponents_actions_docstring)
 - `tie_breaking::Symbol` : Control how to break a tie (see Returns for details).
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -352,22 +355,56 @@ Return a best response action to `opponents_actions`.
   the smallest index; if `tie_breaking=:random`, returns an action randomly
   chosen from the best response actions.
 """
-function best_response(player::Player,
+function best_response(rng::AbstractRNG, player::Player,
                        opponents_actions::Union{Action,ActionProfile,Nothing};
                        tie_breaking::Symbol=:smallest,
-                       tol::Float64=1e-8)
+                       tol::Real=1e-8)
     if tie_breaking == :smallest
         payoffs = payoff_vector(player, opponents_actions)
         return argmax(payoffs)
     elseif tie_breaking == :random
         brs = best_responses(player, opponents_actions; tol=tol)
-        return rand(brs)
+        return rand(rng, brs)
     else
         throw(ArgumentError(
             "tie_breaking must be one of `:smallest` or `:random`"
         ))
     end
 end
+
+best_response(player::Player,
+              opponents_actions::Union{Action,ActionProfile,Nothing};
+              tie_breaking::Symbol=:smallest, tol::Real=1e-8) =
+    best_response(Random.GLOBAL_RNG, player, opponents_actions,
+                  tie_breaking=tie_breaking, tol=tol)
+
+"""
+    BROptions
+
+Struct to contain options for `best_response`.
+
+# Fieslds
+- `tol::Real=1e-8` : Tolerance level.
+- `tie_breaking::Symbol=:smallest` : `:smallest` or `:random`.
+- `rng::AbstractRNG=GLOBAL_RNG` : Random number generator.
+"""
+@with_kw struct BROptions{T<:Real,TR<:AbstractRNG}
+    tol::T = 1e-8
+    tie_breaking::Symbol = :smallest
+    rng::TR = Random.GLOBAL_RNG
+end
+
+"""
+    best_response(player, opponents_actions, options)
+
+Return a best response action to `opponents_actions` with options as specified
+by a `BROptions` instance `options`.
+"""
+best_response(player::Player,
+              opponents_actions::Union{Action,ActionProfile,Nothing},
+              options::BROptions) =
+    best_response(options.rng, player, opponents_actions;
+                  tie_breaking=options.tie_breaking, tol=options.tol)
 
 # Perturbed best response
 """
@@ -660,7 +697,7 @@ Base.setindex!(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) where {N} =
 # is_nash
 
 function is_nash(g::NormalFormGame, action_profile::ActionProfile;
-                 tol::Float64=1e-8)
+                 tol::Real=1e-8)
     for (i, player) in enumerate(g.players)
         own_action = action_profile[i]
         opponents_actions =
@@ -673,7 +710,7 @@ function is_nash(g::NormalFormGame, action_profile::ActionProfile;
 end
 
 function is_nash(g::NormalFormGame{2}, action_profile::ActionProfile;
-                 tol::Float64=1e-8)
+                 tol::Real=1e-8)
     for (i, player) in enumerate(g.players)
         own_action, opponent_action =
             action_profile[i], action_profile[3-i]
@@ -695,7 +732,7 @@ Return true if `action_profile` is a Nash equilibrium.
 - `g::NormalFormGame` : Instance of N-player NormalFormGame.
 - `action_profile::ActionProfile` : Tuple of N integers (pure actions) or N
   vectors of reals (mixed actions).
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
 
@@ -718,11 +755,11 @@ Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 
 - `::Bool`
 """
-is_nash(g::NormalFormGame{1}, action::Action; tol::Float64=1e-8) =
+is_nash(g::NormalFormGame{1}, action::Action; tol::Real=1e-8) =
     is_best_response(g.players[1], action, nothing, tol=tol)
 
 is_nash(g::NormalFormGame{1}, action_profile::ActionProfile;
-        tol::Float64=1e-8) = is_nash(g, action_profile..., tol=tol)
+        tol::Real=1e-8) = is_nash(g, action_profile..., tol=tol)
 
 # Utility functions
 
