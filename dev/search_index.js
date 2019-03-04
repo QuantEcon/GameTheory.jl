@@ -169,11 +169,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.best_response-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
+    "location": "lib/base_types_and_methods/#Games.best_response-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real},BROptions}",
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "method",
-    "text": "best_response(player, opponents_actions; tie_breaking=:smallest, tol=1e-8)\n\nReturn a best response action to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntie_breaking::Symbol : Control how to break a tie (see Returns for details).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Int : If tie_breaking=:smallest, returns the best response action with the smallest index; if tie_breaking=:random, returns an action randomly chosen from the best response actions.\n\n\n\n\n\n"
+    "text": "best_response(player, opponents_actions, options)\n\nReturn a best response action to opponents_actions with options as specified by a BROptions instance options.\n\n\n\n\n\n"
+},
+
+{
+    "location": "lib/base_types_and_methods/#Games.best_response-Tuple{Random.AbstractRNG,Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
+    "page": "Base Types and Methods",
+    "title": "Games.best_response",
+    "category": "method",
+    "text": "best_response([rng=GLOBAL_RNG], player, opponents_actions;\n              tie_breaking=:smallest, tol=1e-8)\n\nReturn a best response action to opponents_actions.\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG : Random number generator; relevant only with tie_breaking=:random.\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntie_breaking::Symbol : Control how to break a tie (see Returns for details).\ntol::Real : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Int : If tie_breaking=:smallest, returns the best response action with the smallest index; if tie_breaking=:random, returns an action randomly chosen from the best response actions.\n\n\n\n\n\n"
 },
 
 {
@@ -181,11 +189,11 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.best_responses",
     "category": "method",
-    "text": "best_responses(player, opponents_actions; tol=1e-8)\n\nReturn all the best response actions to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nbest_responses::Vector{Int} : Vector containing all the best response actions.\n\n\n\n\n\n"
+    "text": "best_responses(player, opponents_actions; tol=1e-8)\n\nReturn all the best response actions to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Real : Tolerance to be used to determine best response actions.\n\nReturns\n\nbest_responses::Vector{Int} : Vector containing all the best response actions.\n\n\n\n\n\n"
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.delete_action-Union{Tuple{N}, Tuple{NormalFormGame{N,T} where T<:Real,AbstractArray{#s15,1} where #s15<:Integer,Integer}} where N",
+    "location": "lib/base_types_and_methods/#Games.delete_action-Union{Tuple{N}, Tuple{NormalFormGame{N,T} where T<:Real,AbstractArray{#s18,1} where #s18<:Integer,Integer}} where N",
     "page": "Base Types and Methods",
     "title": "Games.delete_action",
     "category": "method",
@@ -213,7 +221,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "method",
-    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::MixedAction : Own mixed action (vector of reals).\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n\n\n"
+    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::MixedAction : Own mixed action (vector of reals).\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Real : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n\n\n"
 },
 
 {
@@ -221,7 +229,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "method",
-    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n\n\n"
+    "text": "is_best_response(player, own_action, opponents_actions; tol=1e-8)\n\nReturn true if own_action is a best response to opponents_actions.\n\nArguments\n\nplayer::Player : Player instance.\nown_action::PureAction : Own pure action (integer).\nopponents_actions::Union{Action,ActionProfile,Nothing} : Profile of N-1 opponents\' actions. If N=2, then it must be a vector of reals (in which case it is treated as the opponent\'s mixed action) or a scalar of integer (in which case it is treated as the opponent\'s pure action). If N>2, then it must be a tuple of N-1 integers (pure actions) or N-1 vectors of reals (mixed actions). (For the degenerate case N=1, it must be nothing.)\ntol::Real : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool : True if own_action is a best response to opponents_actions; false otherwise.\n\n\n\n\n\n"
 },
 
 {
@@ -237,7 +245,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Base Types and Methods",
     "title": "Games.is_nash",
     "category": "function",
-    "text": "is_nash(g, action_profile; tol=1e-8)\n\nReturn true if action_profile is a Nash equilibrium.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::ActionProfile : Tuple of N integers (pure actions) or N vectors of reals (mixed actions).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool\n\n\n\n\n\n"
+    "text": "is_nash(g, action_profile; tol=1e-8)\n\nReturn true if action_profile is a Nash equilibrium.\n\nArguments\n\ng::NormalFormGame : Instance of N-player NormalFormGame.\naction_profile::ActionProfile : Tuple of N integers (pure actions) or N vectors of reals (mixed actions).\ntol::Real : Tolerance to be used to determine best response actions.\n\nReturns\n\n::Bool\n\n\n\n\n\n"
 },
 
 {
@@ -453,7 +461,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Nash Equilibria",
     "title": "Games.pure_nash",
     "category": "method",
-    "text": "pure_nash(nfg; ntofind=Inf, tol=1e-8)\n\nFinds all pure action Nash equilibria for a normal form game. It returns an empty array if there is no pure action Nash.\n\nCurrently uses a brute force algorithm, but that hopefully will change in the future.\n\nArguments\n\nnfg::NormalFormGame: Instance of N-player NormalFormGame.\nntofind::Inf: Maximal number of pure action Nash equilibria to be found; default is prod(nfg.nums_actions).\ntol::Float64 : Tolerance to be used to determine best response actions.\n\nReturns\n\nne::Vector{NTuple{N,Int}}: Vector of pure action Nash equilibria.\n\n\n\n\n\n"
+    "text": "pure_nash(nfg; ntofind=Inf, tol=1e-8)\n\nFinds all pure action Nash equilibria for a normal form game. It returns an empty array if there is no pure action Nash.\n\nCurrently uses a brute force algorithm, but that hopefully will change in the future.\n\nArguments\n\nnfg::NormalFormGame: Instance of N-player NormalFormGame.\nntofind::Inf: Maximal number of pure action Nash equilibria to be found; default is prod(nfg.nums_actions).\ntol::Real : Tolerance to be used to determine best response actions.\n\nReturns\n\nne::Vector{NTuple{N,Int}}: Vector of pure action Nash equilibria.\n\n\n\n\n\n"
 },
 
 {
