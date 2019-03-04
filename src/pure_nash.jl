@@ -13,13 +13,13 @@ will change in the future.
 - `nfg::NormalFormGame`: Instance of N-player NormalFormGame.
 - `ntofind::Inf`: Maximal number of pure action Nash equilibria to be
   found; default is `prod(nfg.nums_actions)`.
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
 - `ne::Vector{NTuple{N,Int}}`: Vector of pure action Nash equilibria.
 """
 function pure_nash(nfg::NormalFormGame; ntofind=prod(nfg.nums_actions),
-                   tol::Float64=1e-8)
+                   tol::Real=1e-8)
     # Get number of players and their actions
     np = num_players(nfg)
     na = nfg.nums_actions

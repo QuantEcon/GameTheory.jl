@@ -8,6 +8,7 @@ using Clp
 using MathProgBase
 using QuantEcon
 using Combinatorics
+using Parameters
 
 # Geometry packages
 using Polyhedra
@@ -78,6 +79,9 @@ export
 
     # General functions
     num_players, num_actions, num_opponents,
+
+    # Utilities
+    BROptions,
 
     # Nash Equilibrium
     pure_nash,
