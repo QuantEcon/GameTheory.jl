@@ -4,7 +4,7 @@ include("auto_doc_gen.jl")
 
 makedocs(
     modules = [Games],
-    format = :html,
+    format = Documenter.HTML(prettyurls = false),
     sitename = "Games.jl",
     pages = PAGES,
 )
