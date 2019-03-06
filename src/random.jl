@@ -97,3 +97,45 @@ end
 
 covariance_game(nums_actions::NTuple{N,Int}, rho::Real) where {N} =
     covariance_game(Random.GLOBAL_RNG, nums_actions, rho)
+
+#
+# Random action profile
+#
+"""
+    random_pure_actions([rng=GLOBAL_RNG], nums_actions)
+
+Return a tuple of random pure actions (integers).
+
+# Arguments
+
+- `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
+- `nums_actions::NTuple{N,Int}`: N-tuple of the numbers of actions,
+  one for each player.
+
+# Returns
+
+- `::NTuple{N,Int}`: N-tuple of random pure actions.
+
+"""
+random_pure_actions(rng::AbstractRNG, nums_actions::NTuple{N,Int}) where {N} =
+    ntuple(i -> rand(rng, 1:nums_actions[i]), Val(N))
+
+random_pure_actions(nums_actions::NTuple{N,Int}) where {N} =
+    random_pure_actions(Random.GLOBAL_RNG, nums_actions)
+
+"""
+    random_mixed_actions(nums_actions)
+
+Return a tuple of random mixed actions (vectors of floats).
+
+# Arguments
+
+- `nums_actions::NTuple{N,Int}`: N-tuple of the numbers of actions,
+  one for each player.
+
+# Returns
+
+- `::NTuple{N,Vector{Float64}}`: N-tuple of random mixed actions.
+"""
+random_mixed_actions(nums_actions::NTuple{N,Int}) where {N} =
+    ntuple(i -> vec(QuantEcon.random_probvec(nums_actions[i], 1)), Val(N))
