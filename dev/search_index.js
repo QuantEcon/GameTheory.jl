@@ -385,6 +385,22 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "lib/game_generators.html#Games.random_mixed_actions-Union{Tuple{Tuple{Vararg{Int64,N}}}, Tuple{N}} where N",
+    "page": "Game Generators",
+    "title": "Games.random_mixed_actions",
+    "category": "method",
+    "text": "random_mixed_actions(nums_actions)\n\nReturn a tuple of random mixed actions (vectors of floats).\n\nArguments\n\nnums_actions::NTuple{N,Int}: N-tuple of the numbers of actions, one for each player.\n\nReturns\n\n::NTuple{N,Vector{Float64}}: N-tuple of random mixed actions.\n\n\n\n\n\n"
+},
+
+{
+    "location": "lib/game_generators.html#Games.random_pure_actions-Union{Tuple{N}, Tuple{AbstractRNG,Tuple{Vararg{Int64,N}}}} where N",
+    "page": "Game Generators",
+    "title": "Games.random_pure_actions",
+    "category": "method",
+    "text": "random_pure_actions([rng=GLOBAL_RNG], nums_actions)\n\nReturn a tuple of random pure actions (integers).\n\nArguments\n\nrng::AbstractRNG=GLOBAL_RNG: Random number generator used.\nnums_actions::NTuple{N,Int}: N-tuple of the numbers of actions, one for each player.\n\nReturns\n\n::NTuple{N,Int}: N-tuple of random pure actions.\n\n\n\n\n\n"
+},
+
+{
     "location": "lib/game_generators.html#Games.Generators.blotto_game",
     "page": "Game Generators",
     "title": "Games.Generators.blotto_game",
