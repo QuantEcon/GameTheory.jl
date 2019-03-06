@@ -1,3 +1,5 @@
+using Random
+
 @testset "Testing Random Games Generating" begin
 
     @testset "test random game" begin
@@ -58,6 +60,21 @@
 
         @test_throws ArgumentError covariance_game(nums_actions, rho)
 
+    end
+
+    @testset "random_pure_actions" begin
+        nums_actions = (2, 3, 4)
+        seed = 1234
+        action_profiles = [random_pure_actions(MersenneTwister(seed), nums_actions)
+                           for i in 1:2]
+        @test action_profiles[1] <= nums_actions
+        @test action_profiles[2] == action_profiles[1]
+    end
+
+    @testset "random_mixed_actions" begin
+        nums_actions = (2, 3, 4)
+        action_profile = random_mixed_actions(nums_actions)
+        @test length.(action_profile) == nums_actions
     end
 
 end

@@ -94,6 +94,7 @@ export
 
     # Random Games
     random_game, covariance_game,
+    random_pure_actions, random_mixed_actions,
 
     # Support Enumeration
     support_enumeration, support_enumeration_task
