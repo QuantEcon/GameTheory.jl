@@ -1,7 +1,7 @@
 var documenterSearchIndex = {"docs": [
 
 {
-    "location": "#",
+    "location": "index.html#",
     "page": "Home",
     "title": "Home",
     "category": "page",
@@ -9,7 +9,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#Games.jl-1",
+    "location": "index.html#Games.jl-1",
     "page": "Home",
     "title": "Games.jl",
     "category": "section",
@@ -17,7 +17,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#Installation-1",
+    "location": "index.html#Installation-1",
     "page": "Home",
     "title": "Installation",
     "category": "section",
@@ -25,7 +25,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#Usage-1",
+    "location": "index.html#Usage-1",
     "page": "Home",
     "title": "Usage",
     "category": "section",
@@ -33,7 +33,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#notebooks-1",
+    "location": "index.html#notebooks-1",
     "page": "Home",
     "title": "Notebooks",
     "category": "section",
@@ -41,7 +41,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "#Library-Outline-1",
+    "location": "index.html#Library-Outline-1",
     "page": "Home",
     "title": "Library Outline",
     "category": "section",
@@ -49,7 +49,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#",
+    "location": "lib/base_types_and_methods.html#",
     "page": "Base Types and Methods",
     "title": "Base Types and Methods",
     "category": "page",
@@ -57,7 +57,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#base_types_and_methods-1",
+    "location": "lib/base_types_and_methods.html#base_types_and_methods-1",
     "page": "Base Types and Methods",
     "title": "Base Types and Methods",
     "category": "section",
@@ -65,7 +65,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.Action",
+    "location": "lib/base_types_and_methods.html#Games.Action",
     "page": "Base Types and Methods",
     "title": "Games.Action",
     "category": "constant",
@@ -73,7 +73,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.ActionProfile",
+    "location": "lib/base_types_and_methods.html#Games.ActionProfile",
     "page": "Base Types and Methods",
     "title": "Games.ActionProfile",
     "category": "constant",
@@ -81,7 +81,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.MixedAction",
+    "location": "lib/base_types_and_methods.html#Games.MixedAction",
     "page": "Base Types and Methods",
     "title": "Games.MixedAction",
     "category": "type",
@@ -89,7 +89,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.PureAction",
+    "location": "lib/base_types_and_methods.html#Games.PureAction",
     "page": "Base Types and Methods",
     "title": "Games.PureAction",
     "category": "type",
@@ -97,7 +97,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.NormalFormGame",
+    "location": "lib/base_types_and_methods.html#Games.NormalFormGame",
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "type",
@@ -105,7 +105,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.NormalFormGame-Union{Tuple{Array{Player{N,T},1}}, Tuple{T}, Tuple{N}} where T where N",
+    "location": "lib/base_types_and_methods.html#Games.NormalFormGame-Union{Tuple{Array{Player{N,T},1}}, Tuple{T}, Tuple{N}} where T where N",
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "method",
@@ -113,7 +113,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.NormalFormGame-Union{Tuple{Array{T,2}}, Tuple{T}} where T<:Real",
+    "location": "lib/base_types_and_methods.html#Games.NormalFormGame-Union{Tuple{Array{T,2}}, Tuple{T}} where T<:Real",
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "method",
@@ -121,7 +121,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.NormalFormGame-Union{Tuple{Array{T,M}}, Tuple{M}, Tuple{T}} where M where T<:Real",
+    "location": "lib/base_types_and_methods.html#Games.NormalFormGame-Union{Tuple{Array{T,M}}, Tuple{M}, Tuple{T}} where M where T<:Real",
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "method",
@@ -129,7 +129,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.NormalFormGame-Union{Tuple{N}, Tuple{Type,Tuple{Vararg{Int64,N}}}} where N",
+    "location": "lib/base_types_and_methods.html#Games.NormalFormGame-Union{Tuple{N}, Tuple{Type,Tuple{Vararg{Int64,N}}}} where N",
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "method",
@@ -137,7 +137,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.NormalFormGame-Union{Tuple{Tuple{Vararg{Player{N,T},N}}}, Tuple{T}, Tuple{N}} where T where N",
+    "location": "lib/base_types_and_methods.html#Games.NormalFormGame-Union{Tuple{Tuple{Vararg{Player{N,T},N}}}, Tuple{T}, Tuple{N}} where T where N",
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "method",
@@ -145,7 +145,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.NormalFormGame-Union{Tuple{Vararg{Player{N,T},N1} where N1}, Tuple{T}, Tuple{N}} where T where N",
+    "location": "lib/base_types_and_methods.html#Games.NormalFormGame-Union{Tuple{Vararg{Player{N,T},N1} where N1}, Tuple{T}, Tuple{N}} where T where N",
     "page": "Base Types and Methods",
     "title": "Games.NormalFormGame",
     "category": "method",
@@ -153,7 +153,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.Player",
+    "location": "lib/base_types_and_methods.html#Games.Player",
     "page": "Base Types and Methods",
     "title": "Games.Player",
     "category": "type",
@@ -161,7 +161,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.best_response-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real},Array{Float64,1}}",
+    "location": "lib/base_types_and_methods.html#Games.best_response-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real},Array{Float64,1}}",
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "method",
@@ -169,7 +169,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.best_response-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real},BROptions}",
+    "location": "lib/base_types_and_methods.html#Games.best_response-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real},BROptions}",
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "method",
@@ -177,7 +177,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.best_response-Tuple{Random.AbstractRNG,Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
+    "location": "lib/base_types_and_methods.html#Games.best_response-Tuple{Random.AbstractRNG,Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
     "page": "Base Types and Methods",
     "title": "Games.best_response",
     "category": "method",
@@ -185,7 +185,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.best_responses-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
+    "location": "lib/base_types_and_methods.html#Games.best_responses-Tuple{Player,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
     "page": "Base Types and Methods",
     "title": "Games.best_responses",
     "category": "method",
@@ -193,7 +193,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.delete_action-Union{Tuple{N}, Tuple{NormalFormGame{N,T} where T<:Real,AbstractArray{#s18,1} where #s18<:Integer,Integer}} where N",
+    "location": "lib/base_types_and_methods.html#Games.delete_action-Union{Tuple{N}, Tuple{NormalFormGame{N,T} where T<:Real,AbstractArray{#s18,1} where #s18<:Integer,Integer}} where N",
     "page": "Base Types and Methods",
     "title": "Games.delete_action",
     "category": "method",
@@ -201,7 +201,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.delete_action-Union{Tuple{T}, Tuple{N}, Tuple{Player{N,T},AbstractArray{#s17,1} where #s17<:Integer}, Tuple{Player{N,T},AbstractArray{#s18,1} where #s18<:Integer,Integer}} where T where N",
+    "location": "lib/base_types_and_methods.html#Games.delete_action-Union{Tuple{T}, Tuple{N}, Tuple{Player{N,T},AbstractArray{#s17,1} where #s17<:Integer}, Tuple{Player{N,T},AbstractArray{#s18,1} where #s18<:Integer,Integer}} where T where N",
     "page": "Base Types and Methods",
     "title": "Games.delete_action",
     "category": "method",
@@ -209,7 +209,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.dominated_actions-Tuple{Player}",
+    "location": "lib/base_types_and_methods.html#Games.dominated_actions-Tuple{Player}",
     "page": "Base Types and Methods",
     "title": "Games.dominated_actions",
     "category": "method",
@@ -217,7 +217,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.is_best_response-Tuple{Player,Array{T,1} where T<:Real,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
+    "location": "lib/base_types_and_methods.html#Games.is_best_response-Tuple{Player,Array{T,1} where T<:Real,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "method",
@@ -225,7 +225,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.is_best_response-Tuple{Player,Integer,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
+    "location": "lib/base_types_and_methods.html#Games.is_best_response-Tuple{Player,Integer,Union{Nothing, Tuple{Vararg{T,N}} where T<:Integer where N, Tuple{Vararg{Array{T,1},N}} where N where T<:Real, Union{Array{T,1}, Integer} where T<:Real}}",
     "page": "Base Types and Methods",
     "title": "Games.is_best_response",
     "category": "method",
@@ -233,7 +233,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.is_dominated-Union{Tuple{T}, Tuple{N}, Tuple{Player{N,T},Integer}} where T<:Real where N",
+    "location": "lib/base_types_and_methods.html#Games.is_dominated-Union{Tuple{T}, Tuple{N}, Tuple{Player{N,T},Integer}} where T<:Real where N",
     "page": "Base Types and Methods",
     "title": "Games.is_dominated",
     "category": "method",
@@ -241,7 +241,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.is_nash",
+    "location": "lib/base_types_and_methods.html#Games.is_nash",
     "page": "Base Types and Methods",
     "title": "Games.is_nash",
     "category": "function",
@@ -249,7 +249,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.is_nash-Tuple{NormalFormGame{1,T} where T<:Real,Union{Array{T,1}, Integer} where T<:Real}",
+    "location": "lib/base_types_and_methods.html#Games.is_nash-Tuple{NormalFormGame{1,T} where T<:Real,Union{Array{T,1}, Integer} where T<:Real}",
     "page": "Base Types and Methods",
     "title": "Games.is_nash",
     "category": "method",
@@ -257,7 +257,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.is_pareto_dominant",
+    "location": "lib/base_types_and_methods.html#Games.is_pareto_dominant",
     "page": "Base Types and Methods",
     "title": "Games.is_pareto_dominant",
     "category": "function",
@@ -265,7 +265,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.is_pareto_efficient",
+    "location": "lib/base_types_and_methods.html#Games.is_pareto_efficient",
     "page": "Base Types and Methods",
     "title": "Games.is_pareto_efficient",
     "category": "function",
@@ -273,7 +273,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.payoff_vector-Tuple{Player,Tuple{Vararg{T,N}} where T<:Integer where N}",
+    "location": "lib/base_types_and_methods.html#Games.payoff_vector-Tuple{Player,Tuple{Vararg{T,N}} where T<:Integer where N}",
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
@@ -281,7 +281,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.payoff_vector-Tuple{Player{1,T} where T<:Real,Nothing}",
+    "location": "lib/base_types_and_methods.html#Games.payoff_vector-Tuple{Player{1,T} where T<:Real,Nothing}",
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
@@ -289,7 +289,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.payoff_vector-Tuple{Player{2,T} where T<:Real,Array{T,1} where T<:Real}",
+    "location": "lib/base_types_and_methods.html#Games.payoff_vector-Tuple{Player{2,T} where T<:Real,Array{T,1} where T<:Real}",
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
@@ -297,7 +297,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.payoff_vector-Tuple{Player{2,T} where T<:Real,Integer}",
+    "location": "lib/base_types_and_methods.html#Games.payoff_vector-Tuple{Player{2,T} where T<:Real,Integer}",
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
@@ -305,7 +305,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.payoff_vector-Union{Tuple{T2}, Tuple{T1}, Tuple{N}, Tuple{Player{N,T1},Tuple{Vararg{Array{T2,1},N}} where N}} where T2 where T1 where N",
+    "location": "lib/base_types_and_methods.html#Games.payoff_vector-Union{Tuple{T2}, Tuple{T1}, Tuple{N}, Tuple{Player{N,T1},Tuple{Vararg{Array{T2,1},N}} where N}} where T2 where T1 where N",
     "page": "Base Types and Methods",
     "title": "Games.payoff_vector",
     "category": "method",
@@ -313,7 +313,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.pure2mixed-Tuple{Integer,Integer}",
+    "location": "lib/base_types_and_methods.html#Games.pure2mixed-Tuple{Integer,Integer}",
     "page": "Base Types and Methods",
     "title": "Games.pure2mixed",
     "category": "method",
@@ -321,7 +321,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Exported-1",
+    "location": "lib/base_types_and_methods.html#Exported-1",
     "page": "Base Types and Methods",
     "title": "Exported",
     "category": "section",
@@ -329,7 +329,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.MixedActionProfile",
+    "location": "lib/base_types_and_methods.html#Games.MixedActionProfile",
     "page": "Base Types and Methods",
     "title": "Games.MixedActionProfile",
     "category": "type",
@@ -337,7 +337,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Games.PureActionProfile",
+    "location": "lib/base_types_and_methods.html#Games.PureActionProfile",
     "page": "Base Types and Methods",
     "title": "Games.PureActionProfile",
     "category": "type",
@@ -345,7 +345,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/base_types_and_methods/#Internal-1",
+    "location": "lib/base_types_and_methods.html#Internal-1",
     "page": "Base Types and Methods",
     "title": "Internal",
     "category": "section",
@@ -353,7 +353,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#",
+    "location": "lib/game_generators.html#",
     "page": "Game Generators",
     "title": "Game Generators",
     "category": "page",
@@ -361,7 +361,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#game_generators-1",
+    "location": "lib/game_generators.html#game_generators-1",
     "page": "Game Generators",
     "title": "Game Generators",
     "category": "section",
@@ -369,7 +369,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Games.covariance_game-Union{Tuple{N}, Tuple{AbstractRNG,Tuple{Vararg{Int64,N}},Real}} where N",
+    "location": "lib/game_generators.html#Games.covariance_game-Union{Tuple{N}, Tuple{AbstractRNG,Tuple{Vararg{Int64,N}},Real}} where N",
     "page": "Game Generators",
     "title": "Games.covariance_game",
     "category": "method",
@@ -377,7 +377,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Games.random_game-Union{Tuple{N}, Tuple{AbstractRNG,Tuple{Vararg{Int64,N}}}} where N",
+    "location": "lib/game_generators.html#Games.random_game-Union{Tuple{N}, Tuple{AbstractRNG,Tuple{Vararg{Int64,N}}}} where N",
     "page": "Game Generators",
     "title": "Games.random_game",
     "category": "method",
@@ -385,7 +385,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Games.Generators.blotto_game",
+    "location": "lib/game_generators.html#Games.Generators.blotto_game",
     "page": "Game Generators",
     "title": "Games.Generators.blotto_game",
     "category": "function",
@@ -393,7 +393,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Games.Generators.ranking_game",
+    "location": "lib/game_generators.html#Games.Generators.ranking_game",
     "page": "Game Generators",
     "title": "Games.Generators.ranking_game",
     "category": "function",
@@ -401,7 +401,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Games.Generators.sgc_game-Tuple{Integer}",
+    "location": "lib/game_generators.html#Games.Generators.sgc_game-Tuple{Integer}",
     "page": "Game Generators",
     "title": "Games.Generators.sgc_game",
     "category": "method",
@@ -409,7 +409,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Games.Generators.tournament_game-Tuple{Integer,Integer}",
+    "location": "lib/game_generators.html#Games.Generators.tournament_game-Tuple{Integer,Integer}",
     "page": "Game Generators",
     "title": "Games.Generators.tournament_game",
     "category": "method",
@@ -417,7 +417,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Games.Generators.unit_vector_game-Tuple{Random.AbstractRNG,Integer}",
+    "location": "lib/game_generators.html#Games.Generators.unit_vector_game-Tuple{Random.AbstractRNG,Integer}",
     "page": "Game Generators",
     "title": "Games.Generators.unit_vector_game",
     "category": "method",
@@ -425,7 +425,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Exported-1",
+    "location": "lib/game_generators.html#Exported-1",
     "page": "Game Generators",
     "title": "Exported",
     "category": "section",
@@ -433,7 +433,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/game_generators/#Internal-1",
+    "location": "lib/game_generators.html#Internal-1",
     "page": "Game Generators",
     "title": "Internal",
     "category": "section",
@@ -441,7 +441,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#",
+    "location": "lib/computing_nash_equilibria.html#",
     "page": "Computing Nash Equilibria",
     "title": "Computing Nash Equilibria",
     "category": "page",
@@ -449,7 +449,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#computing_nash_equilibria-1",
+    "location": "lib/computing_nash_equilibria.html#computing_nash_equilibria-1",
     "page": "Computing Nash Equilibria",
     "title": "Computing Nash Equilibria",
     "category": "section",
@@ -457,7 +457,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#Games.pure_nash-Tuple{NormalFormGame}",
+    "location": "lib/computing_nash_equilibria.html#Games.pure_nash-Tuple{NormalFormGame}",
     "page": "Computing Nash Equilibria",
     "title": "Games.pure_nash",
     "category": "method",
@@ -465,7 +465,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#Games.support_enumeration-Union{Tuple{NormalFormGame{2,T}}, Tuple{T}} where T",
+    "location": "lib/computing_nash_equilibria.html#Games.support_enumeration-Union{Tuple{NormalFormGame{2,T}}, Tuple{T}} where T",
     "page": "Computing Nash Equilibria",
     "title": "Games.support_enumeration",
     "category": "method",
@@ -473,7 +473,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#Games.support_enumeration_task-Tuple{Channel,NormalFormGame{2,T} where T<:Real}",
+    "location": "lib/computing_nash_equilibria.html#Games.support_enumeration_task-Tuple{Channel,NormalFormGame{2,T} where T<:Real}",
     "page": "Computing Nash Equilibria",
     "title": "Games.support_enumeration_task",
     "category": "method",
@@ -481,7 +481,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#Exported-1",
+    "location": "lib/computing_nash_equilibria.html#Exported-1",
     "page": "Computing Nash Equilibria",
     "title": "Exported",
     "category": "section",
@@ -489,7 +489,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#Games._indiff_mixed_action!-Union{Tuple{T}, Tuple{Array{T,2},Array{T,1},Array{T,1},Array{T,2} where T,Array{Int64,1},Array{Int64,1}}} where T<:Real",
+    "location": "lib/computing_nash_equilibria.html#Games._indiff_mixed_action!-Union{Tuple{T}, Tuple{Array{T,2},Array{T,1},Array{T,1},Array{T,2} where T,Array{Int64,1},Array{Int64,1}}} where T<:Real",
     "page": "Computing Nash Equilibria",
     "title": "Games._indiff_mixed_action!",
     "category": "method",
@@ -497,7 +497,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#Games._support_enumeration_producer-Union{Tuple{T}, Tuple{Channel,Tuple{Array{T,2},Array{T,2}}}} where T<:Real",
+    "location": "lib/computing_nash_equilibria.html#Games._support_enumeration_producer-Union{Tuple{T}, Tuple{Channel,Tuple{Array{T,2},Array{T,2}}}} where T<:Real",
     "page": "Computing Nash Equilibria",
     "title": "Games._support_enumeration_producer",
     "category": "method",
@@ -505,7 +505,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/computing_nash_equilibria/#Internal-1",
+    "location": "lib/computing_nash_equilibria.html#Internal-1",
     "page": "Computing Nash Equilibria",
     "title": "Internal",
     "category": "section",
@@ -513,7 +513,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#",
+    "location": "lib/repeated_games.html#",
     "page": "Repeated Games",
     "title": "Repeated Games",
     "category": "page",
@@ -521,7 +521,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#repeated_games-1",
+    "location": "lib/repeated_games.html#repeated_games-1",
     "page": "Repeated Games",
     "title": "Repeated Games",
     "category": "section",
@@ -529,7 +529,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.RepeatedGame",
+    "location": "lib/repeated_games.html#Games.RepeatedGame",
     "page": "Repeated Games",
     "title": "Games.RepeatedGame",
     "category": "type",
@@ -537,7 +537,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.RepeatedGame-Tuple{Player,Player,Float64}",
+    "location": "lib/repeated_games.html#Games.RepeatedGame-Tuple{Player,Player,Float64}",
     "page": "Repeated Games",
     "title": "Games.RepeatedGame",
     "category": "method",
@@ -545,7 +545,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.outerapproximation-Tuple{RepeatedGame{2,T} where T<:Real}",
+    "location": "lib/repeated_games.html#Games.outerapproximation-Tuple{RepeatedGame{2,T} where T<:Real}",
     "page": "Repeated Games",
     "title": "Games.outerapproximation",
     "category": "method",
@@ -553,7 +553,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.unpack-Tuple{RepeatedGame}",
+    "location": "lib/repeated_games.html#Games.unpack-Tuple{RepeatedGame}",
     "page": "Repeated Games",
     "title": "Games.unpack",
     "category": "method",
@@ -561,7 +561,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.worst_value_1",
+    "location": "lib/repeated_games.html#Games.worst_value_1",
     "page": "Repeated Games",
     "title": "Games.worst_value_1",
     "category": "function",
@@ -569,7 +569,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.worst_value_2",
+    "location": "lib/repeated_games.html#Games.worst_value_2",
     "page": "Repeated Games",
     "title": "Games.worst_value_2",
     "category": "function",
@@ -577,7 +577,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.worst_value_i",
+    "location": "lib/repeated_games.html#Games.worst_value_i",
     "page": "Repeated Games",
     "title": "Games.worst_value_i",
     "category": "function",
@@ -585,7 +585,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Exported-1",
+    "location": "lib/repeated_games.html#Exported-1",
     "page": "Repeated Games",
     "title": "Exported",
     "category": "section",
@@ -593,7 +593,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.RepGame2",
+    "location": "lib/repeated_games.html#Games.RepGame2",
     "page": "Repeated Games",
     "title": "Games.RepGame2",
     "category": "type",
@@ -601,7 +601,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.initialize_LP_matrices-Tuple{RepeatedGame{2,T} where T<:Real,Array{Float64,2}}",
+    "location": "lib/repeated_games.html#Games.initialize_LP_matrices-Tuple{RepeatedGame{2,T} where T<:Real,Array{Float64,2}}",
     "page": "Repeated Games",
     "title": "Games.initialize_LP_matrices",
     "category": "method",
@@ -609,7 +609,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.initialize_sg_hpl-Tuple{Int64,Array{Float64,1},Float64}",
+    "location": "lib/repeated_games.html#Games.initialize_sg_hpl-Tuple{Int64,Array{Float64,1},Float64}",
     "page": "Repeated Games",
     "title": "Games.initialize_sg_hpl",
     "category": "method",
@@ -617,7 +617,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.initialize_sg_hpl-Tuple{RepeatedGame,Int64}",
+    "location": "lib/repeated_games.html#Games.initialize_sg_hpl-Tuple{RepeatedGame,Int64}",
     "page": "Repeated Games",
     "title": "Games.initialize_sg_hpl",
     "category": "method",
@@ -625,7 +625,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Games.unitcircle-Tuple{Int64}",
+    "location": "lib/repeated_games.html#Games.unitcircle-Tuple{Int64}",
     "page": "Repeated Games",
     "title": "Games.unitcircle",
     "category": "method",
@@ -633,7 +633,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/repeated_games/#Internal-1",
+    "location": "lib/repeated_games.html#Internal-1",
     "page": "Repeated Games",
     "title": "Internal",
     "category": "section",
@@ -641,7 +641,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/#",
+    "location": "lib/index.html#",
     "page": "Index",
     "title": "Index",
     "category": "page",
@@ -649,7 +649,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "lib/#Index-1",
+    "location": "lib/index.html#Index-1",
     "page": "Index",
     "title": "Index",
     "category": "section",
