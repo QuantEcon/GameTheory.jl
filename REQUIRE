@@ -1,0 +1,11 @@
+julia 0.7
+QuantEcon 0.16
+Combinatorics
+Parameters
+MathProgBase
+MathOptInterface
+Clp
+Polyhedra
+LightGraphs
+Distributions
+StatsBase
