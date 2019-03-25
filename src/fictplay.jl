@@ -9,21 +9,21 @@ Tools for fictitious play
 """
     AbstractGain
 
-Abstract type representing the gain of fictitious play moodel.
+Abstract type representing the gain in a fictitious play model.
 """
 abstract type AbstractGain end
 
 """
     DecreasingGain
 
-Type representing the gain decresing over time. Subtype of `AbstractGain`.
+Type representing a decresing gain.
 """
 struct DecreasingGain <: AbstractGain end
 
 """
     ConstantGain
 
-Type representing the gain constant over time. Subtype of `AbstractGain`.
+Type representing a constant gain.
 """
 struct ConstantGain{T<:Real} <: AbstractGain
     size::T
@@ -38,22 +38,21 @@ step_size(T::Type, gain::ConstantGain, t::Integer) = T(gain.size)
 """
     AbstractFictitiousPlay
 
-Abstract type representing the fictitious play model.
+Abstract type representing a fictitious play model.
 """
 abstract type AbstractFictitiousPlay{N,T<:Real} end
 
 """
     FictitiousPlay{N, T, TG}
 
-Type representing the fictitious play model with N players.
-Subtype of `AbstractFictitiousPlay`.
+Type representing a fictitious play model with N players.
 
 # Fields
 
-- `players::NTuple{N,Player{N,T}}` : Tuple of player instances.
-- `nums_actions::NTuple{N,Int}` : Tuple of integers which are the number of
-    actions for each player.
-- `gain::TG` : Type of gain.
+- `players::NTuple{N,Player{N,T}}` : Tuple of `Player` instances.
+- `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for
+  each player.
+- `gain::TG<:AbstractGain` : Gain type.
 """
 struct FictitiousPlay{N,T<:Real,TG<:AbstractGain} <: AbstractFictitiousPlay{N,T}
     players::NTuple{N,Player{N,T}}
@@ -62,36 +61,36 @@ struct FictitiousPlay{N,T<:Real,TG<:AbstractGain} <: AbstractFictitiousPlay{N,T}
 end
 
 """
-    FictitiousPlay(g[, gain])
+    FictitiousPlay(g[, gain=DecreasingGain()])
 
-Construct a `FictitiousPlay` instance.
+Construct a `FictitiousPlay` instance from `NormalFormGame`.
 
 # Arguments
 
 - `g::NormalFormGame` : `NormalFormGame` instance.
 - `gain::AbstractGain` : Argument to specify the gain or step size;
-    `DecreasingGain()` (default) or `ConstantGain(size)`.
+  `DecreasingGain()` or `ConstantGain(size)`.
 
 # Returns
 
-- `::FictitiousPlay`
+- `::FictitiousPlay` : The fictitious play model.
 """
 FictitiousPlay(g::NormalFormGame, gain::AbstractGain=DecreasingGain()) =
     FictitiousPlay(g.players, g.nums_actions, gain)
 
 """
-    FictitiousPlay(fp[, gain])
+    FictitiousPlay(fp[, gain=fp.gain])
 
 Construct a new `FictitiousPlay` instance from `fp`.
 
 # Arguments
 
-- `g::AbstractFictitiousPlay`
-- `gain::AbstractGain`
+- `fp::AbstractFictitiousPlay` : `AbstractFictitiousPlay` instance.
+- `gain::AbstractGain` : Argument to specify the gain or step size.
 
 # Returns
 
-- `::FictitiousPlay`
+- `::FictitiousPlay` : The fictitious play model.
 """
 FictitiousPlay(fp::AbstractFictitiousPlay, gain::AbstractGain=fp.gain) =
     FictitiousPlay(fp.players, fp.nums_actions, gain)
@@ -99,16 +98,16 @@ FictitiousPlay(fp::AbstractFictitiousPlay, gain::AbstractGain=fp.gain) =
 """
     StochasticFictitiousPlay{N, T, TG, TD}
 
-Type representing the stochastic fictitious play model with N players.
-Subtype of `AbstractFictitiousPlay`.
+Type representing a stochastic fictitious play model with N players.
 
 # Fields
 
-- `players::NTuple{N,Player{N,T}}` : Tuple of player instances.
-- `nums_actions::NTuple{N,Int}` : Tuple of integers which are the number of
-    actions for each player.
-- `gain::TG` : Type of gain.
-- `d::TD` Distribution of the payoff shocks.
+- `players::NTuple{N,Player{N,T}}` : Tuple of `Player` instances.
+- `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for
+  each player.
+- `gain::TG<:AbstractGain` : Gain type.
+- `d::TD<:Distributions.Distribution` : `Distribution` instance from which
+  payoff perturbations are drawn.
 """
 struct StochasticFictitiousPlay{N,T<:Real,TD<:Distribution,
                                 TG<:AbstractGain} <: AbstractFictitiousPlay{N,T}
@@ -119,7 +118,7 @@ struct StochasticFictitiousPlay{N,T<:Real,TD<:Distribution,
 end
 
 """
-    StochasticFictitiousPlay(g, d[, gain])
+    StochasticFictitiousPlay(g, d[, gain=DecreasingGain()])
 
 Construct a `StochasticFictitiousPlay` instance.
 
@@ -127,32 +126,33 @@ Construct a `StochasticFictitiousPlay` instance.
 
 - `g::NormalFormGame` : `NormalFormGame` instance.
 - `d::Distributions.Distribution` : `Distribution` instance from which payoff
-    perturbations are drawn.
+  perturbations are drawn.
 - `gain::AbstractGain` : Argument to specify the gain or step size;
-    `DecreasingGain()` (default) or `ConstantGain(size)`.
+  `DecreasingGain()` or `ConstantGain(size)`.
 
 # Returns
 
-- `::StochasticFictitiousPlay`
+- `::StochasticFictitiousPlay` : The stochastic fictitious play model.
 """
 StochasticFictitiousPlay(g::NormalFormGame, d::Distribution,
                          gain::AbstractGain=DecreasingGain()) =
     StochasticFictitiousPlay(g.players, g.nums_actions, d, gain)
 
 """
-    StochasticFictitiousPlay(fp[, d, gain])
+    StochasticFictitiousPlay(fp[, d=fp.d, gain=fp.gain])
 
 Construct a new `StochasticFictitiousPlay` instance from `fp`.
 
 # Arguments
 
-- `g::AbstractFictitiousPlay`
-- `d::Distributions.Distribution`
-- `gain::AbstractGain`
+- `fp::AbstractFictitiousPlay` : `AbstractFictitiousPlay` instance.
+- `d::Distributions.Distribution` : `Distribution` instance from which payoff
+  perturbations are drawn.
+- `gain::AbstractGain` : Argument to specify the gain or step size.
 
 # Returns
 
-- `::StochasticFictitiousPlay`
+- `::StochasticFictitiousPlay` : The stochastic fictitious play model.
 """
 StochasticFictitiousPlay(fp::AbstractFictitiousPlay, d::Distribution,
                          gain::AbstractGain=fp.gain) =
@@ -164,25 +164,6 @@ StochasticFictitiousPlay(fp::StochasticFictitiousPlay,
 
 # play!
 
-"""
-    play!(rng, fp, actions, options, brs, t)
-
-Update `actions` which represents the normalized action history for each player.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `fp::FictitiousPlay{N}` : FictitiousPlay instance.
-- `actions::MixedActionProfile{TA,N}` : Normalized action history for each
-    player.
-- `options::BROptions` : Options for `best_response` method.
-- `brs::Vector{Int}` : Vector used temporarily.
-- `t::Integer` : Integer representing period.
-
-# Returns
-
-- `actions::MixedActionProfile` : Updated `actions`.
-"""
 function play!(rng::AbstractRNG,
                fp::FictitiousPlay{N},
                actions::MixedActionProfile{TA,N},
@@ -202,24 +183,6 @@ function play!(rng::AbstractRNG,
     return actions
 end
 
-"""
-    play!(rng, fp, actions, options, brs, t)
-
-Update `actions` which represents the normalized action history for each player.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `fp::StochasticFictitiousPlay{N}` : StochasticFictitiousPlay instance.
-- `actions::MixedActionProfile{TA,N}` : Normalized action history for each player.
-- `options::BROptions` : Options for `best_response` method.
-- `brs::Vector{Int}` : Vector used temporarily.
-- `t::Integer` : Integer representing period.
-
-# Returns
-
-- `actions::MixedActionProfile` : Updated `actions`.
-"""
 function play!(rng::AbstractRNG,
                fp::StochasticFictitiousPlay{N},
                actions::MixedActionProfile{TA,N},
@@ -244,24 +207,6 @@ play!(fp::StochasticFictitiousPlay{N}, actions::MixedActionProfile{TA,N},
       options::BROptions, brs::Vector{Int}, t::Integer) where {N,TA<:Real} =
     play!(Random.GLOBAL_RNG, fp, actions, options, brs, t)
 
-"""
-    play!(rng, fp, actions, options, num_reps, t_init)
-
-Update normalized action history `num_reps` times.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `fp::AbstractFictitiousPlay{N}` : StochasticFictitiousPlay instance.
-- `actions::MixedActionProfile{TA,N}` : Normalized action history for each player.
-- `options::BROptions` : Options for `best_response` method.
-- `num_reps::Integer` : The number of iteration.
-- `t_init::Integer` : The period iteration starts.
-
-# Returns
-
-- `actions::MixedActionProfile` : Updated `actions`.
-"""
 function play!(rng::AbstractRNG,
                fp::AbstractFictitiousPlay{N},
                actions::MixedActionProfile{TA,N},
@@ -274,28 +219,29 @@ function play!(rng::AbstractRNG,
     return actions
 end
 
+@doc """
+    play!(rng, fp, actions[, options=BROptions(); num_reps=1, t_init=1])
 
-# play
-
-"""
-    play(rng, fp, actions, options, num_reps, t_init)
-
-Return normalized action history after `num_reps` times iterations.
+Update action profile `num_reps` times.
 
 # Arguments
 
 - `rng::AbstractRNG` : Random number generator used.
-- `fp::AbstractFictitiousPlay{N}` : StochasticFictitiousPlay instance.
-- `actions::MixedActionProfile{TA,N}` : Normalized action history for each player.
+- `fp::AbstractFictitiousPlay{N}` : `AbstractFictitiousPlay` instance.
+- `actions::MixedActionProfile{TA,N}` : Mixed action profile for each player.
 - `options::BROptions` : Options for `best_response` method.
-- `num_reps::Integer` : The number of iteration.
-- `t_init::Integer` : The period iteration starts.
+- `num_reps::Integer` : The number of iterations.
+- `t_init::Integer` : The period when the iteration starts.
 
 # Returns
 
-- `actions::MixedActionProfile` : Normalized action history after iterations.
+- `actions::MixedActionProfile` : Updated mixed action profile.
 """
-function play(rng::AbstractRNG=Random.GLOBAL_RNG,
+
+
+# play
+
+function play(rng::AbstractRNG,
               fp::AbstractFictitiousPlay{N},
               actions::MixedActionProfile{TA,N},
               options::BROptions=BROptions();
@@ -306,25 +252,12 @@ function play(rng::AbstractRNG=Random.GLOBAL_RNG,
     play!(rng, fp, actions_copied, options, num_reps=num_reps, t_init=t_init)
 end
 
-"""
-    play(rng, fp, actions, options, num_reps, t_init)
+play(fp::AbstractFictitiousPlay, actions::MixedActionProfile,
+     options::BROptions=BROptions(); num_reps::Integer=1, t_init::Integer=1) =
+    play(Random.GLOBAL_RNG, fp, actions, options,
+         num_reps=num_reps, t_init=t_init)
 
-Return normalized action history after `num_reps` times iterations.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `fp::AbstractFictitiousPlay{N}` : StochasticFictitiousPlay instance.
-- `actions::PureActionProfile{TA,N}` : Normalized action history for each player.
-- `options::BROptions` : Options for `best_response` method.
-- `num_reps::Integer` : The number of iteration.
-- `t_init::Integer` : The period iteration starts.
-
-# Returns
-
-- `::MixedActionProfile` : Normalized action history after iterations.
-"""
-function play(rng::AbstractRNG=Random.GLOBAL_RNG,
+function play(rng::AbstractRNG,
               fp::AbstractFictitiousPlay{N},
               actions::PureActionProfile{N},
               options::BROptions=BROptions();
@@ -333,24 +266,12 @@ function play(rng::AbstractRNG=Random.GLOBAL_RNG,
     play!(rng, fp, mixed_actions, options, num_reps=num_reps, t_init=t_init)
 end
 
-"""
-    play(rng, fp, actions, options, num_reps, t_init)
+play(fp::AbstractFictitiousPlay, actions::PureActionProfile,
+     options::BROptions=BROptions(); num_reps::Integer=1, t_init::Integer=1) =
+    play(Random.GLOBAL_RNG, fp, actions, options,
+         num_reps=num_reps, t_init=t_init)
 
-Return normalized action history after `num_reps` times iterations.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `fp::AbstractFictitiousPlay{N}` : StochasticFictitiousPlay instance.
-- `options::BROptions` : Options for `best_response` method.
-- `num_reps::Integer` : The number of iteration.
-- `t_init::Integer` : The period iteration starts.
-
-# Returns
-
-- `::MixedActionProfile` : Normalized action history after iterations.
-"""
-function play(rng::AbstractRNG=Random.GLOBAL_RNG,
+function play(rng::AbstractRNG,
               fp::AbstractFictitiousPlay{N},
               options::BROptions=BROptions();
               num_reps::Integer=1, t_init::Integer=1) where {N}
@@ -358,22 +279,47 @@ function play(rng::AbstractRNG=Random.GLOBAL_RNG,
           num_reps=num_reps, t_init=t_init)
 end
 
+play(fp::AbstractFictitiousPlay, options::BROptions=BROptions();
+     num_reps::Integer=1, t_init::Integer=1) =
+    play(Random.GLOBAL_RNG, fp, options, num_reps=num_reps, t_init=t_init)
 
-# time_series!
+@doc """
+    play([rng=Random.GLOBAL_RNG, ]fp, actions[, options=BROptions();
+          num_reps=1, t_init=1])
 
-"""
-    time_series!(rng, fp, out, options, t_init)
-
-Update the `out` which
+Return a new action profile after `num_reps` times iterations.
 
 # Arguments
 
 - `rng::AbstractRNG` : Random number generator used.
-- `fp::AbstractFictitiousPlay{N}` : AbstractFictitiousPlay instance.
+- `actions::ActionProfile` : Action profile used in the initial period;
+  `PureActionProfile`, `MixedActionProfile`, or nothing. If nothing, mixed
+  action profile is randomly selected.
+- `fp::AbstractFictitiousPlay{N}` : `AbstractFictitiousPlay` instance.
+- `options::BROptions` : Options for `best_response` method.
+- `num_reps::Integer` : The number of the iterations.
+- `t_init::Integer` : The period when the iteration starts.
+
+# Returns
+
+- `::MixedActionProfile` : The new action profile after iterations.
+"""
+
+# time_series!
+
+"""
+    time_series!(rng, fp, out[, options=BROptions(); t_init=1])
+
+Update the tuple of matrices `out` which is used in `time_series` method.
+
+# Arguments
+
+- `rng::AbstractRNG` : Random number generator used.
+- `fp::AbstractFictitiousPlay{N}` : `AbstractFictitiousPlay` instance.
 - `out::NTuple{N,Matrix{<:Real}}` : Tuple of matrices which represent the time
-    series of normalized action history.
+    series of mixed action profile.
 - `options::BROptions` : Options for `best_response`.
-- `t_init::Integer` : The period iteration starts.
+- `t_init::Integer` : The period when the iteration starts.
 
 # Returns
 
@@ -416,7 +362,7 @@ for (ex_TAS, ex_where, ex_T) in (
         (:(MixedActionProfile{TA,N}), (:(N), :(T<:Real), :(TA<:Real)), :(TA)),
         (:(PureActionProfile{N}), (:(N), :(T<:Real)), :(T))
     )
-    @eval function time_series(rng::AbstractRNG=Random.GLOBAL_RNG,
+    @eval function time_series(rng::AbstractRNG,
                                fp::AbstractFictitiousPlay{N,T},
                                ts_length::Integer,
                                init_actions::$(ex_TAS),
@@ -432,61 +378,13 @@ for (ex_TAS, ex_where, ex_T) in (
     end
 end
 
-@doc """
-    time_series(rng, fp, ts_length, init_actions, options, t_init)
+time_series(fp::AbstractFictitiousPlay, ts_length::Integer,
+            init_actions::ActionProfile, options::BROptions=BROptions();
+            t_init::Integer=1) =
+    time_series(Random.GLOBAL_RNG, fp, ts_length, init_actions, options,
+                t_init=t_init)
 
-Return time series of normalized action histories.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `fp::AbstractFictitiousPlay{N,T}` : AbstractFictitiousPlay instance.
-- `ts_length::Integer` : The length of time series.
-- `init_actions::MixedActionProfile{TA,N}` : Initial action history.
-- `options::BROptions` : Options for `best_response` method.
-- `t_init::Integer` : The period iteration starts.
-
-# Returns
-
-- `::NTuple{N,Matrix{<:Real}}` : Time series of normalized action history.
-"""
-
-@doc """
-    time_series(rng, fp, ts_length, init_actions, options, t_init)
-
-Return time series of normalized action histories.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator.
-- `fp::AbstractFictitiousPlay{N,T}` : AbstractFictitiousPlay instance.
-- `ts_length::Integer` : The length of time series.
-- `init_actions::PureActionProfile{TA,N}` : Initial action history.
-- `options::BROptions` : Options for `best_response` method.
-- `t_init::Integer` : The period iteration starts.
-
-# Returns
-
-- `::NTuple{N,Matrix{<:Real}}` : Time series of normalized action history.
-"""
-
-"""
-    time_series(rng, fp, ts_length, options, t_init)
-
-Return time series of normalized action histories.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `fp::AbstractFictitiousPlay{N}` : AbstractFictitiousPlay instance.
-- `ts_length::Integer` : The length of time series.
-- `options::BROptions` : Options for `best_response` method.
-- `t_init::Integer` : The period iteration starts.
-
-# Returns
-- `::NTuple{N,Matrix{<:Real}}` : Time series of normalized action history.
-"""
-function time_series(rng::AbstractRNG=Random.GLOBAL_RNG,
+function time_series(rng::AbstractRNG,
                      fp::AbstractFictitiousPlay{N},
                      ts_length::Integer,
                      options::BROptions=BROptions();
@@ -494,3 +392,29 @@ function time_series(rng::AbstractRNG=Random.GLOBAL_RNG,
     time_series(rng, fp, ts_length, random_mixed_actions(rng, fp.nums_actions),
                 options, t_init=t_init)
 end
+
+time_series(fp::AbstractFictitiousPlay, ts_length::Integer,
+            options::BROptions=BROptions(); t_init::Integer=1) =
+    time_series(Random.GLOBAL_RNG, fp, ts_length, options, t_init=t_init)
+
+@doc """
+    time_series([rng=Random.GLOBAL_RNG, ]fp, ts_length, init_actions
+                [, options=BROptions(); t_init=1])
+
+Return a time series of mixed action profiles.
+
+# Arguments
+
+- `rng::AbstractRNG` : Random number generator.
+- `fp::AbstractFictitiousPlay{N,T}` : `AbstractFictitiousPlay` instance.
+- `ts_length::Integer` : The length of the time series.
+- `init_actions::ActionProfile` : Action profile used in the initial period;
+  `PureActionProfile`, `MixedActionProfile`, or nothing. If nothing, mixed
+  action profile is randomly selected.
+- `options::BROptions` : Options for `best_response` method.
+- `t_init::Integer` : The period when the iteration starts.
+
+# Returns
+
+- `::NTuple{N,Matrix{<:Real}}` : The time series of mixed action profiles.
+"""
