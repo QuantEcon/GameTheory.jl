@@ -33,8 +33,7 @@ struct SimultaneousRevision <: AbstractRevision end
 # LocalInteraction
 
 """
-
-　　LocalInteraction{N, T, S}
+　　LocalInteraction{N, T, S, A, TR}
 
 Type representing the local interaction model with N players.
 
@@ -61,7 +60,7 @@ Construct a LocalInteraction instance.
 - `g::NormalFormGame` : The game used in the model.
 - `adj_matrix::AbstractMatrix` : Adjacency matrix of the graph in the model.
 - `revision::AbstractRevision` : Arguments to specify the revision method.
-    `SimultaneousRevision()`(default) or `SequencialRevision`.
+    `SimultaneousRevision()`(default) or `SequencialRevision()`.
 
 # Returns
 
@@ -120,17 +119,7 @@ end
 
 # play!
 
-function _vector_to_matrix(li::LocalInteraction{N},
-                           actions::Vector{<:Integer}) where N
-    matrix_action = zeros(Int, N, li.num_actions)
-    for (i, action) in enumerate(actions)
-        matrix_action[i, action] = 1
-    end
-    return matrix_action
-end
-
 """
-
     play!(li, actions, options, player_ind)
 
 Update `actions` given adjacency matrix and actions of each players.
@@ -151,17 +140,16 @@ function play!(li::LocalInteraction{N},
                actions::Vector{<:Integer},
                player_ind::AbstractVector{<:Integer},
                options::BROptions) where N
-    actions_matrix = _vector_to_matrix(li, actions)
+    actions_matrix = sparse(1:N, actions, ones(Int, N), N, li.num_actions)
     opponent_action = li.adj_matrix[player_ind,:] * actions_matrix
     for (k, i) in enumerate(player_ind)
-        br = best_response(li.players[i], opponent_action[k,:], options)
-        actions[i] = br
+        actions[i] = best_response(li.players[i], Vector(opponent_action[k,:]),
+                                   options)
     end
     return actions
 end
 
 """
-
     play!(li, actions, options, player_ind)
 
 Update `actions` given adjacency matrix and actions of each players. One player
@@ -183,7 +171,6 @@ play!(li::LocalInteraction, actions::Vector{<:Integer}, player_ind::Integer,
       options::BROptions) = play!(li, actions, [player_ind], options)
 
 """
-
     play!(li, actions, options, player_ind)
 
 Update `actions` given adjacency matrix and actions of each players. All players
@@ -203,7 +190,6 @@ play!(li::LocalInteraction{N}, actions::Vector{<:Integer},
       options::BROptions) where {N} = play!(li, actions, 1:N, options)
 
 """
-
     play!(li, actions, options, player_ind[, num_reps])
 
 Update actions of each players `num_reps` times.
@@ -236,7 +222,6 @@ end
 # play
 
 """
-
     play(li, actions, player_ind[, options, num_reps])
 
 Return the actions of each players after `num_reps` times iteration.
@@ -267,7 +252,6 @@ function play(li::LocalInteraction{N},
 end
 
 """
-
     play(li, actions[, options, num_reps])
 
 Return the actions of each players after `num_reps` times iteration.
@@ -295,7 +279,6 @@ end
 # time_series!
 
 """
-
     time_series!(li, out, options, player_ind_seq)
 
 Update `out` which is the time series of actions given player index sequence.
@@ -333,7 +316,6 @@ function time_series!(li::LocalInteraction{N},
 end
 
 """
-
     time_series!(li, out, options)
 
 Update `out` which is time series of actions. All players take their actions
@@ -367,7 +349,6 @@ end
 # time_series
 
 """
-
     time_series(rng, li, ts_length, init_actions, player_ind_seq[, options])
 
 Return the time series of actions given player index sequence.
@@ -408,8 +389,7 @@ time_series(li::LocalInteraction, ts_length::Integer,
 
 # simultaneous
 """
-
-    time_series(rng, li, ts_length, init_actions, revision[, options])
+    time_series(rng, li, ts_length, init_actions[, options])
 
 Return the time series of actions. All players take their actions simultaneously.
 
@@ -419,7 +399,6 @@ Return the time series of actions. All players take their actions simultaneously
 - `li::LocalInteraction{N}` : Local interaction instance.
 - `ts_length::Integer` : The length of time series.
 - `init_actions::PureActionProfile` : Initial actions of iterations.
-- `revision::SimultaneousRevision` : Type representing simultaneous revision.
 - `options::BROptions` : Options for `best_response` method;
     defaults to `BROptions()`.
 
@@ -428,11 +407,11 @@ Return the time series of actions. All players take their actions simultaneously
 - `::Matrix{<:Integer}` : Time series of players' actions.
 """
 function time_series(rng::AbstractRNG,
-                     li::LocalInteraction{N},
+                     li::LocalInteraction{N,T,S,A,TR},
                      ts_length::Integer,
                      init_actions::PureActionProfile,
-                     revision::SimultaneousRevision,
-                     options::BROptions=BROptions()) where N
+                     options::BROptions=BROptions()
+                    ) where {N,T,S,A,TR<:SimultaneousRevision}
     out = Matrix{Int}(undef, N, ts_length)
     for i in 1:N
         out[i, 1] = init_actions[i]
@@ -440,51 +419,15 @@ function time_series(rng::AbstractRNG,
     time_series!(li, out, options)
 end
 
-time_series(li::LocalInteraction, ts_length::Integer,
-            init_actions::PureActionProfile, revision::SimultaneousRevision,
-            options::BROptions=BROptions) =
-    time_series(Random.GLOBAL_RNG, li, ts_length, init_actions, revision,
-                options)
+time_series(li::LocalInteraction{N,T,S,A,TR},
+            ts_length::Integer,
+            init_actions::PureActionProfile,
+            options::BROptions=BROptions()
+           ) where {N,T,S,A,TR<:SimultaneousRevision} =
+    time_series(Random.GLOBAL_RNG, li, ts_length, init_actions, options)
 
 # sequencial(random)
 """
-
-    time_series(rng, li, ts_length, init_actions, revision[, options])
-
-Return the time series of actions.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `ts_length::Integer` : The length of time series.
-- `init_actions::PureActionProfile` : Initial actions of iterations.
-- `revision::SequencialRevision` : Type representing sequencial revision.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-
-# Returns
-
-- `::Matrix{<:Integer}` : Time series of players' actions.
-"""
-function time_series(rng::AbstractRNG,
-                     li::LocalInteraction{N},
-                     ts_length::Integer,
-                     init_actions::PureActionProfile,
-                     revision::SequencialRevision,
-                     options::BROptions=BROptions()) where N
-    player_ind_seq = rand(rng, 1:N, ts_length-1)
-    time_series(rng, li, ts_length, init_actions, player_ind_seq, options)
-end
-
-time_series(li::LocalInteraction, ts_length::Integer,
-            init_actions::PureActionProfile, revision::SequencialRevision,
-            options::BROptions=BROptions()) =
-    time_series(Random.GLOBAL_RNG, li, ts_length, init_actions, revision,
-                options)
-
-"""
-
     time_series(rng, li, ts_length, init_actions[, options])
 
 Return the time series of actions.
@@ -502,19 +445,25 @@ Return the time series of actions.
 
 - `::Matrix{<:Integer}` : Time series of players' actions.
 """
-time_series(rng::AbstractRNG,
-            li::LocalInteraction,
+function time_series(rng::AbstractRNG,
+                     li::LocalInteraction{N,T,S,A,TR},
+                     ts_length::Integer,
+                     init_actions::PureActionProfile,
+                     options::BROptions=BROptions()
+                    ) where {N,T,S,A,TR<:SequencialRevision}
+    player_ind_seq = rand(rng, 1:N, ts_length-1)
+    time_series(rng, li, ts_length, init_actions, player_ind_seq, options)
+end
+
+time_series(li::LocalInteraction{N,T,S,A,TR},
             ts_length::Integer,
             init_actions::PureActionProfile,
-            options::BROptions=BROptions()) =
-    time_series(rng, li, ts_length, init_actions, li.revision, options)
-
-time_series(li::LocalInteraction, ts_length::Integer,
-            init_actions::PureActionProfile, options::BROptions=BROptions()) =
+            options::BROptions=BROptions()
+           ) where {N,T,S,A,TR<:SequencialRevision} =
     time_series(Random.GLOBAL_RNG, li, ts_length, init_actions, options)
 
-"""
 
+"""
     time_series(rng, li, ts_length, player_ind_seq[, options])
 
 Return the time series of actions. Initial actions are randomly choosen.
@@ -548,7 +497,6 @@ time_series(li::LocalInteraction, ts_length::Integer,
     time_series(Random.GLOBAL_RNG, li, ts_length, player_ind_seq, options)
 
 """
-
     time_series(rng, li, ts_length, player_ind_seq[, options])
 
 Return the time series of actions. Initial actions are randomly choosen.
