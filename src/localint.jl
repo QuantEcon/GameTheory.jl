@@ -16,16 +16,16 @@ Abstract type representing revision method.
 abstract type AbstractRevision end
 
 """
-    SequencialRevision
+    AsynchronousRevision
 
-Type representing sequencial revision. Subtype of AbstractRevision.
+Type representing an asynchronous revision.
 """
-struct SequencialRevision <: AbstractRevision end
+struct AsynchronousRevision <: AbstractRevision end
 
 """
     SimultaneousRevision
 
-Type representing simultaneous revision. Subtype of AbstractRevision.
+Type representing a simultaneous revision.
 """
 struct SimultaneousRevision <: AbstractRevision end
 
@@ -39,9 +39,10 @@ Type representing the local interaction model with N players.
 
 # Fields
 
-- `players::NTuple{N,Player{2,T}}` : Tuple of player instances.
+- `players::NTuple{N,Player{2,T}}` : Tuple of `Player` instances.
 - `num_actions::Integer` : The number of actions for players.
 - `adj_matrix::Array{S,2}` : Adjacency matrix of the graph in the model.
+- `revision<:AbstractRevision` : The way to revise the action profile.
 """
 struct LocalInteraction{N,T<:Real,S<:Real,A<:Integer,TR<:AbstractRevision}
     players::NTuple{N,Player{2,T}}
@@ -51,20 +52,20 @@ struct LocalInteraction{N,T<:Real,S<:Real,A<:Integer,TR<:AbstractRevision}
 end
 
 """
-    LocalInteraction(g, adj_matrix[, revision])
+    LocalInteraction(g, adj_matrix[, revision=SimultaneousRevision()])
 
-Construct a LocalInteraction instance.
+Construct a `LocalInteraction` instance.
 
 # Arguments
 
 - `g::NormalFormGame` : The game used in the model.
 - `adj_matrix::AbstractMatrix` : Adjacency matrix of the graph in the model.
-- `revision::AbstractRevision` : Arguments to specify the revision method.
-    `SimultaneousRevision()`(default) or `SequencialRevision()`.
+- `revision::AbstractRevision` : Arguments to specify the revision method;
+  `SimultaneousRevision()` or `AsynchronousRevision()`.
 
 # Returns
 
-- `::LocalInteraction` : Local interaction instance.
+- `::LocalInteraction` : The local interaction model.
 """
 function LocalInteraction(g::NormalFormGame{2,T},
                           adj_matrix::AbstractMatrix{S},
@@ -84,20 +85,21 @@ function LocalInteraction(g::NormalFormGame{2,T},
 end
 
 """
-    LocalInteraction(payoff_matrix, adj_matrix[, revision])
+    LocalInteraction(payoff_matrix,
+                     adj_matrix[, revision=SimultaneousRevision()])
 
-Construct a LocalInteraction instance.
+Construct a `LocalInteraction` instance.
 
 # Arguments
 
 - `payoff_matrix::Matrix` : The payoff matrix of the game.
 - `adj_matrix::AbstractMatrix` : Adjacency matrix of the graph in the model.
 - `revision::AbstractRevision` : Arguments to specify the revision method.
-    `SimultaneousRevision()`(default) or `SequencialRevision`
+  `SimultaneousRevision()` or `AsynchronousRevision`
 
 # Returns
 
-- `::LocalInteraction` : Local interaction instance.
+- `::LocalInteraction` : The local interaction model.
 """
 function LocalInteraction(payoff_matrix::Matrix{T},
                           adj_matrix::AbstractMatrix{S},
@@ -119,23 +121,6 @@ end
 
 # play!
 
-"""
-    play!(li, actions, options, player_ind)
-
-Update `actions` given adjacency matrix and actions of each players.
-
-# Arguments
-
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `actions::Vector{<:Integer}` : Vector of actions of each players.
-- `player_ind::AbstractVector{<:Integer}` : Vector of integers representing the
-    index of players to take an action.
-- `options::BROptions` : Options for `best_response` method.
-
-# Returns
-
-- `actions::Vector{<:Integer}` : Updated `actions`. 
-"""
 function play!(li::LocalInteraction{N},
                actions::Vector{<:Integer},
                player_ind::AbstractVector{<:Integer},
@@ -149,68 +134,16 @@ function play!(li::LocalInteraction{N},
     return actions
 end
 
-"""
-    play!(li, actions, options, player_ind)
-
-Update `actions` given adjacency matrix and actions of each players. One player
-take her action.
-
-# Arguments
-
-- `li::LocalInteraction` : Local interaction instance.
-- `actions::Vector{<:Integer}` : Vector of actions of each players.
-- `player_ind::Integer` : Integer representing the index of player to take an
-    action.
-- `options::BROptions` : Options for `best_response` method.
-
-# Returns
-
-- `actions::Vector{<:Integer}` : Updated `actions`. 
-"""
 play!(li::LocalInteraction, actions::Vector{<:Integer}, player_ind::Integer,
       options::BROptions) = play!(li, actions, [player_ind], options)
 
-"""
-    play!(li, actions, options, player_ind)
-
-Update `actions` given adjacency matrix and actions of each players. All players
-take their actions simultaneously.
-
-# Arguments
-
-- `li::LocalInteraction` : Local interaction instance.
-- `actions::Vector{<:Integer}` : Vector of actions of each players.
-- `options::BROptions` : Options for `best_response` method.
-
-# Returns
-
-- `actions::Vector{<:Integer}` : Updated `actions`. 
-"""
 play!(li::LocalInteraction{N}, actions::Vector{<:Integer},
       options::BROptions) where {N} = play!(li, actions, 1:N, options)
 
-"""
-    play!(li, actions, options, player_ind[, num_reps])
-
-Update actions of each players `num_reps` times.
-
-# Arguments
-
-- `li::LocalInteraction` : Local interaction instance.
-- `actions::Vector{<:Integer}` : Vector of actions of each players.
-- `options::BROptions` : Options for `best_response` method.
-- `player_ind::Union{Vector{<:Integer},Integer} : Integer or vector of integers
-    representing the index of players to take an action.
-- `num_reps::Integer` : The number of iterations; defaults to 1.
-
-# Returns
-
-- `actions::Vector{Int}` : Updated `actions`.
-"""
 function play!(li::LocalInteraction,
                actions::Vector{<:Integer},
                options::BROptions,
-               player_ind::Union{Vector{<:Integer},Integer},
+               player_ind::Union{AbstractVector{<:Integer},Integer},
                num_reps::Integer=1)
     for t in 1:num_reps
         play!(li, actions, player_ind, options)
@@ -218,28 +151,28 @@ function play!(li::LocalInteraction,
     return actions
 end
 
+@doc """
+    play!(li, actions, options, player_ind[, num_reps=1])
 
-# play
-
-"""
-    play(li, actions, player_ind[, options, num_reps])
-
-Return the actions of each players after `num_reps` times iteration.
+Update an action profile `num_reps` times.
 
 # Arguments
 
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `actions::PureActionProfile` : Initial actions of each players.
-- `player_ind::Union{AbstractVector{<:Integer},Integer}` : Integer or vector of
-    integers representing the index of players to take an action.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`
-- `num_reps::Integer` : The number of iterations; defaults to 1.
+- `li::LocalInteraction` : `LocalInteraction` instance.
+- `actions::Vector{<:Integer}` : Action profile in the intial period.
+- `options::BROptions` : Options for `best_response` method.
+- `player_ind::Union{Vector{<:Integer},Integer} : Integer or vector of integers
+  representing the index of players to take an action.
+- `num_reps::Integer` : The number of iterations.
 
 # Returns
 
-- `::PureActionProfile` : Actions of each players after iterations.
+- `actions::Vector{Int}` : Updated `actions`.
 """
+
+
+# play
+
 function play(li::LocalInteraction{N},
               actions::PureActionProfile,
               player_ind::Union{AbstractVector{<:Integer},Integer},
@@ -251,23 +184,6 @@ function play(li::LocalInteraction{N},
     return new_actions
 end
 
-"""
-    play(li, actions[, options, num_reps])
-
-Return the actions of each players after `num_reps` times iteration.
-
-# Arguments
-
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `actions::PureActionProfile` : Initial actions of each players.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-- `num_reps::Integer` : The number of iterations; defaults to 1.
-
-# Returns
-
-- `::PureActionProfile` : Action profile of each players after iterations.
-"""
 function play(li::LocalInteraction{N},
               actions::PureActionProfile,
               options::BROptions=BROptions();
@@ -275,22 +191,43 @@ function play(li::LocalInteraction{N},
     play(li, actions, 1:N, options, num_reps=num_reps)
 end
 
+@doc """
+    play(li, actions, player_ind[, options=BROptions(); num_reps=1])
+
+Return the action profile after `num_reps` time iterations.
+
+# Arguments
+
+- `li::LocalInteraction{N}` : `LocalInteraction` instance.
+- `actions::PureActionProfile` : Initial actions of each players.
+- `player_ind::Union{AbstractVector{<:Integer},Integer}` : Integer or vector of
+  integers representing the index of players to take an action with asynchronous
+  revision.
+- `options::BROptions` : Options for `best_response` method.
+- `num_reps::Integer` : The number of iterations.
+
+# Returns
+
+- `::PureActionProfile` : Actions of each players after iterations.
+"""
+
 
 # time_series!
 
 """
     time_series!(li, out, options, player_ind_seq)
 
-Update `out` which is the time series of actions given player index sequence.
+Update the matrix `out` which is used in `time_series` method given player index
+sequence.
 
 # Arguments
 
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `out::Matrix{<:Integer}` : Matrix representing time series of actions of each
-    players.
+- `li::LocalInteraction{N}` : `LocalInteraction` instance.
+- `out::Matrix{<:Integer}` : Matrix representing a time series of action
+  profiles.
 - `options::BROptions` : Options for `best_response` method.
 - `player_ind_seq::Vector{<:Integer}` : Vector representing the index of players
-   to take an action.
+  to take an action.
 
 # Returns
 
@@ -318,14 +255,14 @@ end
 """
     time_series!(li, out, options)
 
-Update `out` which is time series of actions. All players take their actions
-simultaneously.
+Update the matrix `out` which is used in `time_series` method. All players take
+their actions simultaneously.
 
 # Arguments
 
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `out::Matrix{<:Integer}` : Matrix representing time series of actions of each
-    players.
+- `li::LocalInteraction{N}` : `LocalInteraction` instance.
+- `out::Matrix{<:Integer}` : Matrix representing a time series of action
+  profiles.
 - `options::BROptions` : Options for `best_response` method.
 
 # Returns
@@ -348,26 +285,6 @@ end
 
 # time_series
 
-"""
-    time_series(rng, li, ts_length, init_actions, player_ind_seq[, options])
-
-Return the time series of actions given player index sequence.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `ts_length::Integer` : The length of time series.
-- `init_actions::PureActionProfile` : Initial actions of iterations.
-- `player_ind_seq::Vector{<:Integer}` : Vector of integers representing the
-    index of players to take an action.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-
-# Returns
-
-- `::Matrix{<:Integer}` : Time series of players' actions.
-"""
 function time_series(rng::AbstractRNG,
                      li::LocalInteraction{N},
                      ts_length::Integer,
@@ -387,25 +304,6 @@ time_series(li::LocalInteraction, ts_length::Integer,
     time_series(Random.GLOBAL_RNG, li, ts_length, init_actions, player_ind_seq,
                 options)
 
-# simultaneous
-"""
-    time_series(rng, li, ts_length, init_actions[, options])
-
-Return the time series of actions. All players take their actions simultaneously.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `ts_length::Integer` : The length of time series.
-- `init_actions::PureActionProfile` : Initial actions of iterations.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-
-# Returns
-
-- `::Matrix{<:Integer}` : Time series of players' actions.
-"""
 function time_series(rng::AbstractRNG,
                      li::LocalInteraction{N,T,S,A,TR},
                      ts_length::Integer,
@@ -426,31 +324,12 @@ time_series(li::LocalInteraction{N,T,S,A,TR},
            ) where {N,T,S,A,TR<:SimultaneousRevision} =
     time_series(Random.GLOBAL_RNG, li, ts_length, init_actions, options)
 
-# sequencial(random)
-"""
-    time_series(rng, li, ts_length, init_actions[, options])
-
-Return the time series of actions.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `ts_length::Integer` : The length of time series.
-- `init_actions::PureActionProfile` : Initial actions of iterations.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-
-# Returns
-
-- `::Matrix{<:Integer}` : Time series of players' actions.
-"""
 function time_series(rng::AbstractRNG,
                      li::LocalInteraction{N,T,S,A,TR},
                      ts_length::Integer,
                      init_actions::PureActionProfile,
                      options::BROptions=BROptions()
-                    ) where {N,T,S,A,TR<:SequencialRevision}
+                    ) where {N,T,S,A,TR<:AsynchronousRevision}
     player_ind_seq = rand(rng, 1:N, ts_length-1)
     time_series(rng, li, ts_length, init_actions, player_ind_seq, options)
 end
@@ -459,29 +338,9 @@ time_series(li::LocalInteraction{N,T,S,A,TR},
             ts_length::Integer,
             init_actions::PureActionProfile,
             options::BROptions=BROptions()
-           ) where {N,T,S,A,TR<:SequencialRevision} =
+           ) where {N,T,S,A,TR<:AsynchronousRevision} =
     time_series(Random.GLOBAL_RNG, li, ts_length, init_actions, options)
 
-
-"""
-    time_series(rng, li, ts_length, player_ind_seq[, options])
-
-Return the time series of actions. Initial actions are randomly choosen.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `ts_length::Integer` : The length of time series.
-- `player_ind::Vector{<:Integer}` : Vector of integers representing the index of
-    players to take an action.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-
-# Returns
-
-- `::Matrix{<:Integer}` : Time series of players' actions.
-"""
 function time_series(rng::AbstractRNG,
                      li::LocalInteraction{N},
                      ts_length::Integer,
@@ -496,23 +355,6 @@ time_series(li::LocalInteraction, ts_length::Integer,
             player_ind_seq::Vector{<:Integer}, options::BROptions=BROptions()) =
     time_series(Random.GLOBAL_RNG, li, ts_length, player_ind_seq, options)
 
-"""
-    time_series(rng, li, ts_length, player_ind_seq[, options])
-
-Return the time series of actions. Initial actions are randomly choosen.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used.
-- `li::LocalInteraction{N}` : Local interaction instance.
-- `ts_length::Integer` : The length of time series.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-
-# Returns
-
-- `::Matrix{<:Integer}` : Time series of players' actions.
-"""
 function time_series(rng::AbstractRNG,
                      li::LocalInteraction{N},
                      ts_length::Integer,
@@ -525,3 +367,26 @@ end
 time_series(li::LocalInteraction, ts_length::Integer,
             options::BROptions=BROptions()) =
     time_series(Random.GLOBAL_RNG, li, ts_length, options)
+
+@doc """
+    time_series([rng=Random.GLOBAL_RNG, ]li, ts_length, init_actions,
+                player_ind_seq[, options=BROptions()])
+
+Return the time series of action profiles.
+
+# Arguments
+
+- `rng::AbstractRNG` : Random number generator used.
+- `li::LocalInteraction{N}` : `LocalInteraction` instance.
+- `ts_length::Integer` : The length of time series.
+- `init_actions::PureActionProfile` : Action profile in the initial period. If
+  not provided, it is selected randomly.
+- `player_ind_seq::Vector{<:Integer}` : Vector of integers representing the
+  index of players to take an action with asynchronous revision. If not
+  provided, it is selected randomly.
+- `options::BROptions` : Options for `best_response` method.
+
+# Returns
+
+- `::Matrix{<:Integer}` : The time series of action profiles.
+"""

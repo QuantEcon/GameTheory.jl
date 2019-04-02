@@ -7,5 +7,6 @@ include("test_normal_form_game.jl")
 include("test_random.jl")
 include("test_support_enumeration.jl")
 include("test_fictplay.jl")
+include("test_localint.jl")
 
 include("generators/runtests.jl")
