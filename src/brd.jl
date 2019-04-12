@@ -1,6 +1,5 @@
 #=
     Tools for best response dynamics
-
 =#
 
 using StatsBase
@@ -143,6 +142,7 @@ function SamplingBRD(payoff_array::Matrix{T},
     return SamplingBRD(N, Player(payoff_array), num_actions, k)
 end
 
+
 # play!
 
 """
@@ -156,7 +156,8 @@ Update action distribution given a specified action.
 - `brd::BRD` : BRD instance.
 - `action::Integer` : Played action.
 - `action_dist::Vector{<:Integer}` : The distribution of actions of players.
-- `options::BROptions` : Options for `best response` method.
+- `options::BROptions` : Options for `best response` method;
+    defaults to `BROptions()`.
 
 # Returns
 
@@ -166,7 +167,7 @@ function play!(rng::AbstractRNG,
                brd::BRD,
                action::Integer,
                action_dist::Vector{<:Integer},
-               options::BROptions)
+               options::BROptions=BROptions())
     action_dist[action] -= 1
     next_action = best_response(brd.player, action_dist, options)
     action_dist[next_action] += 1
@@ -174,7 +175,7 @@ function play!(rng::AbstractRNG,
 end
 
 play!(brd::BRD, action::Integer, action_dist::Vector{<:Integer},
-      options::BROptions) =
+      options::BROptions=BROptions()) =
     play!(Random.GLOBAL_RNG, brd, action, action_dist, options)
 
 """
@@ -188,7 +189,8 @@ Update action distribution given a specified action.
 - `brd::KMR` : KMR instance.
 - `action::Integer` : Played action.
 - `action_dist::Vector{<:Integer}` : The distribution of actions of players.
-- `options::BROptions` : Options for `best response` method.
+- `options::BROptions` : Options for `best response` method;
+    defaults to `BROptions()`.
 
 # Returns
 
@@ -198,7 +200,7 @@ function play!(rng::AbstractRNG,
                brd::KMR,
                action::Integer,
                action_dist::Vector{<:Integer},
-               options::BROptions)
+               options::BROptions=BROptions())
     action_dist[action] -= 1
     if rand() <= brd.epsilon
         next_action = rand(rng, 1:brd.num_actions)
@@ -210,7 +212,7 @@ function play!(rng::AbstractRNG,
 end
 
 play!(brd::KMR, action::Integer, action_dist::Vector{<:Integer},
-      options::BROptions) =
+      options::BROptions=BROptions()) =
     play!(Random.GLOBAL_RNG, brd, action, action_dist, options)
 
 """
@@ -224,7 +226,8 @@ Update action distribution given a specified action.
 - `brd::SamplingBRD` : SamplingBRD instance.
 - `action::Integer` : Played action.
 - `action_dist::Vector{<:Integer}` : The distribution of actions of players.
-- `options::BROptions` : Options for `best_response` method.
+- `options::BROptions` : Options for `best_response` method;
+    defaults to `BROptions()`.
 
 # Returns
 
@@ -234,7 +237,7 @@ function play!(rng::AbstractRNG,
                brd::SamplingBRD,
                action::Integer,
                action_dist::Vector{<:Integer},
-               options::BROptions)
+               options::BROptions=BROptions())
     action_dist[action] -= 1
     actions = sample(1:brd.num_actions, Weights(action_dist), brd.k)
     sample_action_dist = zeros(Int, brd.num_actions)
@@ -247,8 +250,48 @@ function play!(rng::AbstractRNG,
 end
 
 play!(brd::SamplingBRD, action::Integer, action_dist::Vector{<:Integer},
-      options::BROptions) =
+      options::BROptions=BROptions()) =
     play!(Random.GLOBAL_RNG, brd, action, action_dist, options)
+
+
+# play
+
+"""
+    play(rng, brd, init_action_dist, options; num_reps)
+
+Return the action distribution after `num_reps` times iteration
+
+# Arguments
+
+- `rng::AbstractRNG` : Random number generator used.
+- `brd::AbstractBRD` : AbstractBRD instance.
+- `init_action_dist::Vector{<:Integer}` : The initial distribution of actions
+    for each players.
+- `options::BROptions` : Options for `best_response` method;
+    defaults to `BROptions()`.
+- `num_reps::Integer` : The number of iterations; defaults to 1.
+
+# Returns
+
+- `::Vector{<:Integer}` : The action distribution after iterations
+"""
+function play(rng::AbstractRNG,
+              brd::AbstractBRD,
+              init_action_dist::Vector{<:Integer},
+              options::BROptions=BROptions();
+              num_reps::Integer=1)
+    player_ind_seq = rand(rng, 1:brd.N, num_reps)
+    for t in 1:num_reps
+        action = searchsortedfirst(accumulate(+, init_action_dist),
+                                   player_ind_seq[t])
+        init_action_dist = play!(rng, brd, action, init_action_dist, options)
+    end
+    return init_action_dist
+end
+
+play(brd::AbstractBRD, init_action_dist::Vector{<:Integer},
+     options::BROptions=BROptions(); num_reps::Integer=1) =
+    play(Random.GLOBAL_RNG, brd, init_action_dist, options, num_reps=num_reps)
 
 
 # time_series!
@@ -290,18 +333,6 @@ end
 
 # time_series
 
-function _set_action_dist(brd::AbstractBRD, actions::Games.PureActionProfile)
-    if brd.N != length(actions)
-        throw(ArgumentError("The length of action profile must
-                             equal to the number of players"))
-    end
-    action_dist = zeros(Int, brd.num_actions)
-    for i in 1:brd.N
-        action_dist[actions[i]] += 1
-    end
-    return action_dist
-end
-
 """
     time_series(rng, brd, ts_length, init_action_dist, options)
 
@@ -312,7 +343,7 @@ Return the time series of action distribution.
 - `rng::AbstractRNG` : Random number generator used.
 - `brd::AbstractBRD` : Instance of the model.
 - `ts_length::Integer` : The length of time series.
-- `init_action_dist::Vector{Integer}` : Initial action distribution.
+- `init_action_dist::Vector{<:Integer}` : Initial action distribution.
 - `options::BROptions` : Options for `best_response` method;
     defaults to `BROptions()`.
 
@@ -341,42 +372,8 @@ time_series(brd::AbstractBRD, ts_length::Integer,
 """
     time_series(rng, brd, ts_length, init_actions, options)
 
-Return the time series of action distribution.
-
-# Arguments
-
-- `rng::AbstractRNG` : Random number generator used;
-    defaults to `Random.GLOBAL_RNG`
-- `brd::AbstractBRD` : Instance of the model.
-- `ts_length::Integer` : The length of time series.
-- `init_actions::Games.PureActionProfile` : Initial actions.
-- `options::BROptions` : Options for `best_response` method;
-    defaults to `BROptions()`.
-
-# Returns
-
-- `::Matrix{<:Integer}` : Time series of action distribution.
-"""
-function time_series(rng::AbstractRNG,
-                     brd::AbstractBRD,
-                     ts_length::Integer,
-                     init_actions::Games.PureActionProfile,
-                     options::BROptions=BROptions())
-    action_dist = _set_action_dist(brd, init_actions)
-    time_series(rng, brd, ts_length, action_dist, options)
-end
-
-time_series(brd::AbstractBRD,
-            ts_length::Integer,
-            init_actions::Games.PureActionProfile,
-            options::BROptions=BROptions()) =
-    time_series(Random.GLOBAL_RNG, brd, ts_length, init_actions, options)
-
-"""
-    time_series(rng, brd, ts_length, init_actions, options)
-
-Return the time series of action distribution. Initial actions are choosed
-randomly.
+Return the time series of action distribution. Initial action distribution is
+choosed randomly.
 
 # Arguments
 
@@ -394,10 +391,14 @@ function time_series(rng::AbstractRNG,
                      brd::AbstractBRD,
                      ts_length::Integer,
                      options::BROptions=BROptions())
-    player_ind_seq = rand(1:brd.N, ts_length)
+    player_ind_seq = rand(rng, 1:brd.N, ts_length)
     nums_actions = ntuple(i -> brd.num_actions, brd.N)
     init_actions = random_pure_actions(nums_actions)
-    time_series(rng, brd, ts_length, init_actions, options)
+    action_dist = zeros(Int, brd.num_actions)
+    for i in 1:brd.N
+        action_dist[actions[i]] += 1
+    end
+    time_series(rng, brd, ts_length, action_dist, options)
 end
 
 time_series(brd::AbstractBRD, ts_length::Integer,

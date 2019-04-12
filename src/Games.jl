@@ -110,14 +110,10 @@ export
 
     # Learning algorithm
     play!, play, time_series,
-    DecreasingGain, ConstantGain,
-    AbstractFictitiousPlay, FictitiousPlay, StochasticFictitiousPlay
-
-    # Local interaction
-    SimultaneousRevision, SequencialRevision,
-    LocalInteraction, play, time_series
-
-    # Best response dynamics
-    AbstractBRD, BRD, KMR, SamplingBRD, time_series
+    AbstractGain, DecreasingGain, ConstantGain,
+    AbstractFictitiousPlay, FictitiousPlay, StochasticFictitiousPlay,
+    AbstractRevision, SimultaneousRevision, AsynchronousRevision,
+    LocalInteraction,
+    AbstractBRD, BRD, KMR, SamplingBRD
 
 end # module
