@@ -73,6 +73,7 @@ include("generators/Generators.jl")
 include("fictplay.jl")
 include("localint.jl")
 include("brd.jl")
+include("logitdyn.jl")
 
 export
     # Types
@@ -114,6 +115,7 @@ export
     AbstractFictitiousPlay, FictitiousPlay, StochasticFictitiousPlay,
     AbstractRevision, SimultaneousRevision, AsynchronousRevision,
     LocalInteraction,
-    AbstractBRD, BRD, KMR, SamplingBRD
+    AbstractBRD, BRD, KMR, SamplingBRD,
+    LogitDynamics
 
 end # module

@@ -9,5 +9,6 @@ include("test_support_enumeration.jl")
 include("test_fictplay.jl")
 include("test_localint.jl")
 include("test_brd.jl")
+include("test_logitdyn.jl")
 
 include("generators/runtests.jl")
