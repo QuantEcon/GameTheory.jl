@@ -6,7 +6,6 @@
 #       that multiple times for the same function if we have particular reason
 #       to believe there might be a type stability with that function.
 
-using JuMP
 using Clp
 using CDDLib
 
@@ -332,8 +331,7 @@ using CDDLib
 
     @testset "is_dominated linprog error" begin
         player = Player([1. 1.; 0. -1.; -1. 0.])
-        lp_solver =
-            with_optimizer(Clp.Optimizer, LogLevel=0, MaximumIterations=1)
+        lp_solver = () -> Clp.Optimizer(LogLevel=0, MaximumIterations=1)
         @test_throws ErrorException is_dominated(player, 1,
                                                  lp_solver=lp_solver)
     end
@@ -447,7 +445,7 @@ using CDDLib
 
         @testset "Test rational input game" begin
             T = Rational{BigInt}
-            lp_solver = with_optimizer(CDDLib.Optimizer{T})
+            lp_solver = CDDLib.Optimizer{T}
 
             # Corner cases
             e = 1//(2^25)
@@ -461,7 +459,7 @@ using CDDLib
 
             player.payoff_array[1, 1:2] .= 0;
 
-            @test !is_dominated(T, player, action, tol=01, lp_solver=lp_solver)
+            @test !is_dominated(T, player, action, tol=0, lp_solver=lp_solver)
 
             # Simple game
             game_matrix = [2//3 1//3;

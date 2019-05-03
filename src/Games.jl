@@ -12,7 +12,6 @@ using Parameters
 using MathProgBase
 using MathOptInterface
 const MOI = MathOptInterface
-using JuMP
 using Clp
 
 # Geometry packages

@@ -848,7 +848,7 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 
 """
     is_dominated(player, action; tol=1e-8,
-                 lp_solver=JuMP.with_optimizer(Clp.Optimizer, LogLevel=0))
+                 lp_solver=() -> Clp.Optimizer(LogLevel=0))
 
 Determine whether `action` is strictly dominated by some mixed action.
 
@@ -857,9 +857,11 @@ Determine whether `action` is strictly dominated by some mixed action.
 - `player::Player` : Player instance.
 - `action::PureAction` : Integer representing a pure action.
 - `tol::Real` : Tolerance level used in determining domination.
-- `lp_solver::JuMP.OptimizerFactory` : Linear programming solver to be used
-  internally. For default, `JuMP.with_optimizer(Clp.Optimizer, LogLevel=0)` is
-  passed.
+- `lp_solver::Union{MathOptInterface.AbstractOptimizer,Function}` : Linear
+  programming solver to be used internally. Pass a
+  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
+  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
+  supply options.
 
 # Returns
 
@@ -867,9 +869,10 @@ Determine whether `action` is strictly dominated by some mixed action.
   otherwise.
 
 """
-function is_dominated(::Type{T}, player::Player, action::PureAction;
-                      tol::Real=1e-8, lp_solver::OptimizerFactory=
-                      with_optimizer(Clp.Optimizer, LogLevel=0)) where T<:Real
+function is_dominated(
+    ::Type{T}, player::Player, action::PureAction; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {T<:Real,TO<:MOI.AbstractOptimizer}
     payoff_array = player.payoff_array
     m, n = size(payoff_array, 1) - 1, prod(size(payoff_array)[2:end])
 
@@ -928,23 +931,25 @@ function is_dominated(::Type{T}, player::Player, action::PureAction;
     end
 end
 
-function is_dominated(::Type{T}, player::Player{1}, action::PureAction;
-                      tol::Real=1e-8, lp_solver::OptimizerFactory=
-                      with_optimizer(Clp.Optimizer, LogLevel=0)) where T<:Real
+function is_dominated(
+    ::Type{T}, player::Player{1}, action::PureAction; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {T<:Real,TO<:MOI.AbstractOptimizer}
         payoff_array = player.payoff_array
         return maximum(payoff_array) > payoff_array[action] + tol
 end
 
-is_dominated(player::Player, action::PureAction; tol::Real=1e-8,
-             lp_solver::OptimizerFactory=
-             with_optimizer(Clp.Optimizer, LogLevel=0)) =
+is_dominated(
+    player::Player, action::PureAction; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {TO<:MOI.AbstractOptimizer} =
     is_dominated(Float64, player, action, tol=tol, lp_solver=lp_solver)
 
 # dominated_actions
 
 """
     dominated_actions(player; tol=1e-8,
-                      lp_solver=JuMP.with_optimizer(Clp.Optimizer, LogLevel=0))
+                      lp_solver=() -> Clp.Optimizer(LogLevel=0))
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 
@@ -952,9 +957,11 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 - `player::Player` : Player instance.
 - `tol::Real` : Tolerance level used in determining domination.
-- `lp_solver::JuMP.OptimizerFactory` : Linear programming solver to be used
-  internally. For default, `JuMP.with_optimizer(Clp.Optimizer, LogLevel=0)` is
-  passed.
+- `lp_solver::Union{MathOptInterface.AbstractOptimizer,Function}` : Linear
+  programming solver to be used internally. Pass a
+  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
+  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
+  supply options.
 
 # Returns
 
@@ -964,8 +971,9 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 """
 function dominated_actions(
     ::Type{T}, player::Player; tol::Real=1e-8,
-    lp_solver::OptimizerFactory=with_optimizer(Clp.Optimizer, LogLevel=0)
-) where T<:Real
+    lp_solver::Union{Type{TO},Function}=
+    () -> Clp.Optimizer(LogLevel=0)
+) where {T<:Real,TO<:MOI.AbstractOptimizer}
     out = Int[]
     for action = 1:num_actions(player)
         if is_dominated(T, player, action, tol=tol, lp_solver=lp_solver)
@@ -976,7 +984,8 @@ function dominated_actions(
     return out
 end
 
-dominated_actions(player::Player; tol::Real=1e-8,
-                  lp_solver::OptimizerFactory=
-                  with_optimizer(Clp.Optimizer, LogLevel=0)) =
+dominated_actions(
+    player::Player; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {TO<:MOI.AbstractOptimizer} =
     dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)
