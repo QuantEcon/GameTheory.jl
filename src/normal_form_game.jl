@@ -847,7 +847,8 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 # is_dominated
 
 """
-    is_dominated(player, action; tol=1e-8, lp_solver=ClpSolver())
+    is_dominated(player, action; tol=1e-8,
+                 lp_solver=() -> Clp.Optimizer(LogLevel=0))
 
 Determine whether `action` is strictly dominated by some mixed action.
 
@@ -855,11 +856,12 @@ Determine whether `action` is strictly dominated by some mixed action.
 
 - `player::Player` : Player instance.
 - `action::PureAction` : Integer representing a pure action.
-- `tol::Real` : Tolerance to be used.
-- `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
-  solver for linear programming problems. Options include ClpSolver(),
-  CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
-  ClpSolver().
+- `tol::Real` : Tolerance level used in determining domination.
+- `lp_solver::Union{MathOptInterface.AbstractOptimizer,Function}` : Linear
+  programming solver to be used internally. Pass a
+  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
+  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
+  supply options.
 
 # Returns
 
@@ -867,61 +869,87 @@ Determine whether `action` is strictly dominated by some mixed action.
   otherwise.
 
 """
-function is_dominated(player::Player{N,T}, action::PureAction;
-                      tol::Real=1e-8,
-                      lp_solver::MathProgBase.AbstractMathProgSolver=
-                      ClpSolver()) where {N,T<:Real}
+function is_dominated(
+    ::Type{T}, player::Player, action::PureAction; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {T<:Real,TO<:MOI.AbstractOptimizer}
     payoff_array = player.payoff_array
-    S = typeof(zero(T)/one(T))
-
-    m, n = size(payoff_array, 1) - 1, prod(size(player.payoff_array)[2:end])
+    m, n = size(payoff_array, 1) - 1, prod(size(payoff_array)[2:end])
 
     ind = trues(num_actions(player))
     ind[action] = false
 
-    A = Array{S}(undef, n+1, m+1)
-    A[1:n, 1:m] = transpose(reshape(-selectdim(payoff_array, 1, ind) .+
-                                    selectdim(payoff_array, 1, action:action),
-                                    (m, n)))
-    A[1:n, m+1] .= 1
-    A[n+1, 1:m] .= 1
-    A[n+1, m+1] = 0
+    A_ub = Matrix{T}(undef, (m+1, n))  # transposed
+    A_ub[1:end-1, :] .= reshape(selectdim(payoff_array, 1, action), (1, n))
+    A_ub[1:end-1, :] -= reshape(selectdim(payoff_array, 1, ind), (m, n))
+    A_ub[end, :] .= 1
 
-    b = zeros(S, n+1)
-    b[end] = 1
+    a_eq = ones(T, m+1)
+    a_eq[end] = 0
 
-    c = zeros(S, m+1)
-    c[end] = -1
+    c = zeros(T, m+1)
+    c[end] = 1
 
-    sense = Array{Char}(undef, n+1)
-    for i in 1:n
-      sense[i] = '<'
+    optimizer = lp_solver()
+    x = MOI.add_variables(optimizer, m+1)
+    MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+            MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.(c, x), 0))
+    MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    for j in 1:n
+        MOI.add_constraint(
+            optimizer,
+            MOI.ScalarAffineFunction{T}(
+                MOI.ScalarAffineTerm{T}.(A_ub[:, j], x), 0
+            ),
+            MOI.LessThan{T}(0)
+        )
     end
-    sense[n+1] = '='
+    MOI.add_constraint(
+        optimizer,
+        MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.(a_eq, x), 0),
+        MOI.EqualTo{T}(1)
+    )
+    # Nonnegativity
+    for i in 1:m
+        a = zeros(T, m+1)
+        a[i] = -1
+        MOI.add_constraint(
+            optimizer,
+            MOI.ScalarAffineFunction{T}(MOI.ScalarAffineTerm{T}.(a, x), 0),
+            MOI.LessThan{T}(0)
+        )
+    end
+    MOI.optimize!(optimizer)
+    status = MOI.get(optimizer, MOI.TerminationStatus())
 
-    res = linprog(c, A, sense, b, lp_solver)
-
-    if res.status == :Optimal
-        return (res.sol[end] > tol)::Bool
-    elseif res.status == :Infeasible
+    if status == MOI.OPTIMAL
+        return (MOI.get(optimizer, MOI.ObjectiveValue()) > tol)::Bool
+    elseif status == MOI.INFEASIBLE
         return false
     else
-        throw(ErrorException("Error: solution status $(res.status)"))
+        throw(ErrorException("Error: solution status $(status)"))
     end
 end
 
-function is_dominated(player::Player{1}, action::PureAction;
-                      tol::Real=1e-8,
-                      lp_solver::MathProgBase.AbstractMathProgSolver=
-                      ClpSolver())
+function is_dominated(
+    ::Type{T}, player::Player{1}, action::PureAction; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {T<:Real,TO<:MOI.AbstractOptimizer}
         payoff_array = player.payoff_array
         return maximum(payoff_array) > payoff_array[action] + tol
 end
 
+is_dominated(
+    player::Player, action::PureAction; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {TO<:MOI.AbstractOptimizer} =
+    is_dominated(Float64, player, action, tol=tol, lp_solver=lp_solver)
+
 # dominated_actions
 
 """
-    dominated_actions(player; tol=1e-8, lp_solver=ClpSolver())
+    dominated_actions(player; tol=1e-8,
+                      lp_solver=() -> Clp.Optimizer(LogLevel=0))
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 
@@ -929,7 +957,11 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 - `player::Player` : Player instance.
 - `tol::Real` : Tolerance level used in determining domination.
-- `lp_solver::AbstractMathProgSolver` : See `is_dominated`.
+- `lp_solver::Union{MathOptInterface.AbstractOptimizer,Function}` : Linear
+  programming solver to be used internally. Pass a
+  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
+  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
+  supply options.
 
 # Returns
 
@@ -937,15 +969,23 @@ Return a vector of actions that are strictly dominated by some mixed actions.
   of which is strictly dominated by some mixed action.
 
 """
-function dominated_actions(player::Player; tol::Real=1e-8,
-                           lp_solver::MathProgBase.AbstractMathProgSolver=
-                           ClpSolver())
-    out = Vector{Int}(undef, 0)
+function dominated_actions(
+    ::Type{T}, player::Player; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=
+    () -> Clp.Optimizer(LogLevel=0)
+) where {T<:Real,TO<:MOI.AbstractOptimizer}
+    out = Int[]
     for action = 1:num_actions(player)
-        if is_dominated(player, action, tol=tol, lp_solver=lp_solver)
+        if is_dominated(T, player, action, tol=tol, lp_solver=lp_solver)
             append!(out, action);
         end
     end
 
     return out
 end
+
+dominated_actions(
+    player::Player; tol::Real=1e-8,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {TO<:MOI.AbstractOptimizer} =
+    dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)

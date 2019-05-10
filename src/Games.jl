@@ -4,11 +4,15 @@ module Games
 using LinearAlgebra, Random
 
 # Packages
-using Clp
-using MathProgBase
 using QuantEcon
 using Combinatorics
 using Parameters
+
+# Optimization packages
+using MathProgBase
+using MathOptInterface
+const MOI = MathOptInterface
+using Clp
 
 # Geometry packages
 using Polyhedra

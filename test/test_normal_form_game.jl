@@ -331,7 +331,7 @@ using CDDLib
 
     @testset "is_dominated linprog error" begin
         player = Player([1. 1.; 0. -1.; -1. 0.])
-        lp_solver = ClpSolver(MaximumIterations=1)
+        lp_solver = () -> Clp.Optimizer(LogLevel=0, MaximumIterations=1)
         @test_throws ErrorException is_dominated(player, 1,
                                                  lp_solver=lp_solver)
     end
@@ -444,7 +444,8 @@ using CDDLib
         end
 
         @testset "Test rational input game" begin
-            lp_solver = CDDSolver(exact=true)
+            T = Rational{BigInt}
+            lp_solver = CDDLib.Optimizer{T}
 
             # Corner cases
             e = 1//(2^25)
@@ -453,19 +454,19 @@ using CDDLib
                              -1//1 1//1])
 
             action = 1
-            @test !is_dominated(player, action, tol=e, lp_solver=lp_solver)
-            @test is_dominated(player, action, tol=e//2, lp_solver=lp_solver)
+            @test !is_dominated(T, player, action, tol=e, lp_solver=lp_solver)
+            @test is_dominated(T, player, action, tol=e//2, lp_solver=lp_solver)
 
             player.payoff_array[1, 1:2] .= 0;
 
-            @test !is_dominated(player, action, tol=0//1, lp_solver=lp_solver)
+            @test !is_dominated(T, player, action, tol=0, lp_solver=lp_solver)
 
             # Simple game
             game_matrix = [2//3 1//3;
                            1//3 2//3]
             player = Player(game_matrix)
 
-            @test dominated_actions(player, lp_solver=lp_solver) == Int[]
+            @test dominated_actions(T, player, lp_solver=lp_solver) == Int[]
         end
     end
 

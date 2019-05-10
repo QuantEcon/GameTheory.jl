@@ -1,8 +1,9 @@
 julia 0.7
-Clp
-MathProgBase
 QuantEcon
-Polyhedra
-LightGraphs
 Combinatorics
 Parameters
+MathProgBase
+MathOptInterface
+Clp
+Polyhedra
+LightGraphs
