@@ -124,12 +124,13 @@ random_pure_actions(nums_actions::NTuple{N,Int}) where {N} =
     random_pure_actions(Random.GLOBAL_RNG, nums_actions)
 
 """
-    random_mixed_actions(nums_actions)
+    random_mixed_actions([rng=GLOBAL_RNG], nums_actions)
 
 Return a tuple of random mixed actions (vectors of floats).
 
 # Arguments
 
+- `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 - `nums_actions::NTuple{N,Int}`: N-tuple of the numbers of actions,
   one for each player.
 
@@ -137,5 +138,8 @@ Return a tuple of random mixed actions (vectors of floats).
 
 - `::NTuple{N,Vector{Float64}}`: N-tuple of random mixed actions.
 """
+random_mixed_actions(rng::AbstractRNG, nums_actions::NTuple{N,Int}) where {N} =
+    ntuple(i -> QuantEcon.random_probvec(rng, nums_actions[i]), Val(N))
+
 random_mixed_actions(nums_actions::NTuple{N,Int}) where {N} =
-    ntuple(i -> vec(QuantEcon.random_probvec(nums_actions[i], 1)), Val(N))
+    random_mixed_actions(Random.GLOBAL_RNG, nums_actions)

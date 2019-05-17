@@ -65,16 +65,23 @@ using Random
     @testset "random_pure_actions" begin
         nums_actions = (2, 3, 4)
         seed = 1234
-        action_profiles = [random_pure_actions(MersenneTwister(seed), nums_actions)
-                           for i in 1:2]
+        action_profiles =
+            [random_pure_actions(MersenneTwister(seed), nums_actions)
+             for i in 1:2]
         @test action_profiles[1] <= nums_actions
         @test action_profiles[2] == action_profiles[1]
     end
 
     @testset "random_mixed_actions" begin
         nums_actions = (2, 3, 4)
-        action_profile = random_mixed_actions(nums_actions)
-        @test length.(action_profile) == nums_actions
+        seed = 1234
+        action_profiles =
+            [random_mixed_actions(MersenneTwister(seed), nums_actions)
+             for i in 1:2]
+        @test length.(action_profiles[1]) == nums_actions
+        for i in 1:length(nums_actions)
+            @test action_profiles[2][i] == action_profiles[1][i]
+        end
     end
 
 end

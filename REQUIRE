@@ -1,5 +1,5 @@
 julia 0.7
-QuantEcon
+QuantEcon 0.16
 Combinatorics
 Parameters
 MathProgBase
