@@ -857,8 +857,8 @@ Determine whether `action` is strictly dominated by some mixed action.
 - `player::Player` : Player instance.
 - `action::PureAction` : Integer representing a pure action.
 - `tol::Real` : Tolerance level used in determining domination.
-- `lp_solver::Union{MathOptInterface.AbstractOptimizer,Function}` : Linear
-  programming solver to be used internally. Pass a
+- `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
+  Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
   option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
   supply options.
@@ -957,8 +957,8 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 - `player::Player` : Player instance.
 - `tol::Real` : Tolerance level used in determining domination.
-- `lp_solver::Union{MathOptInterface.AbstractOptimizer,Function}` : Linear
-  programming solver to be used internally. Pass a
+- `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
+  Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
   option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
   supply options.
@@ -971,8 +971,7 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 """
 function dominated_actions(
     ::Type{T}, player::Player; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=
-    () -> Clp.Optimizer(LogLevel=0)
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
 ) where {T<:Real,TO<:MOI.AbstractOptimizer}
     out = Int[]
     for action = 1:num_actions(player)
