@@ -509,13 +509,17 @@ function outerapproximation(
     # using Polyhedra.jl (it uses `plib` which was chosen for computations)
     p = polyhedron(hrep(H, C), plib)
     vr = vrep(p)
-    vertices = vr.V::Matrix{Float64}
+    pts = points(vr)  # Vector of Vectors
 
     # Reduce the number of vertices by rounding points to the tolerance
     tol_int = round(Int, abs(log10(tol))) - 1
 
     # Find vertices that are unique within tolerance level
-    vertices = unique(round.(vertices, digits=tol_int), dims=1)
+    vertices = Matrix{Float64}(undef, (length(pts), 2))
+    for (i, pt) in enumerate(pts)
+        vertices[i, :] = round.(pt, digits=tol_int)
+    end
+    vertices = unique(vertices, dims=1)
 
     return vertices
 end
