@@ -4,8 +4,6 @@ form game by support enumeration.
 
 Julia version of QuantEcon.py/support_enumeration.py
 
-Authors: Daisuke Oyama, Zejin Shi
-
 References
 ----------
 B. von Stengel, "Equilibrium Computation for Two-Player Games in

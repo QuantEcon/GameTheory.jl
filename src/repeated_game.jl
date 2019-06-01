@@ -1,8 +1,6 @@
 #=
 Tools for repeated games
 
-Authors: Chase Coleman
-
 This file contains code to build and manage repeated games
 
 It currently only has tools for solving two player repeated

@@ -1,7 +1,5 @@
 #=
 Generate random NormalFormGame instances.
-
-Authors: Daisuke Oyama, Zejin Shi
 =#
 
 #

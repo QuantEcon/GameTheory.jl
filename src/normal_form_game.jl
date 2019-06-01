@@ -1,8 +1,5 @@
 #=
 Tools for normal form games.
-
-Authors: Daisuke Oyama
-
 =#
 
 const opponents_actions_docstring = """
