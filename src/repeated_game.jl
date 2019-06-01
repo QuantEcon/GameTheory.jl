@@ -210,7 +210,7 @@ Initialize matrices for the linear programming problems.
 
 - `rpd::RepeatedGame` : Two player repeated game.
 - `H::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the subgradients
-   used to approximate the value set, where `nH` is the number of subgradients.
+  used to approximate the value set, where `nH` is the number of subgradients.
 
 # Returns
 
@@ -251,33 +251,57 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 
 - `rpd::RepGame2` : Two player repeated game.
 - `H::Matrix{Float64}` : Matrix of shape `(nH, 2)` containing the subgradients
-   here `nH` is the number of subgradients.
+  here `nH` is the number of subgradients.
 - `C::Vector{Float64}` : The array containing the hyperplane levels.
 - `i::Int` : The player of interest.
-- `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
-  solver for linear programming problems. Options include ClpSolver(),
-  CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
-  ClpSolver().
+- `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
+  Linear programming solver to be used internally. Pass a 
+  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
+  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`)
+  to supply options.
+
 
 # Returns
 
 - `out::Float64` : Worst possible payoff for player i.
 """
-function worst_value_i(rpd::RepGame2, H::Matrix{Float64},
-                       C::Vector{Float64}, i::Int,
-                       lp_solver::MathProgBase.AbstractMathProgSolver=
-                       ClpSolver())
+function worst_value_i(
+    rpd::RepGame2, H::Matrix{Float64},
+    C::Vector{Float64}, i::Int,
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {TO<:MOI.AbstractOptimizer}
     # Objective depends on which player we are minimizing
     c = zeros(2)
     c[i] = 1.0
 
-    # Lower and upper bounds for w
-    lb = [-Inf, -Inf]
-    ub = [Inf, Inf]
+    optimizer = lp_solver()
 
-    lpout = linprog(c, H, '<', C, lb, ub, lp_solver)
-    if lpout.status == :Optimal
-        out = lpout.sol[i]
+    # Add variables
+    x = MOI.add_variables(optimizer, 2)
+
+    # Define objective function
+    MOI.set(optimizer,
+            MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0))
+    MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+    # Add constraints
+    for i in 1:size(H,1)
+        MOI.add_constraint(
+            optimizer,
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(H[i, :],x), 0.0),
+            MOI.LessThan(C[i])
+        )
+    end
+
+    # Optimize
+    MOI.optimize!(optimizer)
+
+    status = MOI.get(optimizer, MOI.TerminationStatus())
+
+    if status == MOI.OPTIMAL
+        variable_result = MOI.get(optimizer, MOI.VariablePrimal(), x)
+        out = variable_result[i]
     else
         out = minimum(rpd.sg.players[i].payoff_array)
     end
@@ -286,13 +310,20 @@ function worst_value_i(rpd::RepGame2, H::Matrix{Float64},
 end
 
 "See `worst_value_i` for documentation"
-worst_value_1(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
-              lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
-    worst_value_i(rpd, H, C, 1, lp_solver)
+worst_value_1(
+    rpd::RepGame2,
+    H::Matrix{Float64},
+    C::Vector{Float64},
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {TO<:MOI.AbstractOptimizer} = worst_value_i(rpd, H, C, 1, lp_solver)
+
 "See `worst_value_i` for documentation"
-worst_value_2(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
-              lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()) =
-    worst_value_i(rpd, H, C, 2, lp_solver)
+worst_value_2(
+    rpd::RepGame2,
+    H::Matrix{Float64},
+    C::Vector{Float64},
+    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+) where {TO<:MOI.AbstractOptimizer} = worst_value_i(rpd, H, C, 2, lp_solver)
 
 #
 # Outer Hyper Plane Approximation
@@ -301,7 +332,7 @@ worst_value_2(rpd::RepGame2, H::Matrix{Float64}, C::Vector{Float64},
     outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,
                        verbose=false, nskipprint=50,
                        plib=default_library(2, Float64),
-                       lp_solver=ClpSolver())
+                       lp_solver=() -> Clp.Optimizer(LogLevel=0))
 
 Approximates the set of equilibrium values for a repeated game with the outer
 hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
@@ -321,10 +352,11 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
   the geometry computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
   docs for more info). By default, it chooses to use `Polyhedra.DefaultLibrary`.
-- `lp_solver::AbstractMathProgSolver` : Allows users to choose a particular
-  solver for linear programming problems. Options include ClpSolver(),
-  CbcSolver(), GLPKSolverLP() and GurobiSolver(). By default, it choooses
-  ClpSolver().
+- `lp_solver::Union{<:Type{MathOptInterface.AbstractOptimizer},Function}` :
+  Linear programming solver to be used internally. Pass a
+  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
+  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`)
+  to supply options.
 
 # Returns
 
@@ -335,8 +367,8 @@ function outerapproximation(
         rpd::RepGame2; nH::Int=32, tol::Float64=1e-8, maxiter::Int=500,
         check_pure_nash::Bool=true, verbose::Bool=false, nskipprint::Int=50,
         plib::Polyhedra.Library=default_library(2, Float64),
-        lp_solver::MathProgBase.AbstractMathProgSolver=ClpSolver()
-    )
+        lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
+    ) where {TO<:MOI.AbstractOptimizer}
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -362,10 +394,6 @@ function outerapproximation(
 
     # Create matrices for linear programming
     c, A, b = initialize_LP_matrices(rpd, H)
-
-    # bounds on w are [-Inf, Inf] while bounds on slack are [0, Inf]
-    lb = [-Inf, -Inf]
-    ub = [Inf, Inf]
 
     # Set iterative parameters and iterate until converged
     iter, dist = 0, 10.0
@@ -403,11 +431,34 @@ function outerapproximation(
                 b[nH+2] = (1-delta)*flow_u_2(rpd, a1, a2) -
                           (1-delta)*best_dev_payoff_2(rpd, a1) - delta*_w2
 
+                optimizer = lp_solver()
+
+                # Add variables
+                x = MOI.add_variables(optimizer, 2)
+
+                # Define objective function
+                MOI.set(
+                    optimizer,
+                    MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+                    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(c, x), 0.0)
+                    )
+                MOI.set(optimizer, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+
+                # Add constraints
+                for i in 1:size(A,1)
+                    MOI.add_constraint(optimizer,
+                                       MOI.ScalarAffineFunction(
+                                       MOI.ScalarAffineTerm.(A[i, :],x), 0.0),
+                                       MOI.LessThan(b[i]))
+                end
+
                 # Solve corresponding linear program
-                lpout = linprog(c, A, '<', b, lb, ub, lp_solver)
-                if lpout.status == :Optimal
+                MOI.optimize!(optimizer)
+
+                status = MOI.get(optimizer, MOI.TerminationStatus())
+                if status == MOI.OPTIMAL
                     # Pull out optimal value and compute
-                    w_sol = lpout.sol
+                    w_sol = MOI.get(optimizer, MOI.VariablePrimal(), x)
                     value = (1-delta)*flow_u(rpd, a1, a2) + delta*w_sol
 
                     # Save hyperplane level and continuation promises
@@ -458,13 +509,17 @@ function outerapproximation(
     # using Polyhedra.jl (it uses `plib` which was chosen for computations)
     p = polyhedron(hrep(H, C), plib)
     vr = vrep(p)
-    vertices = vr.V::Matrix{Float64}
+    pts = points(vr)  # Vector of Vectors
 
     # Reduce the number of vertices by rounding points to the tolerance
     tol_int = round(Int, abs(log10(tol))) - 1
 
     # Find vertices that are unique within tolerance level
-    vertices = unique(round.(vertices, digits=tol_int), dims=1)
+    vertices = Matrix{Float64}(undef, (length(pts), 2))
+    for (i, pt) in enumerate(pts)
+        vertices[i, :] = round.(pt, digits=tol_int)
+    end
+    vertices = unique(vertices, dims=1)
 
     return vertices
 end
