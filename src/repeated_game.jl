@@ -494,7 +494,7 @@ function outerapproximation(
         end
 
         if iter >= maxiter
-            warn("Maximum Iteration Reached")
+            @warn "Maximum Iteration Reached"
         end
 
         # Update hyperplane levels
