@@ -11,6 +11,7 @@ using Parameters
 # Optimization packages
 using MathOptInterface
 const MOI = MathOptInterface
+const MOIU = MOI.Utilities
 using Clp
 
 # Geometry packages
