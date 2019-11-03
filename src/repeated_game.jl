@@ -272,7 +272,8 @@ function worst_value_i(
     c = zeros(2)
     c[i] = 1.0
 
-    optimizer = lp_solver()
+    CACHE = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    optimizer = MOIU.CachingOptimizer(CACHE, lp_solver())
 
     # Add variables
     x = MOI.add_variables(optimizer, 2)
@@ -367,6 +368,11 @@ function outerapproximation(
         plib::Polyhedra.Library=default_library(2, Float64),
         lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
     ) where {TO<:MOI.AbstractOptimizer}
+
+    # set up optimizer
+    CACHE = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    optimizer = MOIU.CachingOptimizer(CACHE, lp_solver())
+
     # Long unpacking of stuff
     sg, delta = unpack(rpd)
     p1, p2 = sg.players
@@ -429,7 +435,7 @@ function outerapproximation(
                 b[nH+2] = (1-delta)*flow_u_2(rpd, a1, a2) -
                           (1-delta)*best_dev_payoff_2(rpd, a1) - delta*_w2
 
-                optimizer = lp_solver()
+                MOI.empty!(optimizer)
 
                 # Add variables
                 x = MOI.add_variables(optimizer, 2)
