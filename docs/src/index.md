@@ -6,10 +6,10 @@
 
 *Games.jl* is an unregistered package that is currently under development.
 
-To install the package, open a `Julia` session and type
+To install the package, enter the Pkg mode by pressing `]` and run
 
 ```julia
-Pkg.clone("https://github.com/QuantEcon/Games.jl")
+add https://github.com/QuantEcon/Games.jl
 ```
 
 ## Usage
@@ -54,10 +54,9 @@ Please see the [notebooks](@ref notebooks) on QuantEcon for more details.
 
 ## [Notebooks](@id notebooks)
 
-Some notebooks for this package are available on [QuantEcon](https://lectures.quantecon.org). See:
+Some notebooks for demonstration are available:
 
-* [Tools for Game Theory](http://nbviewer.jupyter.org/github/QuantEcon/QuantEcon.notebooks/blob/master/game_theory_jl.ipynb)
-
+* [Tools for Game Theory](https://nbviewer.jupyter.org/github/QuantEcon/game-theory-notebooks/blob/master/game_theory_py.ipynb)
 * [A Recursive Formulation of Repeated Games](https://nbviewer.jupyter.org/github/QuantEcon/QuantEcon.notebooks/blob/master/recursive_repeated_games.ipynb)
 
 ## Library Outline
