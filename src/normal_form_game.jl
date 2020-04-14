@@ -42,6 +42,22 @@ Player{N,T}(player::Player{N,S}) where {N,T,S} =
 Base.convert(::Type{T}, player::Player) where {T<:Player} =
     player isa T ? player : T(player)
 
+"""
+    Player(T, player)
+
+Convert `player` into a new `Player` instance with eltype `T`.
+
+# Arguments
+
+- `T::Type`
+- `player::Player`
+
+# Returns
+
+- `::Player` : `Player` instance with eltype `T`.
+"""
+Player(::Type{T}, player::Player{N}) where {T<:Real,N} = Player{N,T}(player)
+
 num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents(::Player{N}) where {N} = N - 1
 
@@ -600,6 +616,23 @@ end
 
 Base.convert(::Type{T}, g::NormalFormGame) where {T<:NormalFormGame} =
     g isa T ? g : T(g)
+
+"""
+    NormalFormGame(T, g)
+
+Convert `g` into a new `NormalFormGame` instance with eltype `T`.
+
+# Arguments
+
+- `T::Type`
+- `g::NormalFormGame`
+
+# Returns
+
+- `::NormalFormGame` : `NormalFormGame` instance with eltype `T`.
+"""
+NormalFormGame(::Type{T}, g::NormalFormGame{N}) where {T<:Real,N} =
+    NormalFormGame{N,T}(g)
 
 Base.summary(g::NormalFormGame) =
     string(Base.dims2string(g.nums_actions),
