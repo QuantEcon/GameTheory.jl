@@ -56,7 +56,7 @@ Please see the [notebooks](@ref notebooks) on QuantEcon for more details.
 
 Some notebooks for demonstration are available:
 
-* [Tools for Game Theory](https://nbviewer.jupyter.org/github/QuantEcon/game-theory-notebooks/blob/master/game_theory_py.ipynb)
+* [Tools for Game Theory](https://nbviewer.jupyter.org/github/QuantEcon/game-theory-notebooks/blob/master/game_theory_jl.ipynb)
 * [A Recursive Formulation of Repeated Games](https://nbviewer.jupyter.org/github/QuantEcon/QuantEcon.notebooks/blob/master/recursive_repeated_games.ipynb)
 
 ## Library Outline
