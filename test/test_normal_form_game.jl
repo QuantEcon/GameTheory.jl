@@ -88,6 +88,13 @@ using CDDLib
             @test player_new.payoff_array !== player.payoff_array
         end
 
+        player_new = @inferred Player(player)
+        @test eltype(player_new.payoff_array) == T1
+        @test player_new.payoff_array == player.payoff_array
+
+        # Constructor always makes a copy
+        @test player_new.payoff_array !== player.payoff_array
+
         for T in [T1, T2]
             player_new = convert(Player{N,T}, player)
             @test eltype(player_new.payoff_array) == T
@@ -218,6 +225,15 @@ using CDDLib
                 # Constructor always makes a copy
                 @test player_new.payoff_array !== player.payoff_array
             end
+        end
+
+        g_new = @inferred NormalFormGame(g)
+        for (player_new, player) in zip(g_new.players, players)
+            @test eltype(player_new.payoff_array) == T1
+            @test player_new.payoff_array == player.payoff_array
+
+            # Constructor always makes a copy
+            @test player_new.payoff_array !== player.payoff_array
         end
 
         for T in [T1, T2]
