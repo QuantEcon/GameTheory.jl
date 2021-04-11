@@ -881,8 +881,7 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 # is_dominated
 
 """
-    is_dominated(player, action; tol=1e-8,
-                 lp_solver=() -> Clp.Optimizer(LogLevel=0))
+    is_dominated(player, action; tol=1e-8, lp_solver=Games.clp_optimizer_silent)
 
 Determine whether `action` is strictly dominated by some mixed action.
 
@@ -891,10 +890,9 @@ Determine whether `action` is strictly dominated by some mixed action.
 - `player::Player` : Player instance.
 - `action::PureAction` : Integer representing a pure action.
 - `tol::Real` : Tolerance level used in determining domination.
-- `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
-  Linear programming solver to be used internally. Pass a
+- `lp_solver` : Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
+  option is needed, or a function (such as `Games.clp_optimizer_silent`) to
   supply options.
 
 # Returns
@@ -905,8 +903,8 @@ Determine whether `action` is strictly dominated by some mixed action.
 """
 function is_dominated(
     ::Type{T}, player::Player, action::PureAction; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {T<:Real,TO<:MOI.AbstractOptimizer}
+    lp_solver=clp_optimizer_silent
+) where {T<:Real}
     payoff_array = player.payoff_array
     m, n = size(payoff_array, 1) - 1, prod(size(payoff_array)[2:end])
 
@@ -968,23 +966,21 @@ end
 
 function is_dominated(
     ::Type{T}, player::Player{1}, action::PureAction; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {T<:Real,TO<:MOI.AbstractOptimizer}
+    lp_solver=clp_optimizer_silent
+) where {T<:Real}
         payoff_array = player.payoff_array
         return maximum(payoff_array) > payoff_array[action] + tol
 end
 
 is_dominated(
     player::Player, action::PureAction; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {TO<:MOI.AbstractOptimizer} =
-    is_dominated(Float64, player, action, tol=tol, lp_solver=lp_solver)
+    lp_solver=clp_optimizer_silent
+) = is_dominated(Float64, player, action, tol=tol, lp_solver=lp_solver)
 
 # dominated_actions
 
 """
-    dominated_actions(player; tol=1e-8,
-                      lp_solver=() -> Clp.Optimizer(LogLevel=0))
+    dominated_actions(player; tol=1e-8, lp_solver=Games.clp_optimizer_silent)
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 
@@ -995,7 +991,7 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 - `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
   Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
+  option is needed, or a function (such as `Games.clp_optimizer_silent`) to
   supply options.
 
 # Returns
@@ -1005,9 +1001,8 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 """
 function dominated_actions(
-    ::Type{T}, player::Player; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {T<:Real,TO<:MOI.AbstractOptimizer}
+    ::Type{T}, player::Player; tol::Real=1e-8, lp_solver=clp_optimizer_silent
+) where {T<:Real}
     out = Int[]
     for action = 1:num_actions(player)
         if is_dominated(T, player, action, tol=tol, lp_solver=lp_solver)
@@ -1019,7 +1014,5 @@ function dominated_actions(
 end
 
 dominated_actions(
-    player::Player; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {TO<:MOI.AbstractOptimizer} =
-    dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)
+    player::Player; tol::Real=1e-8, lp_solver=clp_optimizer_silent
+) = dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)

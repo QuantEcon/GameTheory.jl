@@ -252,10 +252,9 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
   here `nH` is the number of subgradients.
 - `C::Vector{Float64}` : The array containing the hyperplane levels.
 - `i::Int` : The player of interest.
-- `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
-  Linear programming solver to be used internally. Pass a 
+- `lp_solver` : Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`)
+  option is needed, or a function (such as `Games.clp_optimizer_silent`)
   to supply options.
 
 
@@ -266,8 +265,8 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 function worst_value_i(
     rpd::RepGame2, H::Matrix{Float64},
     C::Vector{Float64}, i::Int,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {TO<:MOI.AbstractOptimizer}
+    lp_solver=clp_optimizer_silent
+)
     # Objective depends on which player we are minimizing
     c = zeros(2)
     c[i] = 1.0
@@ -313,16 +312,16 @@ worst_value_1(
     rpd::RepGame2,
     H::Matrix{Float64},
     C::Vector{Float64},
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {TO<:MOI.AbstractOptimizer} = worst_value_i(rpd, H, C, 1, lp_solver)
+    lp_solver=clp_optimizer_silent
+) = worst_value_i(rpd, H, C, 1, lp_solver)
 
 "See `worst_value_i` for documentation"
 worst_value_2(
     rpd::RepGame2,
     H::Matrix{Float64},
     C::Vector{Float64},
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {TO<:MOI.AbstractOptimizer} = worst_value_i(rpd, H, C, 2, lp_solver)
+    lp_solver=clp_optimizer_silent
+) = worst_value_i(rpd, H, C, 2, lp_solver)
 
 #
 # Outer Hyper Plane Approximation
@@ -331,7 +330,7 @@ worst_value_2(
     outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,
                        verbose=false, nskipprint=50,
                        plib=default_library(2, Float64),
-                       lp_solver=() -> Clp.Optimizer(LogLevel=0))
+                       lp_solver=Games.clp_optimizer_silent)
 
 Approximates the set of equilibrium values for a repeated game with the outer
 hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
@@ -351,10 +350,9 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
   the geometry computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
   docs for more info). By default, it chooses to use `Polyhedra.DefaultLibrary`.
-- `lp_solver::Union{<:Type{MathOptInterface.AbstractOptimizer},Function}` :
-  Linear programming solver to be used internally. Pass a
+- `lp_solver` : Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`)
+  option is needed, or a function (such as `Games.clp_optimizer_silent`)
   to supply options.
 
 # Returns
@@ -366,8 +364,8 @@ function outerapproximation(
         rpd::RepGame2; nH::Int=32, tol::Float64=1e-8, maxiter::Int=500,
         check_pure_nash::Bool=true, verbose::Bool=false, nskipprint::Int=50,
         plib::Polyhedra.Library=default_library(2, Float64),
-        lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-    ) where {TO<:MOI.AbstractOptimizer}
+        lp_solver=clp_optimizer_silent
+    )
 
     # set up optimizer
     CACHE = MOIU.UniversalFallback(MOIU.Model{Float64}())
