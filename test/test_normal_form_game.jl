@@ -6,6 +6,8 @@
 #       that multiple times for the same function if we have particular reason
 #       to believe there might be a type stability with that function.
 
+using MathOptInterface
+const MOI = MathOptInterface
 using Clp
 using CDDLib
 
@@ -367,7 +369,14 @@ using CDDLib
 
     @testset "is_dominated linprog error" begin
         player = Player([1. 1.; 0. -1.; -1. 0.])
-        lp_solver = () -> Clp.Optimizer(LogLevel=0, MaximumIterations=1)
+
+        function clp_optimizer_silent_maxiter1()
+            optimizer = Clp.Optimizer()
+            MOI.set(optimizer, MOI.Silent(), true)
+            MOI.set(optimizer, MOI.RawParameter("MaximumIterations"), 1)
+            return optimizer
+        end
+        lp_solver = clp_optimizer_silent_maxiter1
         @test_throws ErrorException is_dominated(player, 1,
                                                  lp_solver=lp_solver)
     end
