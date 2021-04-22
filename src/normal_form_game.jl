@@ -922,7 +922,7 @@ function is_dominated(
     c = zeros(T, m+1)
     c[end] = 1
 
-    CACHE = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    CACHE = MOIU.UniversalFallback(MOIU.Model{T}())
     optimizer = MOIU.CachingOptimizer(CACHE, lp_solver())
     x = MOI.add_variables(optimizer, m+1)
     MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
