@@ -69,6 +69,7 @@ include("random.jl")
 include("support_enumeration.jl")
 include("util.jl")
 include("generators/Generators.jl")
+include("vertex_enumeration.jl")
 
 export
     # Types
@@ -102,6 +103,9 @@ export
     random_pure_actions, random_mixed_actions,
 
     # Support Enumeration
-    support_enumeration, support_enumeration_task
+    support_enumeration, support_enumeration_task,
+
+    # Vertex Enumeration
+    vertex_enumeration, vertex_enumeration_task
 
 end # module
