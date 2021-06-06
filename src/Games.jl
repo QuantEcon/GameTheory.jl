@@ -61,8 +61,11 @@ Alias for `Union{PureActionProfile,MixedActionProfile}`.
 """
 const ActionProfile = Union{PureActionProfile,MixedActionProfile}
 
+const RatOrInt = Union{Rational,Int}
+
 # package code goes here
 include("normal_form_game.jl")
+include("lrsnash.jl")
 include("pure_nash.jl")
 include("repeated_game.jl")
 include("random.jl")
@@ -102,6 +105,9 @@ export
     random_pure_actions, random_mixed_actions,
 
     # Support Enumeration
-    support_enumeration, support_enumeration_task
+    support_enumeration, support_enumeration_task,
+
+    # LRS
+    lrsnash
 
 end # module
