@@ -1,6 +1,7 @@
 name = "Games"
 uuid = "d5cce6e7-4428-536b-a17f-94dfa0e3a07a"
 repo = "https://github.com/QuantEcon/Games.jl.git"
+version = "0.1.0"
 
 [deps]
 Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
