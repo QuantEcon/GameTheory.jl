@@ -22,6 +22,7 @@ LRSLib = "0.7.2"
 LightGraphs = "1"
 MathOptInterface = "0.9.6"
 Parameters = "0.12"
+Polyhedra = "0.6"
 QuantEcon = "0.16.0"
 julia = "1.3"
 
