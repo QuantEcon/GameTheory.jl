@@ -18,6 +18,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 [compat]
 Clp = "0.8"
 LRSLib = "0.7.2"
+LightGraphs = "1"
 MathOptInterface = "0.9.6"
 Parameters = "0.12"
 QuantEcon = "0.16.0"
