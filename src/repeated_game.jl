@@ -254,7 +254,7 @@ Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 - `i::Int` : The player of interest.
 - `lp_solver` : Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `Games.clp_optimizer_silent`)
+  option is needed, or a function (such as `GameTheory.clp_optimizer_silent`)
   to supply options.
 
 
@@ -330,7 +330,7 @@ worst_value_2(
     outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,
                        verbose=false, nskipprint=50,
                        plib=default_library(2, Float64),
-                       lp_solver=Games.clp_optimizer_silent)
+                       lp_solver=GameTheory.clp_optimizer_silent)
 
 Approximates the set of equilibrium values for a repeated game with the outer
 hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
@@ -352,7 +352,7 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
   docs for more info). By default, it chooses to use `Polyhedra.DefaultLibrary`.
 - `lp_solver` : Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `Games.clp_optimizer_silent`)
+  option is needed, or a function (such as `GameTheory.clp_optimizer_silent`)
   to supply options.
 
 # Returns

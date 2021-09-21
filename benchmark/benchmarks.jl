@@ -1,5 +1,5 @@
-using Games
-using Games.Generators
+using GameTheory
+using GameTheory.Generators
 using BenchmarkTools
 
 const SUITE = BenchmarkGroup()

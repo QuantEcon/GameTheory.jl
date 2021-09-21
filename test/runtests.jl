@@ -1,4 +1,4 @@
-using Games
+using GameTheory
 using Test
 
 include("test_pure_nash.jl")

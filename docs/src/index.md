@@ -1,23 +1,23 @@
-# Games.jl
+# GameTheory.jl
 
-*Games.jl* is a [`Julia`](http://www.julialang.org) package about algorithms and data structures for Game Theory.
+*GameTheory.jl* is a [`Julia`](http://www.julialang.org) package about algorithms and data structures for Game Theory.
 
 ## Installation
 
-*Games.jl* is an unregistered package that is currently under development.
+*GameTheory.jl* is an unregistered package that is currently under development.
 
 To install the package, enter the Pkg mode by pressing `]` and run
 
 ```julia
-add https://github.com/QuantEcon/Games.jl
+add https://github.com/QuantEcon/GameTheory.jl
 ```
 
 ## Usage
 
-Once installed, the `Games` package can be used by typing
+Once installed, the `GameTheory` package can be used by typing
 
 ```@example 1
-using Games
+using GameTheory
 ```
 
 The Base type `Player` can be created by passing a payoff matrix.
@@ -44,7 +44,7 @@ payoff_bimatrix[2, 2, :] = [2, 3]
 g = NormalFormGame(payoff_bimatrix)
 ```
 
-After constructing a `NormalFormGame`, we can find its Nash Equilibria by using methods of `Games`. For example, `pure_nash` finds all pure action Nash Equilibria by enumeration.
+After constructing a `NormalFormGame`, we can find its Nash Equilibria by using methods of `GameTheory`. For example, `pure_nash` finds all pure action Nash Equilibria by enumeration.
 
 ```@example 1
 pure_nash(g)

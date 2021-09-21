@@ -1,5 +1,5 @@
-using Games: pure_nash
+using GameTheory: pure_nash
 using QuantEcon: MVNSampler
-using Games.Generators
+using GameTheory.Generators
 
 include("test_bimatrix_generators.jl")
