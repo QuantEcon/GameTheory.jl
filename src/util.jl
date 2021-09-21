@@ -1,5 +1,5 @@
 #=
-Utility functions used in Games.jl
+Utility functions used in GameTheory.jl
 =#
 
 """

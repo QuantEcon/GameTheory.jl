@@ -1,6 +1,6 @@
-name = "Games"
-uuid = "d5cce6e7-4428-536b-a17f-94dfa0e3a07a"
-repo = "https://github.com/QuantEcon/Games.jl.git"
+name = "GameTheory"
+uuid = "64a4ffa8-f47c-4a47-8dad-aee7aadc3b51"
+repo = "https://github.com/QuantEcon/GameTheory.jl.git"
 version = "0.1.0"
 
 [deps]

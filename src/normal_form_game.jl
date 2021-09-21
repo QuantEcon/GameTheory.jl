@@ -881,7 +881,7 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 # is_dominated
 
 """
-    is_dominated(player, action; tol=1e-8, lp_solver=Games.clp_optimizer_silent)
+    is_dominated(player, action; tol=1e-8, lp_solver=GameTheory.clp_optimizer_silent)
 
 Determine whether `action` is strictly dominated by some mixed action.
 
@@ -892,7 +892,7 @@ Determine whether `action` is strictly dominated by some mixed action.
 - `tol::Real` : Tolerance level used in determining domination.
 - `lp_solver` : Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `Games.clp_optimizer_silent`) to
+  option is needed, or a function (such as `GameTheory.clp_optimizer_silent`) to
   supply options.
 
 # Returns
@@ -980,7 +980,7 @@ is_dominated(
 # dominated_actions
 
 """
-    dominated_actions(player; tol=1e-8, lp_solver=Games.clp_optimizer_silent)
+    dominated_actions(player; tol=1e-8, lp_solver=GameTheory.clp_optimizer_silent)
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 
@@ -991,7 +991,7 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 - `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
   Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `Games.clp_optimizer_silent`) to
+  option is needed, or a function (such as `GameTheory.clp_optimizer_silent`) to
   supply options.
 
 # Returns

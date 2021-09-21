@@ -1,4 +1,4 @@
-module Games
+module GameTheory
 
 # stdlib
 using LinearAlgebra, Random

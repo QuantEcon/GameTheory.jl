@@ -1,4 +1,4 @@
-# Games.jl Benchmarks
+# GameTheory.jl Benchmarks
 
 ## Running the benchmark suite
 
@@ -9,12 +9,12 @@ using PkgBenchmark
 ```
 
 As an example, let us run the benchmarks (defined in `benchmarks.jl`) and compare the performance changes for the two commits
-[`68f3c4b`](https://github.com/QuantEcon/Games.jl/commit/68f3c4bef03554a00384350a047f1e95abd865df) (target)
+[`68f3c4b`](https://github.com/QuantEcon/GameTheory.jl/commit/68f3c4bef03554a00384350a047f1e95abd865df) (target)
 and
-[`d6682de`](https://github.com/QuantEcon/Games.jl/commit/d6682deb9fdae6f16a89b17fbeee9061d763710a) (baseline):
+[`d6682de`](https://github.com/QuantEcon/GameTheory.jl/commit/d6682deb9fdae6f16a89b17fbeee9061d763710a) (baseline):
 
 ```jl
-jud = judge("Games", "68f3c4b", "d6682de")
+jud = judge("GameTheory", "68f3c4b", "d6682de")
 ```
 
 To show the results:

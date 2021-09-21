@@ -6,7 +6,7 @@ docs using `Documenter.jl`.
 
 =#
 
-path = replace(pathof(Games), "src/Games.jl" => "")
+path = replace(pathof(GameTheory), "src/GameTheory.jl" => "")
 
 # read the basic structures
 order = SubString{String}[]
@@ -31,19 +31,19 @@ open(joinpath(path, "docs/Structure")) do f
     end
 end
 
-modules = String["Games"]
-# find all files used in Games.jl
+modules = String["GameTheory"]
+# find all files used in GameTheory.jl
 re = r"include\(\"(.*)\.jl\"\)"
 files = String[]
 
-open(joinpath(path, "src/Games.jl")) do f
+open(joinpath(path, "src/GameTheory.jl")) do f
     for match in eachmatch(re, String(read(f)))
         # check if it is a submodule
         if occursin("/", match.captures[1])
             submodule_path = match.captures[1]
             submodule_dir, submodule_name = split(submodule_path, "/")
             # add submodule name to modules
-            push!(modules, "Games.$submodule_name")
+            push!(modules, "GameTheory.$submodule_name")
             # find all files used in submodules
             open(joinpath(path, "src/$submodule_path.jl")) do f_submodule
                 for match_sub in eachmatch(re, String(read(f_submodule)))
@@ -116,9 +116,9 @@ for section_name in sections_names
     section_name_lower = replace(lowercase(section_name), " " => "_")
     section_file_list = join(map(i -> string("\"", i, ".jl\""),
                              section_files), ", ")
-    # include "Games.jl" in "Base Types and Methods"
+    # include "GameTheory.jl" in "Base Types and Methods"
     if section_name == "Base Types and Methods"
-        section_file_list = string("\"Games.jl\", ", section_file_list)
+        section_file_list = string("\"GameTheory.jl\", ", section_file_list)
     end
     section_page = """
 # [$section_name](@id $section_name_lower)
