@@ -4,12 +4,10 @@
 
 ## Installation
 
-*GameTheory.jl* is an unregistered package that is currently under development.
-
 To install the package, enter the Pkg mode by pressing `]` and run
 
 ```julia
-add https://github.com/QuantEcon/GameTheory.jl
+add GameTheory
 ```
 
 ## Usage
