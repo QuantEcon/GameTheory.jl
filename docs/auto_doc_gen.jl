@@ -6,8 +6,8 @@ docs using `Documenter.jl`.
 
 =#
 
-path = abspath("..")
-# path = replace(pathof(GameTheory), "src/GameTheory.jl" => "")
+# path = abspath("..")
+path = replace(pathof(GameTheory), "src/GameTheory.jl" => "")
 
 # read the basic structures
 order = SubString{String}[]
