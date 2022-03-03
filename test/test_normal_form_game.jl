@@ -373,7 +373,7 @@ using CDDLib
         function clp_optimizer_silent_maxiter1()
             optimizer = Clp.Optimizer()
             MOI.set(optimizer, MOI.Silent(), true)
-            MOI.set(optimizer, MOI.RawParameter("MaximumIterations"), 1)
+            MOI.set(optimizer, MOI.RawOptimizerAttribute("MaximumIterations"), 1)
             return optimizer
         end
         lp_solver = clp_optimizer_silent_maxiter1
