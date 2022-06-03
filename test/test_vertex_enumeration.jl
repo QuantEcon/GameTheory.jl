@@ -1,4 +1,3 @@
-using Test
 @testset "Testing nondegenerate bimatrix games" begin
     @testset "Test 2 by 2 normal form game with 3 equilibria" begin
         g = NormalFormGame(Player([1 0; 0 1]), Player([1 0; 0 1]))
