@@ -1,8 +1,3 @@
-using GameTheory
-using Polyhedra
-using LinearAlgebra
-
-
 function nonnegativeorthant_hrep(dim::Int)
     h = Vector{HalfSpace{Float64, Vector{Float64}}}()
     for i in 1:dim
@@ -43,8 +38,6 @@ function bestresponsepolyhedra(G::NormalFormGame)
     Q = nnorthantQ ∩ brenvelopeQ  # best response polyhedron for Player 2
     polyhedron(P), polyhedron(Q)
 end
-
-@btime vertex_enumeration(G)
 
 
 function hlabels(P::HRepresentation)
