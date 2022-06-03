@@ -209,31 +209,3 @@ function vertex_enumeration(g::NormalFormGame)
     end
     nash
 end
-
-
-## Testing ground
-player1 = Player([π 0; 0 1])
-player2 = Player([1 0; 0 π])
-
-G = NormalFormGame((player1, player2))
-using BenchmarkTools
-@btime vertex_enumeration(g)
-
-A = [3 3; 2 5; 0 6]
-B = [3 2 3; 2 6 1]
-g = NormalFormGame(Player(A), Player(B))
-B = LabeledBimatrixGame(G)
-B.Q.polyhedron
-dropvertex!(B.Q, zeros(2))
-num_actions(Player(B))
-vertex_enumeration(g)
-B = LabeledBimatrixGame(g)
-if !is_nondegenerate(B)
-    @error("The vertex enumeration algorithm will not yield a solution for degenerate games.")
-    return nothing
-end
-m, n = num_actions.(g.players)
-nash = []
-dropvertex!(B.P, zeros(m))
-B.Q.points
-dropvertex!(B.Q, zeros(n))
