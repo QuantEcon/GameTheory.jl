@@ -172,7 +172,10 @@ end
 """
     vertex_enumeration(G::NormalFormGame)
 
-Finds all Nash equilibria via the equilibria by vertex enumeration algorithm (Algorithm 3.5 in von Stengel (2007).)
+Finds all Nash equilibria of a non-degenerate bimatrix game `G` via the vertex enumeration algorithm (Algorithm 3.5 in von Stengel (2007).)
+
+# References
+- B. von Stengel, "Equilibria Computation for Two-Player Games in Strategic and Extensive Form." In N. Nisan, T. Roughgarden, E. Tardos and V. V. Vazirani (eds.), Algorithmic Game Theory, 2007. 
 """
 function vertex_enumeration(g::NormalFormGame)
     B = LabeledBimatrixGame(g)
