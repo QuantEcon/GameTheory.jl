@@ -29,11 +29,11 @@ function br_envelope_hrep(player::Player)
 end
 
 
-function bestresponsepolyhedra(G::NormalFormGame)
-    nnorthantP = nonnegativeorthant_hrep(num_actions(G.players[1]))  # x_i ≥ 0 for all i=1,…,m
-    nnorthantQ = nonnegativeorthant_hrep(num_actions(G.players[2]))  # x_i ≥ 0 for all i=m+1,…,m+n
-    brenvelopeP = br_envelope_hrep(G.players[2])  # B'x ≤ 1
-    brenvelopeQ = br_envelope_hrep(G.players[1])  # Ax ≤ 1
+function bestresponsepolyhedra(g::NormalFormGame)
+    nnorthantP = nonnegativeorthant_hrep(num_actions(g.players[1]))  # x_i ≥ 0 for all i=1,…,m
+    nnorthantQ = nonnegativeorthant_hrep(num_actions(g.players[2]))  # x_i ≥ 0 for all i=m+1,…,m+n
+    brenvelopeP = br_envelope_hrep(g.players[2])  # B'x ≤ 1
+    brenvelopeQ = br_envelope_hrep(g.players[1])  # Ax ≤ 1
     P = brenvelopeP ∩ nnorthantP  # best response polyhedron for Player 1
     Q = nnorthantQ ∩ brenvelopeQ  # best response polyhedron for Player 2
     polyhedron(P), polyhedron(Q)
@@ -51,15 +51,15 @@ hlabels(P::DefaultPolyhedron) = hlabels(hrep(P))
 hlabels(P::VRepresentation) = hlabels(doubledescription(P))
 
 
-function vlabels(P::VRepresentation)
-    Pvindices = Polyhedra.Index{Float64, Vector{Float64}}[]
-    for pi in eachindex(points(P))
-        push!(Pvindices, pi)
-    end
-    Pvindices
-end
-vlabels(P::DefaultPolyhedron) = vlabels(vrep(P))
-vlabels(P::HRepresentation) = vlabels(doubledescription(P))
+#function vlabels(P::VRepresentation)
+#    Pvindices = Polyhedra.Index{Float64, Vector{Float64}}[]
+#    for pi in eachindex(points(P))
+#        push!(Pvindices, pi)
+#    end
+#    Pvindices
+#end
+# vlabels(P::DefaultPolyhedron) = vlabels(vrep(P))
+# vlabels(P::HRepresentation) = vlabels(doubledescription(P))
 
 
 label_to_integer(idx::Polyhedra.Index{T, S}) where {T, S} = idx.value
@@ -98,10 +98,10 @@ struct LabeledBimatrixGame
 end
 
 
-function LabeledBimatrixGame(G::NormalFormGame)
-    @assert num_players(G) == 2
-    P, Q = bestresponsepolyhedra(G)
-    LabeledBimatrixGame(G, LabeledPolyhedron(P), LabeledPolyhedron(Q))
+function LabeledBimatrixGame(g::NormalFormGame)
+    @assert num_players(g) == 2
+    P, Q = bestresponsepolyhedra(g)
+    LabeledBimatrixGame(g, LabeledPolyhedron(P), LabeledPolyhedron(Q))
 end
 
 
@@ -112,18 +112,18 @@ end
 get_num_hlabels(LP::LabeledPolyhedron, point) = length(LP.labelmap[point])
 
 
-function is_nondegenerate(B::LabeledBimatrixGame)
-    m = num_actions(B.game.players[1])
-    n = num_actions(B.game.players[2])
-    all([(get_num_hlabels(B.P, point) ≤ m) for point in B.P.points]) && all([(get_num_hlabels(B.Q, idx) ≤ n) for idx in B.Q.points])
+function is_nondegenerate(b::LabeledBimatrixGame)
+    m = num_actions(b.game.players[1])
+    n = num_actions(b.game.players[2])
+    all([(get_num_hlabels(b.P, point) ≤ m) for point in b.P.points]) && all([(get_num_hlabels(b.Q, idx) ≤ n) for idx in b.Q.points])
 end
 
 
-function is_nondegenerate(G::NormalFormGame)
-    if num_players(G) == 2
-        return is_nondegenerate(LabeledBimatrixGame(G))
+function is_nondegenerate(g::NormalFormGame)
+    if num_players(g) == 2
+        return is_nondegenerate(LabeledBimatrixGame(g))
     else
-        error("Not a bimatrix game")
+        error("Not a bimatrix game.")
     end
 end
 
@@ -150,11 +150,12 @@ end
 
 function dropvertex_pure!(LP::LabeledPolyhedron, point)
     delete!(LP.labelmap, point)
-    deleteat!(LP.points, findall(x->x==point, LP.points)[1])
+    deleteat!(LP.points, findall(x -> x == point, LP.points)[1])
 end
 
+
 function dropvertex!(LP::LabeledPolyhedron, point)
-    if length(findall(x -> x==point, LP.points)) == 0
+    if length(findall(x -> x == point, LP.points)) == 0
         dropvertex!(LP::LabeledPolyhedron, point, 1e-10)
     else
         dropvertex_pure!(LP, point)
@@ -162,46 +163,44 @@ function dropvertex!(LP::LabeledPolyhedron, point)
 end
 
 
-function dropvertex!(LP::LabeledPolyhedron, point, tol)
-    local_point = LP.points[findall(x->norm(x-point)<tol, LP.points)[1]]
+function dropvertex!(LP::LabeledPolyhedron, point, tol)  # handle precision errors up to tolerance
+    local_point = LP.points[findall(x -> norm(x - point) < tol, LP.points)[1]]
     local_point
     dropvertex_pure!(LP, local_point)
 end
 
 
 """
-    vertex_enumeration(G::NormalFormGame)
+    vertex_enumeration(g::NormalFormGame)
 
-Finds all Nash equilibria of a non-degenerate bimatrix game `G` via the vertex enumeration algorithm (Algorithm 3.5 in von Stengel (2007).)
+Finds all Nash equilibria of a non-degenerate bimatrix game `g` via the vertex enumeration algorithm (Algorithm 3.5 in von Stengel (2007).)
 
 # References
-- B. von Stengel, "Equilibria Computation for Two-Player Games in Strategic and Extensive Form." In N. Nisan, T. Roughgarden, E. Tardos and V. V. Vazirani (eds.), Algorithmic Game Theory, 2007. 
+- B. von Stengel, "Equilibria Computation for Two-Player Games in Strategic and Extensive Form." 
+In N. Nisan, T. Roughgarden, E. Tardos and V. V. Vazirani (eds.), Algorithmic Game Theory, 2007. 
 """
 function vertex_enumeration(g::NormalFormGame)
-    B = LabeledBimatrixGame(g)
-    if !is_nondegenerate(B)
-        @error("The vertex enumeration algorithm will not yield a solution for degenerate games.")
-        return nothing
+    if !(all(g.players[1].payoff_array .≥ 0) && all(g.players[2].payoff_array .≥ 0))
+        player1_transform = Player(g.players[1].payoff_array .- minimum(g.players[1].payoff_array))
+        player2_transform = Player(g.players[2].payoff_array .- minimum(g.players[2].payoff_array))
+        g = NormalFormGame(player1_transform, player2_transform)  # positive affine transformation
+    end
+    b = LabeledBimatrixGame(g)
+    if !is_nondegenerate(b)
+        error("The vertex enumeration algorithm will not yield a solution for degenerate games.")
     end
     m, n = num_actions.(g.players)
-    nash = []
-    dropvertex!(B.P, zeros(m))
-    dropvertex!(B.Q, zeros(n))
-    if length(B.P.points) ≤ 1 || length(B.Q.points) ≤ 1
-        @warn("At least one best response polyhedron is collapsed to the origin. Applying positive affine transformations.")
-        player1_transform = Player(G.players[1].payoff_array .- minimum(G.players[1].payoff_array))
-        player2_transform = Player(G.players[2].payoff_array .- minimum(G.players[2].payoff_array))
-        B = LabeledBimatrixGame(NormalFormGame(player1_transform, player2_transform))
-        dropvertex!(B.P, zeros(m))
-        dropvertex!(B.Q, zeros(n))
-    end
-    for x in B.P.points
-        for y in B.Q.points
-            if sort(label_to_integer.(vcat(B.P.labelmap[x], B.Q.labelmap[y])))== Vector(1:m+n) 
+    NEs = Tuple[]
+    dropvertex!(b.P, zeros(m))
+    dropvertex!(b.Q, zeros(n))
+
+    for x in b.P.points
+        for y in b.Q.points
+            if sort(label_to_integer.(vcat(b.P.labelmap[x], b.Q.labelmap[y]))) == Vector(1:m+n) 
                 # i.e. (x, y) completely labeled, x ∈ P - {0}, y ∈ Q - {0} 
-                push!(nash, (x./(ones(1,m)*x),y./(ones(1,n)*y)))
+                push!(NEs, (x./(ones(1,m)*x),y./(ones(1,n)*y)))
             end
         end
     end
-    nash
+    NEs
 end
