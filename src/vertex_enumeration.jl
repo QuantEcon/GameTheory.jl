@@ -11,8 +11,6 @@ function nonnegativeorthant_hrep(dim::Int)
     end
     H
 end
-# nonnegativeorthant(dim::Int; plib::Polyhedra.Library=
-# default_library(2, Float64)) = polyhedron(nonnegativeorthant_hrep(dim), plib)
 
 
 function br_envelope_hrep(player::Player)
@@ -52,7 +50,6 @@ function hlabels(P::HRepresentation)
     Phindices
 end
 hlabels(P::DefaultPolyhedron) = hlabels(hrep(P))
-# hlabels(P::VRepresentation) = hlabels(doubledescription(P))
 
 
 label_to_integer(idx::Polyhedra.Index{T, S}) where {T, S} = idx.value
@@ -90,14 +87,9 @@ struct LabeledBimatrixGame
 end
 
 
-<<<<<<< HEAD
 function LabeledBimatrixGame(g::NormalFormGame{2}; plib::Polyhedra.Library =
     default_library(2, Float64))
     P, Q = bestresponsepolyhedra(g; plib=plib)
-=======
-function LabeledBimatrixGame(g::NormalFormGame{2})
-    P, Q = bestresponsepolyhedra(g)
->>>>>>> 0831361521ebed2d26a721bc626d580d97364618
     LabeledBimatrixGame(g, LabeledPolyhedron(P), LabeledPolyhedron(Q))
 end
 
