@@ -109,7 +109,7 @@ export
     support_enumeration, support_enumeration_task,
 
     # LRS
-    lrsnash
+    lrsnash,
 
     # Vertex Enumeration
     vertex_enumeration
