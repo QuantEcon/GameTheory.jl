@@ -98,8 +98,7 @@ struct LabeledBimatrixGame
 end
 
 
-function LabeledBimatrixGame(g::NormalFormGame)
-    @assert num_players(g) == 2
+function LabeledBimatrixGame(g::NormalFormGame{2})
     P, Q = bestresponsepolyhedra(g)
     LabeledBimatrixGame(g, LabeledPolyhedron(P), LabeledPolyhedron(Q))
 end
