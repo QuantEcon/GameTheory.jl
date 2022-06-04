@@ -1,9 +1,9 @@
 function nonnegativeorthant_hrep(dim::Int)
-    h = Vector{HalfSpace}()
+    h = Vector{HalfSpace{Rational{Int64}, Vector{Rational{Int64}}}}()
     for i in 1:dim
         e_i = zeros(dim)
-        e_i[i] = -1
-        push!(h, HalfSpace(e_i, 0))
+        e_i[i] = -1//1
+        push!(h, HalfSpace(e_i, 0//1))
     end
     H = h[1]
     for i in 2:lastindex(h)
@@ -89,7 +89,7 @@ end
 
 function LabeledBimatrixGame(g::NormalFormGame{2}; plib::Polyhedra.Library =
     default_library(2, Float64))
-    P, Q = bestresponsepolyhedra(g; plib=plib)
+    P, Q = bestresponsepolyhedra(g; plib = plib)
     LabeledBimatrixGame(g, LabeledPolyhedron(P), LabeledPolyhedron(Q))
 end
 
@@ -151,6 +151,11 @@ Game Theory, 2007.
 """
 function vertex_enumeration(g::NormalFormGame; plib::Polyhedra.Library = 
     default_library(2, Float64))
+    if typeof(g) <: NormalFormGame{2, Rational{Int64}} && plib == 
+        default_library(2, Float64)
+        plib = default_library(2, Rational{Int64}) # change default if payoffs 
+        # are rational
+    end
     if !(all(g.players[1].payoff_array .≥ 0) && all(g.players[2].payoff_array
          .≥ 0))
         player1_transform = Player(g.players[1].payoff_array 
@@ -175,7 +180,7 @@ function vertex_enumeration(g::NormalFormGame; plib::Polyhedra.Library =
             if sort(label_to_integer.(vcat(b.P.labelmap[x], 
                 b.Q.labelmap[y]))) == Vector(1:m+n) 
                 # i.e. (x, y) completely labeled, x ∈ P - {0}, y ∈ Q - {0} 
-                push!(NEs, (x./(ones(1,m)*x),y./(ones(1,n)*y)))
+                push!(NEs, (x./(ones(Rational, 1,m)*x),y./(ones(Rational, 1,n)*y)))
             end
         end
     end
