@@ -1,9 +1,9 @@
 function nonnegativeorthant_hrep(dim::Int)
-    h = Vector{HalfSpace{Float64, Vector{Float64}}}()
+    h = Vector{HalfSpace}()
     for i in 1:dim
         e_i = zeros(dim)
-        e_i[i] = -1.
-        push!(h, HalfSpace(e_i, 0.))
+        e_i[i] = -1
+        push!(h, HalfSpace(e_i, 0))
     end
     H = h[1]
     for i in 2:lastindex(h)
@@ -11,15 +11,16 @@ function nonnegativeorthant_hrep(dim::Int)
     end
     H
 end
-nonnegativeorthant(dim::Int) = polyhedron(nonnegative_hrep(dim))
+# nonnegativeorthant(dim::Int; plib::Polyhedra.Library=
+# default_library(2, Float64)) = polyhedron(nonnegativeorthant_hrep(dim), plib)
 
 
 function br_envelope_hrep(player::Player)
     A = player.payoff_array
-    h = Vector{HalfSpace{Float64, Vector{Float64}}}()
+    h = Vector{HalfSpace}()
     for i in 1:num_actions(player)
         A_i = A[i,:]
-        push!(h, HalfSpace(A_i, 1.))
+        push!(h, HalfSpace(A_i, 1))
     end
     H = h[1]
     for i in 2:lastindex(h)
@@ -29,49 +30,40 @@ function br_envelope_hrep(player::Player)
 end
 
 
-function bestresponsepolyhedra(g::NormalFormGame)
-    nnorthantP = nonnegativeorthant_hrep(num_actions(g.players[1]))  # x_i ≥ 0 for all i=1,…,m
-    nnorthantQ = nonnegativeorthant_hrep(num_actions(g.players[2]))  # x_i ≥ 0 for all i=m+1,…,m+n
+function bestresponsepolyhedra(g::NormalFormGame; plib::Polyhedra.Library =
+    default_library(2, Float64))
+    nnorthantP = nonnegativeorthant_hrep(num_actions(g.players[1]))  
+    # x_i ≥ 0 for all i=1,…,m
+    nnorthantQ = nonnegativeorthant_hrep(num_actions(g.players[2]))  
+    # x_i ≥ 0 for all i=m+1,…,m+n
     brenvelopeP = br_envelope_hrep(g.players[2])  # B'x ≤ 1
     brenvelopeQ = br_envelope_hrep(g.players[1])  # Ax ≤ 1
     P = brenvelopeP ∩ nnorthantP  # best response polyhedron for Player 1
     Q = nnorthantQ ∩ brenvelopeQ  # best response polyhedron for Player 2
-    polyhedron(P), polyhedron(Q)
+    polyhedron(P, plib), polyhedron(Q, plib)
 end
 
 
 function hlabels(P::HRepresentation)
-    Phindices = Polyhedra.Index{Float64, HalfSpace{Float64, Vector{Float64}}}[]
+    Phindices = Polyhedra.Index[]
     for pi in eachindex(halfspaces(P))
         push!(Phindices, pi)
     end
     Phindices
 end
 hlabels(P::DefaultPolyhedron) = hlabels(hrep(P))
-hlabels(P::VRepresentation) = hlabels(doubledescription(P))
-
-
-#function vlabels(P::VRepresentation)
-#    Pvindices = Polyhedra.Index{Float64, Vector{Float64}}[]
-#    for pi in eachindex(points(P))
-#        push!(Pvindices, pi)
-#    end
-#    Pvindices
-#end
-# vlabels(P::DefaultPolyhedron) = vlabels(vrep(P))
-# vlabels(P::HRepresentation) = vlabels(doubledescription(P))
+# hlabels(P::VRepresentation) = hlabels(doubledescription(P))
 
 
 label_to_integer(idx::Polyhedra.Index{T, S}) where {T, S} = idx.value
-# integer_to_vlabel(n::Int) = Polyhedra.Index{Float64, Vector{Float64}}(n)
-# integer_to_hlabel(n::Int) = Polyhedra.Index{Float64, HalfSpace{Float64, Vector{Float64}}}(n)
 
 
 function labelmap(P::DefaultPolyhedron)
     labelmaps = []
     vpoints = [x for x in points(P)]
     for pi in eachindex(points(P))
-        push!(labelmaps, (vpoints[label_to_integer(pi)], incidenthalfspaceindices(P, pi)))
+        push!(labelmaps, (vpoints[label_to_integer(pi)], 
+        incidenthalfspaceindices(P, pi)))
     end
     Dict(labelmaps)
 end
@@ -98,15 +90,11 @@ struct LabeledBimatrixGame
 end
 
 
-function LabeledBimatrixGame(g::NormalFormGame)
-    @assert num_players(g) == 2
-    P, Q = bestresponsepolyhedra(g)
+function LabeledBimatrixGame(g::NormalFormGame{2}; plib::Polyhedra.Library =
+    default_library(2, Float64))
+    P, Q = bestresponsepolyhedra(g; plib=plib)
     LabeledBimatrixGame(g, LabeledPolyhedron(P), LabeledPolyhedron(Q))
 end
-
-
-# unlabel(LP::LabeledPolyhedron) = LP.polyhedron
-# unlabel(P::T) where T <: Union{Polyhedron, HRepresentation, VRepresentation} = P
 
 
 get_num_hlabels(LP::LabeledPolyhedron, point) = length(LP.labelmap[point])
@@ -115,7 +103,8 @@ get_num_hlabels(LP::LabeledPolyhedron, point) = length(LP.labelmap[point])
 function is_nondegenerate(b::LabeledBimatrixGame)
     m = num_actions(b.game.players[1])
     n = num_actions(b.game.players[2])
-    all([(get_num_hlabels(b.P, point) ≤ m) for point in b.P.points]) && all([(get_num_hlabels(b.Q, idx) ≤ n) for idx in b.Q.points])
+    all([(get_num_hlabels(b.P, point) ≤ m) for point in b.P.points]) && all([
+        (get_num_hlabels(b.Q, idx) ≤ n) for idx in b.Q.points])
 end
 
 
@@ -126,26 +115,6 @@ function is_nondegenerate(g::NormalFormGame)
         error("Not a bimatrix game.")
     end
 end
-
-
-#function droplabel!(LP::LabeledPolyhedron, point, label)
-#    LP.labelmap[point]
-#    if !(label in LP.labelmap[point])
-#        @warn("Label not found.")
-#        return nothing
-#    end
-#    deleteat!(LP.labelmap[point], findall(x->x==label, LP.labelmap[point])[1])  # note label is unique so findall() finds precisely 1 index
-#end
-
-
-#function droplabel(LP::LabeledPolyhedron, point, label)
-#    LP.labelmap[point]
-#    if !(label in LP.labelmap[point])
-#        @warn("Label not found.")
-#        return LP.labelmap[point]
-#    end
-#    deleteat(LP.labelmap[point], findall(x->x==label, LP.labelmap[point])[1])  # note label is unique so findall() finds precisely 1 index
-#end
 
 
 function dropvertex_pure!(LP::LabeledPolyhedron, point)
@@ -163,7 +132,8 @@ function dropvertex!(LP::LabeledPolyhedron, point)
 end
 
 
-function dropvertex!(LP::LabeledPolyhedron, point, tol)  # handle precision errors up to tolerance
+function dropvertex!(LP::LabeledPolyhedron, point, tol)  # handle precision 
+    # errors up to tolerance
     local_point = LP.points[findall(x -> norm(x - point) < tol, LP.points)[1]]
     local_point
     dropvertex_pure!(LP, local_point)
@@ -173,21 +143,30 @@ end
 """
     vertex_enumeration(g::NormalFormGame)
 
-Finds all Nash equilibria of a non-degenerate bimatrix game `g` via the vertex enumeration algorithm (Algorithm 3.5 in von Stengel (2007).)
+Finds all Nash equilibria of a non-degenerate bimatrix game `g` via the vertex 
+enumeration algorithm (Algorithm 3.5 in von Stengel (2007).)
 
 # References
-- B. von Stengel, "Equilibria Computation for Two-Player Games in Strategic and Extensive Form." 
-In N. Nisan, T. Roughgarden, E. Tardos and V. V. Vazirani (eds.), Algorithmic Game Theory, 2007. 
+- B. von Stengel, "Equilibria Computation for Two-Player Games in Strategic and 
+Extensive Form." 
+In N. Nisan, T. Roughgarden, E. Tardos and V. V. Vazirani (eds.), Algorithmic 
+Game Theory, 2007. 
 """
-function vertex_enumeration(g::NormalFormGame)
-    if !(all(g.players[1].payoff_array .≥ 0) && all(g.players[2].payoff_array .≥ 0))
-        player1_transform = Player(g.players[1].payoff_array .- minimum(g.players[1].payoff_array))
-        player2_transform = Player(g.players[2].payoff_array .- minimum(g.players[2].payoff_array))
-        g = NormalFormGame(player1_transform, player2_transform)  # positive affine transformation
+function vertex_enumeration(g::NormalFormGame; plib::Polyhedra.Library = 
+    default_library(2, Float64))
+    if !(all(g.players[1].payoff_array .≥ 0) && all(g.players[2].payoff_array
+         .≥ 0))
+        player1_transform = Player(g.players[1].payoff_array 
+        .- minimum(g.players[1].payoff_array))
+        player2_transform = Player(g.players[2].payoff_array 
+        .- minimum(g.players[2].payoff_array))
+        g = NormalFormGame(player1_transform, player2_transform)  # positive 
+        # affine transformation
     end
-    b = LabeledBimatrixGame(g)
+    b = LabeledBimatrixGame(g; plib = plib)
     if !is_nondegenerate(b)
-        error("The vertex enumeration algorithm will not yield a solution for degenerate games.")
+        error("The vertex enumeration algorithm will not yield a solution for 
+        degenerate games.")
     end
     m, n = num_actions.(g.players)
     NEs = Tuple[]
@@ -196,7 +175,8 @@ function vertex_enumeration(g::NormalFormGame)
 
     for x in b.P.points
         for y in b.Q.points
-            if sort(label_to_integer.(vcat(b.P.labelmap[x], b.Q.labelmap[y]))) == Vector(1:m+n) 
+            if sort(label_to_integer.(vcat(b.P.labelmap[x], 
+                b.Q.labelmap[y]))) == Vector(1:m+n) 
                 # i.e. (x, y) completely labeled, x ∈ P - {0}, y ∈ Q - {0} 
                 push!(NEs, (x./(ones(1,m)*x),y./(ones(1,n)*y)))
             end
