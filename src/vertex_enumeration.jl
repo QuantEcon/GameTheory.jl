@@ -90,9 +90,14 @@ struct LabeledBimatrixGame
 end
 
 
+<<<<<<< HEAD
 function LabeledBimatrixGame(g::NormalFormGame{2}; plib::Polyhedra.Library =
     default_library(2, Float64))
     P, Q = bestresponsepolyhedra(g; plib=plib)
+=======
+function LabeledBimatrixGame(g::NormalFormGame{2})
+    P, Q = bestresponsepolyhedra(g)
+>>>>>>> 0831361521ebed2d26a721bc626d580d97364618
     LabeledBimatrixGame(g, LabeledPolyhedron(P), LabeledPolyhedron(Q))
 end
 
