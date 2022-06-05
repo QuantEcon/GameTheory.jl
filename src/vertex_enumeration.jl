@@ -138,7 +138,7 @@ end
 
 
 """
-    vertex_enumeration(g::NormalFormGame)
+    vertex_enumeration(g::NormalFormGame{2, T})
 
 Finds all Nash equilibria of a non-degenerate bimatrix game `g` via the vertex 
 enumeration algorithm (Algorithm 3.5 in von Stengel (2007).)
@@ -149,10 +149,9 @@ Extensive Form."
 In N. Nisan, T. Roughgarden, E. Tardos and V. V. Vazirani (eds.), Algorithmic 
 Game Theory, 2007. 
 """
-function vertex_enumeration(g::NormalFormGame; plib::Polyhedra.Library = 
-    default_library(2, Float64))
-    if typeof(g) <: NormalFormGame{2, Rational{Int64}} && plib == 
-        default_library(2, Float64)
+function vertex_enumeration(g::NormalFormGame{2, T}; plib::Polyhedra.Library = 
+    default_library(2, Float64)) where T<:Real
+    if T == Rational{Int64} && plib == default_library(2, Float64)
         plib = default_library(2, Rational{Int64}) # change default if payoffs 
         # are rational
     end
@@ -167,11 +166,11 @@ function vertex_enumeration(g::NormalFormGame; plib::Polyhedra.Library =
     end
     b = LabeledBimatrixGame(g; plib = plib)
     if !is_nondegenerate(b)
-        error("The vertex enumeration algorithm will not yield a solution for 
-        degenerate games.")
+        error("The vertex enumeration algorithm will not yield a solution "
+        * "for degenerate games.")
     end
     m, n = num_actions.(g.players)
-    NEs = Tuple[]
+    NEs = NTuple{2, Vector{T}}[]
     dropvertex!(b.P, zeros(m))
     dropvertex!(b.Q, zeros(n))
 
@@ -185,4 +184,8 @@ function vertex_enumeration(g::NormalFormGame; plib::Polyhedra.Library =
         end
     end
     NEs
+end
+function vertex_enumeration(g::NormalFormGame{2, Int}; plib::Polyhedra.Library = 
+    default_library(2, Float64))
+    vertex_enumeration(NormalFormGame{2, Float64}(g); plib = plib)
 end
