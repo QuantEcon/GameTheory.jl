@@ -49,13 +49,13 @@ function hlabels(P::HRepresentation)
     end
     Phindices
 end
-hlabels(P::DefaultPolyhedron) = hlabels(hrep(P))
+hlabels(P::T) where T <: Polyhedron = hlabels(hrep(P))
 
 
 label_to_integer(idx::Polyhedra.Index{T, S}) where {T, S} = idx.value
 
 
-function labelmap(P::DefaultPolyhedron)
+function labelmap(P::T) where T <: Polyhedron
     labelmaps = []
     vpoints = [x for x in points(P)]
     for pi in eachindex(points(P))
@@ -74,7 +74,7 @@ mutable struct LabeledPolyhedron{S<:Polyhedron, T<:Vector, U<:Vector, V<:Dict}
 end
 
 
-function LabeledPolyhedron(P::DefaultPolyhedron)
+function LabeledPolyhedron(P::T) where T <: Polyhedron
     vpoints = [x for x in points(P)]
     LabeledPolyhedron(P, vpoints, hlabels(P), labelmap(P))
 end
