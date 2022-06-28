@@ -86,7 +86,7 @@ References
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using QuantEcon: MVNSampler, simplex_grid, next_k_array!, k_array_rank
-using LightGraphs: random_tournament_digraph
+using Graphs: random_tournament_digraph
 
 
 # blotto_game
