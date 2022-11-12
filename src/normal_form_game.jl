@@ -881,7 +881,8 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 # is_dominated
 
 """
-    is_dominated(player, action; tol=1e-8, lp_solver=GameTheory.clp_optimizer_silent)
+    is_dominated(player, action; tol=1e-8,
+                 lp_solver=GameTheory.highs_optimizer_silent)
 
 Determine whether `action` is strictly dominated by some mixed action.
 
@@ -891,9 +892,9 @@ Determine whether `action` is strictly dominated by some mixed action.
 - `action::PureAction` : Integer representing a pure action.
 - `tol::Real` : Tolerance level used in determining domination.
 - `lp_solver` : Linear programming solver to be used internally. Pass a
-  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `GameTheory.clp_optimizer_silent`) to
-  supply options.
+  `MathOptInterface.AbstractOptimizer` type (such as `HiGHS.Optimizer`) if no
+  option is needed, or a function (such as `GameTheory.highs_optimizer_silent`)
+  to supply options.
 
 # Returns
 
@@ -903,7 +904,7 @@ Determine whether `action` is strictly dominated by some mixed action.
 """
 function is_dominated(
     ::Type{T}, player::Player, action::PureAction; tol::Real=1e-8,
-    lp_solver=clp_optimizer_silent
+    lp_solver=highs_optimizer_silent
 ) where {T<:Real}
     payoff_array = player.payoff_array
     m, n = size(payoff_array, 1) - 1, prod(size(payoff_array)[2:end])
@@ -966,7 +967,7 @@ end
 
 function is_dominated(
     ::Type{T}, player::Player{1}, action::PureAction; tol::Real=1e-8,
-    lp_solver=clp_optimizer_silent
+    lp_solver=highs_optimizer_silent
 ) where {T<:Real}
         payoff_array = player.payoff_array
         return maximum(payoff_array) > payoff_array[action] + tol
@@ -974,13 +975,14 @@ end
 
 is_dominated(
     player::Player, action::PureAction; tol::Real=1e-8,
-    lp_solver=clp_optimizer_silent
+    lp_solver=highs_optimizer_silent
 ) = is_dominated(Float64, player, action, tol=tol, lp_solver=lp_solver)
 
 # dominated_actions
 
 """
-    dominated_actions(player; tol=1e-8, lp_solver=GameTheory.clp_optimizer_silent)
+    dominated_actions(player; tol=1e-8,
+                      lp_solver=GameTheory.highs_optimizer_silent)
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 
@@ -990,9 +992,9 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 - `tol::Real` : Tolerance level used in determining domination.
 - `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
   Linear programming solver to be used internally. Pass a
-  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `GameTheory.clp_optimizer_silent`) to
-  supply options.
+  `MathOptInterface.AbstractOptimizer` type (such as `HiGHS.Optimizer`) if no
+  option is needed, or a function (such as `GameTheory.highs_optimizer_silent`)
+  to supply options.
 
 # Returns
 
@@ -1001,7 +1003,7 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 """
 function dominated_actions(
-    ::Type{T}, player::Player; tol::Real=1e-8, lp_solver=clp_optimizer_silent
+    ::Type{T}, player::Player; tol::Real=1e-8, lp_solver=highs_optimizer_silent
 ) where {T<:Real}
     out = Int[]
     for action = 1:num_actions(player)
@@ -1014,5 +1016,5 @@ function dominated_actions(
 end
 
 dominated_actions(
-    player::Player; tol::Real=1e-8, lp_solver=clp_optimizer_silent
+    player::Player; tol::Real=1e-8, lp_solver=highs_optimizer_silent
 ) = dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)

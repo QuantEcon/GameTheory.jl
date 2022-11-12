@@ -12,7 +12,7 @@ using Parameters
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-using Clp
+using HiGHS
 
 # Geometry packages
 using Polyhedra
