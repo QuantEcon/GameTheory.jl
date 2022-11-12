@@ -3,12 +3,12 @@ Utility functions used in GameTheory.jl
 =#
 
 """
-    clp_optimizer_silent()
+    highs_optimizer_silent()
 
-Function that returns a `Clp.Optimizer` instance with `LogLevel` set to `0`.
+Function that returns a `HiGHS.Optimizer` instance in silent mode.
 """
-function clp_optimizer_silent()
-    optimizer = Clp.Optimizer()
+function highs_optimizer_silent()
+    optimizer = HiGHS.Optimizer()
     MOI.set(optimizer, MOI.Silent(), true)
     return optimizer
 end

@@ -4,9 +4,9 @@ repo = "https://github.com/QuantEcon/GameTheory.jl.git"
 version = "0.1.1"
 
 [deps]
-Clp = "e2554f3b-3117-50c0-817c-e040a3ddf72d"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
 LRSLib = "262c1cb6-76e2-5873-868b-19ece3183cc5"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
@@ -16,9 +16,9 @@ QuantEcon = "fcd29c91-0bd7-5a09-975d-7ac3f643a60c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
-Clp = "1"
 Combinatorics = "1"
 Graphs = "1"
+HiGHS = "1.2"
 LRSLib = "0.8"
 MathOptInterface = "1"
 Parameters = "0.12"

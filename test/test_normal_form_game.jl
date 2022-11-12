@@ -8,7 +8,7 @@
 
 using MathOptInterface
 const MOI = MathOptInterface
-using Clp
+using HiGHS
 using CDDLib
 
 
@@ -370,13 +370,14 @@ using CDDLib
     @testset "is_dominated linprog error" begin
         player = Player([1. 1.; 0. -1.; -1. 0.])
 
-        function clp_optimizer_silent_maxiter1()
-            optimizer = Clp.Optimizer()
+        function highs_optimizer_silent_simplex_maxiter1()
+            optimizer = HiGHS.Optimizer()
             MOI.set(optimizer, MOI.Silent(), true)
-            MOI.set(optimizer, MOI.RawOptimizerAttribute("MaximumIterations"), 1)
+            MOI.set(optimizer, MOI.RawOptimizerAttribute("solver"), "simplex")
+            MOI.set(optimizer, MOI.RawOptimizerAttribute("simplex_iteration_limit"), 1)
             return optimizer
         end
-        lp_solver = clp_optimizer_silent_maxiter1
+        lp_solver = highs_optimizer_silent_simplex_maxiter1
         @test_throws ErrorException is_dominated(player, 1,
                                                  lp_solver=lp_solver)
     end
