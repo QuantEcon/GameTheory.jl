@@ -71,7 +71,11 @@ Base.summary(player::Player) =
 function Base.show(io::IO, player::Player)
     print(io, summary(player))
     println(io, ":")
-    Base.print_array(io, player.payoff_array)
+    X = player.payoff_array
+    if !haskey(io, :compact) && length(axes(X, 2)) > 1
+        io = IOContext(io, :compact => true)
+    end
+    Base.print_array(io, X)
 end
 
 # delete_action
@@ -672,9 +676,18 @@ function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
     return payoff_profile_array
 end
 
-# TODO: add printout of payoff arrays
 function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
+end
+
+function Base.print(io::IO, g::NormalFormGame)
+    print(io, summary(g))
+    println(io, ":")
+    X = payoff_profile_array(g)
+    if !haskey(io, :compact) && length(axes(X, 2)) > 1
+        io = IOContext(io, :compact => true)
+    end
+    Base.print_array(io, X)
 end
 
 function Base.getindex(g::NormalFormGame{N,T},
