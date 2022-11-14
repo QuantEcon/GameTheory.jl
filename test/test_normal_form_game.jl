@@ -149,6 +149,8 @@ using CDDLib
         g = @inferred(NormalFormGame(matching_pennies_bimatrix))
 
         @test g[2, 1] == [-1, 1]
+        payoff_profiles = @inferred payoff_profile_array(g)
+        @test payoff_profiles[2, 1] == [-1, 1]
         @test !(is_nash(g, (1, 1)))
         @test is_nash(g, ([1/2, 1/2], [1/2, 1/2]))
     end
@@ -164,6 +166,8 @@ using CDDLib
 
         @test @inferred(getindex(g, 1, 1, 2)) == [6, 4, 1]
         @test @inferred(getindex(g, CartesianIndex(1, 1, 2))) == [6, 4, 1]
+        payoff_profiles = @inferred payoff_profile_array(g)
+        @test payoff_profiles[1, 1, 2] == [6, 4, 1]
         @test @inferred is_nash(g, (1, 1, 1))
         @test @inferred !(is_nash(g, (1, 1, 2)))
 
@@ -313,6 +317,8 @@ using CDDLib
         @test num_players(g) == 1
         @test g.players[1].payoff_array == [0, 1, 1]
         @test g[1] == 0
+        payoff_profiles = @inferred payoff_profile_array(g)
+        @test payoff_profiles[1] == [0]
         @test is_nash(g, 2)
         @test !(is_nash(g, 1))
         @test is_nash(g, [0, 1/2, 1/2])

@@ -643,38 +643,34 @@ Base.summary(g::NormalFormGame) =
            " ",
            split(string(typeof(g)), ".")[end])
 
-# delete_action
+# payoff_profile_array
 
 """
-    delete_action(g, action, player_idx)
+    payoff_profile_array(g)
 
-Return a new `NormalFormGame` instance with the action(s) specified by `action`
-deleted from the action set of the player specified by `player_idx`.
+Return an N-dimensional array of vectors, whose (a_1, ..., a_N)-entry contains
+a vector of N payoff values, one for each player, for the action profile
+(a_1, ..., a_N).
 
 # Arguments
 
-- `g::NormalFormGame` : `NormalFormGame` instance.
-- `action::Union{PureAction, AbstractVector{<:PureAction}}` : The action(s) to
-  be deleted.
-- `player_idx::Integer` : Index of the player to delete action(s) for.
+- `g::NormalFormGame` : N-player `NormalFormGame` instance.
 
 # Returns
 
-- `::NormalFormGame` : `NormalFormGame` instance with the action(s) deleted as
-  specified.
+- ``::Array{Vector,N}`` : Array of payoff profiles.
 """
-function delete_action(g::NormalFormGame{N},
-                       action::AbstractVector{<:PureAction},
-                       player_idx::Integer) where N
-    players_new  = [delete_action(player, action,
-                    player_idx-i+1>0 ? player_idx-i+1 : player_idx-i+1+N)
-                    for (i, player) in enumerate(g.players)]
-    return NormalFormGame(players_new)
+function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
+    payoff_profile_array =
+        map(index -> Vector{T}(undef, N), CartesianIndices(g.nums_actions))
+    for (i, player) in enumerate(g.players)
+        for index in CartesianIndices(g.nums_actions)
+            payoff_profile_array[index][i] =
+                player.payoff_array[(index.I[i:end]..., index.I[1:i-1]...)...]
+        end
+    end
+    return payoff_profile_array
 end
-
-delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
-    delete_action(g, [action], player_idx)
-
 
 # TODO: add printout of payoff arrays
 function Base.show(io::IO, g::NormalFormGame)
@@ -727,6 +723,38 @@ Base.getindex(g::NormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
     g[to_indices(g, (ci,))...]
 Base.setindex!(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) where {N} =
     g[to_indices(g, (ci,))...] = v
+
+# delete_action
+
+"""
+    delete_action(g, action, player_idx)
+
+Return a new `NormalFormGame` instance with the action(s) specified by `action`
+deleted from the action set of the player specified by `player_idx`.
+
+# Arguments
+
+- `g::NormalFormGame` : `NormalFormGame` instance.
+- `action::Union{PureAction, AbstractVector{<:PureAction}}` : The action(s) to
+  be deleted.
+- `player_idx::Integer` : Index of the player to delete action(s) for.
+
+# Returns
+
+- `::NormalFormGame` : `NormalFormGame` instance with the action(s) deleted as
+  specified.
+"""
+function delete_action(g::NormalFormGame{N},
+                       action::AbstractVector{<:PureAction},
+                       player_idx::Integer) where N
+    players_new  = [delete_action(player, action,
+                    player_idx-i+1>0 ? player_idx-i+1 : player_idx-i+1+N)
+                    for (i, player) in enumerate(g.players)]
+    return NormalFormGame(players_new)
+end
+
+delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
+    delete_action(g, [action], player_idx)
 
 # is_nash
 
