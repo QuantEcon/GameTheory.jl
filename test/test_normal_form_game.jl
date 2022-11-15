@@ -204,6 +204,23 @@ using CDDLib
         @test is_nash(g, (2, 2))
     end
 
+    @testset "NormalFormGame payoff_profile_array constructor" begin
+        nums_actions = (2, 3, 4)
+        for N in 1:length(nums_actions)
+            payoff_arrays = [
+                reshape(collect(1:prod(nums_actions[1:N])),
+                        (nums_actions[i:N]..., nums_actions[1:(i-1)]...))
+                for i in 1:N
+            ]
+            players = [Player(payoff_array) for payoff_array in payoff_arrays]
+            g = NormalFormGame(players)
+            g_new = NormalFormGame(payoff_profile_array(g))
+            for (player_new, payoff_array) in zip(g_new.players, payoff_arrays)
+                    @test player_new.payoff_array == payoff_array
+            end
+        end
+    end
+
     @testset "convert for NormalFormGame" begin
         T1 = Int
         T2 = Float64

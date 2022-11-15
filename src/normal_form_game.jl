@@ -615,6 +615,30 @@ function NormalFormGame(payoffs::Matrix{T}) where T<:Real
     return NormalFormGame(player, player)
 end
 
+"""
+    NormalFormGame(payoffs)
+
+Construct an N-player NormalFormGame with an N-dimensional array `payoffs` of
+vectors, where `payoffs[a_1, a_2, ..., a_N]` contains a vector of N payoff
+values, one for each player, for the action profile (a_1, a_2, ..., a_N).
+
+# Arguments
+
+- `payoffs::Array{AbstractVector{T<:Real}}` : Array with ndims=N containing
+  payoff profiles as vectors.
+"""
+function NormalFormGame(payoffs::Array{TV,N}) where
+    {T<:Real,N,TV<:AbstractVector{T}}
+    g = NormalFormGame(T, size(payoffs))
+    for (i, player) in enumerate(g.players)
+        payoffs_permted = PermutedDimsArray(payoffs, (i:N..., 1:i-1...))
+        for a in eachindex(player.payoff_array)
+            player.payoff_array[a] = payoffs_permted[a][i]
+        end
+    end
+    return g
+end
+
 function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
     players_new = ntuple(i -> Player{N,T}(g.players[i]), Val(N))
     return NormalFormGame(players_new)
