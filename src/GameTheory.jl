@@ -70,6 +70,7 @@ include("pure_nash.jl")
 include("repeated_game.jl")
 include("random.jl")
 include("support_enumeration.jl")
+include("vertex_enumeration.jl")
 include("util.jl")
 include("generators/Generators.jl")
 
@@ -109,6 +110,9 @@ export
     support_enumeration, support_enumeration_task,
 
     # LRS
-    lrsnash
+    lrsnash,
+
+    # Vertex Enumeration
+    vertex_enumeration
 
 end # module

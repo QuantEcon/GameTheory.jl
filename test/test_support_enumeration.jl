@@ -1,16 +1,5 @@
 @testset "Testing Support Enumeration" begin
 
-    function NEs_approx_equal(NEs1::Vector{NTuple{2,Vector{T1}}},
-                              NEs2::Vector{NTuple{2,Vector{T2}}}) where {T1,T2}
-        @test length(NEs1) == length(NEs2)
-        @test T1 == T2
-        for (actions1, actions2) in zip(NEs1, NEs2)
-            for (action1, action2) in zip(actions1, actions2)
-                @test action1 ≈ action2
-            end
-        end
-    end
-
     @testset "test 3 by 2 non-degenerate normal form game(Float)" begin
         g = NormalFormGame(Player([3.0 3.0; 2.0 5.0; 0.0 6.0]),
                            Player([3.0 2.0 3.0; 2.0 6.0 1.0]))

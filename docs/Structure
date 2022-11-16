@@ -1,5 +1,5 @@
 Order: Base Types and Methods, Game Generators, Computing Nash Equilibria, Repeated Games
 Base Types and Methods: normal_form_game
 Game Generators: random, generators/bimatrix_generators
-Computing Nash Equilibria: pure_nash, support_enumeration, lrsnash
+Computing Nash Equilibria: pure_nash, support_enumeration, lrsnash, vertex_enumeration
 Repeated Games: repeated_game_util, repeated_game
