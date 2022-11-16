@@ -209,6 +209,7 @@ the cost of the effort.
 
 # Examples
 
+```julia
 julia> using GameTheory.Generators, Random
 
 julia> rng = MersenneTwister(1234);
