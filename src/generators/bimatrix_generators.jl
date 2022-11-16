@@ -361,7 +361,7 @@ end
 
 # tournament_game
 """
-    tournament_game(n, k; seed=-1)
+    tournament_game([rng=GLOBAL_RNG], n, k)
 
 Return a NormalFormGame instance of the 2-player win-lose game, whose payoffs
 are either 0 or 1, introduced by Anbalagan et al. (2013). Player 1 has n
@@ -381,10 +381,9 @@ which is different from the order used in the original library in C.
 
 # Arguments
 
+- `rng::AbstractRNG=GLOBAL_RNG`: Random number generator used.
 - `n::Integer` : Number of nodes in the tournament graph.
 - `k::Integer` : Size of subsets of nodes in the tournament graph.
-- `seed::Integer=-1`: Seed for random number generator. If seed is negative,
-  then `GLOBAL_RNG` is used.
 
 # Returns
 
@@ -393,9 +392,9 @@ which is different from the order used in the original library in C.
 # Examples
 
 ```julia
-julia> seed = 1234;
+julia> rng = MersenneTwister(1234);
 
-julia> g = tournament_game(5, 2; seed=seed)
+julia> g = tournament_game(rng, 5, 2)
 5×10 NormalFormGame{2,Float64}
 
 julia> g.players[1]
@@ -420,7 +419,7 @@ julia> g.players[2]
  0.0  0.0  0.0  1.0  1.0
 ```
 """
-function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
+function tournament_game(rng::AbstractRNG, n::Integer, k::Integer)
     m = zero(Csize_t)
     try
         m = binomial(Csize_t(n), Csize_t(k))
@@ -430,7 +429,7 @@ function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
 
     R = zeros(Float64, n, m)
     C = zeros(Float64, m, n)
-    tourn_graph = random_tournament_digraph(n; seed=seed)
+    tourn_graph = random_tournament_digraph(n; rng=rng)
     fadjlist = tourn_graph.fadjlist
 
     # populate matrix C
@@ -462,6 +461,9 @@ function tournament_game(n::Integer, k::Integer; seed::Integer=-1)
     g = NormalFormGame([Player(R), Player(C)])
     return g
 end
+
+tournament_game(n::Integer, k::Integer) =
+    tournament_game(Random.GLOBAL_RNG, n, k)
 
 # unit_vector_game
 """
