@@ -1,6 +1,8 @@
 using GameTheory
 using GameTheory.Generators
 using BenchmarkTools
+using Random
+using LinearAlgebra
 
 const SUITE = BenchmarkGroup()
 
@@ -20,7 +22,7 @@ T = Rational{Int}
 ns = [7, 8]
 for n in ns
     sz = (n, n)
-    g = NormalFormGame(eye(T, n))
+    g = NormalFormGame(Matrix{T}(I, n, n))
     SUITE["support_enumeration"]["Rational"][sz] =
         @benchmarkable support_enumeration($g)
 end
@@ -51,7 +53,7 @@ SUITE["bimatrix_generators"]["sgc_game"] = @benchmarkable sgc_game($k)
 # tournament_game
 n, k = 200, 2
 SUITE["bimatrix_generators"]["tournament_game"] =
-    @benchmarkable tournament_game($n, $k; seed=$seed)
+    @benchmarkable tournament_game($rng, $n, $k)
 
 # unit_vector_game
 n = 2000
