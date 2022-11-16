@@ -30,6 +30,12 @@ julia> player2 = Player([3 2 3; 3 6 1]);
 
 julia> g = NormalFormGame(player1, player2);
 
+julia> println(g)
+3×2 NormalFormGame{2, Int64}:
+ [3, 3]  [3, 3]
+ [2, 2]  [5, 6]
+ [0, 3]  [6, 1]
+
 julia> lrsnash(g)
 3-element Vector{Tuple{Vector{Rational{BigInt}}, Vector{Rational{BigInt}}}}:
  ([1//1, 0//1, 0//1], [1//1, 0//1])

@@ -101,18 +101,18 @@ from the action set of the player specified by `player_idx`.
 
 ```julia
 julia> player = Player([3 0; 0 3; 1 1])
-3×2 Player{2,Int64}:
+3×2 Player{2, Int64}:
  3  0
  0  3
  1  1
 
 julia> delete_action(player, 3)
-2×2 Player{2,Int64}:
+2×2 Player{2, Int64}:
  3  0
  0  3
 
 julia> delete_action(player, 1, 2)
-3×1 Player{2,Int64}:
+3×1 Player{2, Int64}:
  0
  3
  1
@@ -620,7 +620,7 @@ end
 
 Construct an N-player NormalFormGame with an N-dimensional array `payoffs` of
 vectors, where `payoffs[a_1, a_2, ..., a_N]` contains a vector of N payoff
-values, one for each player, for the action profile (a_1, a_2, ..., a_N).
+values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
 
 # Arguments
 
@@ -676,9 +676,9 @@ Base.summary(g::NormalFormGame) =
 """
     payoff_profile_array(g)
 
-Return an N-dimensional array of vectors, whose (a_1, ..., a_N)-entry contains
-a vector of N payoff values, one for each player, for the action profile
-(a_1, ..., a_N).
+Return an N-dimensional array of vectors, whose (a\\_1, ..., a\\_N)-entry
+contains a vector of N payoff values, one for each player, for the action profile
+(a\\_1, ..., a\\_N).
 
 # Arguments
 
@@ -686,7 +686,7 @@ a vector of N payoff values, one for each player, for the action profile
 
 # Returns
 
-- ``::Array{Vector,N}`` : Array of payoff profiles.
+- `::Array{Vector,N}` : Array of payoff profiles.
 """
 function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
     payoff_profile_array =
