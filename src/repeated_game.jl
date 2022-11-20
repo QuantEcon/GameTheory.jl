@@ -241,7 +241,7 @@ function initialize_LP_matrices(rpd::RepGame2, H::Matrix{Float64})
 end
 
 """
-    worst_value_i(rpd, H, C, i)
+    worst_value_i(rpd, H, C, i, lp_solver=highs_optimizer_silent)
 
 Given a constraint w ∈ W, this finds the worst possible payoff for agent i.
 
@@ -329,7 +329,7 @@ worst_value_2(
 """
     outerapproximation(rpd; nH=32, tol=1e-8, maxiter=500, check_pure_nash=true,
                        verbose=false, nskipprint=50,
-                       plib=default_library(2, Float64),
+                       plib=CDDLib.Library(),
                        lp_solver=GameTheory.highs_optimizer_silent)
 
 Approximates the set of equilibrium values for a repeated game with the outer
@@ -349,7 +349,7 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 - `plib::Polyhedra.Library`: Allows users to choose a particular package for
   the geometry computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use `Polyhedra.DefaultLibrary`.
+  docs for more info). By default, it chooses to use `CDDLib.Library()`.
 - `lp_solver` : Linear programming solver to be used internally. Pass a
   `MathOptInterface.AbstractOptimizer` type (such as `HiGHS.Optimizer`) if no
   option is needed, or a function (such as `GameTheory.highs_optimizer_silent`)
@@ -363,7 +363,7 @@ hyperplane approximation described by Judd, Yeltekin, Conklin (2002).
 function outerapproximation(
         rpd::RepGame2; nH::Int=32, tol::Float64=1e-8, maxiter::Int=500,
         check_pure_nash::Bool=true, verbose::Bool=false, nskipprint::Int=50,
-        plib::Polyhedra.Library=default_library(2, Float64),
+        plib::Polyhedra.Library=CDDLib.Library(),
         lp_solver=highs_optimizer_silent
     )
 

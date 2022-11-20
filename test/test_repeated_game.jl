@@ -1,5 +1,3 @@
-using CDDLib
-
 @testset "Testing Repeated Game functionality" begin
 
     pd_payoff = [9.0 1.0
@@ -51,15 +49,12 @@ using CDDLib
     # Test the actual computation
     #
     @testset "Testing outer approximation" begin
-        dict = Dict(:nH=>64, :maxiter=>150, :tol=>1e-9)
-        plib = CDDLib.Library()
-        for kwargs in [dict, merge(dict, Dict(:plib=>plib))]
-            vertices = @inferred(outerapproximation(rpd; kwargs...))
-            p_in_v = [vertices[i, :] for i in 1:size(vertices, 1)]
+        kwargs = Dict(:nH=>64, :maxiter=>150, :tol=>1e-9)
+        vertices = @inferred(outerapproximation(rpd; kwargs...))
+        p_in_v = [vertices[i, :] for i in 1:size(vertices, 1)]
 
-            mybools = [all(isapprox.([3.0, 3.0], p)) for p in p_in_v]
-            @test any(mybools)
-        end
+        mybools = [all(isapprox.([3.0, 3.0], p)) for p in p_in_v]
+        @test any(mybools)
     end
 
 end

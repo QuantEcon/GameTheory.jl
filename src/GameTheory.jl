@@ -16,6 +16,8 @@ using HiGHS
 
 # Geometry packages
 using Polyhedra
+using CDDLib
+using LRSLib
 
 # Type aliases #
 
