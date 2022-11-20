@@ -4,6 +4,7 @@ repo = "https://github.com/QuantEcon/GameTheory.jl.git"
 version = "0.1.2"
 
 [deps]
+CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
@@ -16,6 +17,7 @@ QuantEcon = "fcd29c91-0bd7-5a09-975d-7ac3f643a60c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [compat]
+CDDLib = "0.9"
 Combinatorics = "1"
 Graphs = "1"
 HiGHS = "1.2"
@@ -27,7 +29,6 @@ QuantEcon = "0.16.0"
 julia = "1.6"
 
 [extras]
-CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -36,4 +37,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [targets]
-test = ["Combinatorics", "CDDLib", "DelimitedFiles", "LinearAlgebra", "Test", "Random", "Unicode"]
+test = ["Combinatorics", "DelimitedFiles", "LinearAlgebra", "Test", "Random", "Unicode"]
