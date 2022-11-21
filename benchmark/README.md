@@ -9,66 +9,79 @@ using PkgBenchmark
 ```
 
 As an example, let us run the benchmarks (defined in `benchmarks.jl`) and compare the performance changes for the two commits
-[`68f3c4b`](https://github.com/QuantEcon/GameTheory.jl/commit/68f3c4bef03554a00384350a047f1e95abd865df) (target)
+[`32e6090`](https://github.com/QuantEcon/GameTheory.jl/commit/32e60906bdf34f39bc535fc1235e5da5e261d1c4) (target)
 and
-[`d6682de`](https://github.com/QuantEcon/GameTheory.jl/commit/d6682deb9fdae6f16a89b17fbeee9061d763710a) (baseline):
+[`b5031c3`](https://github.com/QuantEcon/GameTheory.jl/commit/b5031c3cf24e41b124e91f4881c9a543eed19ecc) (baseline):
 
 ```jl
-jud = judge("GameTheory", "68f3c4b", "d6682de")
+jud = judge("GameTheory", "32e6090", "b5031c3")
 ```
 
 To show the results:
 
 ```jl
-julia> showall(PkgBenchmark.benchmarkgroup(jud))
-1-element BenchmarkTools.BenchmarkGroup:
+julia> show(PkgBenchmark.benchmarkgroup(jud))
+2-element BenchmarkTools.BenchmarkGroup:
   tags: []
   "support_enumeration" => 2-element BenchmarkTools.BenchmarkGroup:
-	  tags: ["support_enumeration"]
-	  "Rational" => 2-element BenchmarkTools.BenchmarkGroup:
-		  tags: []
-		  "(8, 8)" => TrialJudgement(-1.86% => invariant)
-		  "(7, 7)" => TrialJudgement(-1.68% => invariant)
-	  "Float" => 2-element BenchmarkTools.BenchmarkGroup:
-		  tags: []
-		  "(10, 10)" => TrialJudgement(-8.62% => improvement)
-		  "(11, 11)" => TrialJudgement(-10.96% => improvement)
+    tags: ["support_enumeration"]
+    "Rational" => 2-element BenchmarkTools.BenchmarkGroup:
+      tags: []
+      (8, 8) => TrialJudgement(+5.42% => regression)
+      (7, 7) => TrialJudgement(+5.27% => regression)
+    "Float" => 2-element BenchmarkTools.BenchmarkGroup:
+      tags: []
+      (10, 10) => TrialJudgement(-1.00% => invariant)
+      (11, 11) => TrialJudgement(-0.25% => invariant)
+...
 ```
 
 To show the timing estimates for the baseline:
 
 ```jl
-julia> showall(jud.baseline_results.benchmarkgroup)
-1-element BenchmarkTools.BenchmarkGroup:
+julia> show(jud.baseline_results.benchmarkgroup)
+2-element BenchmarkTools.BenchmarkGroup:
   tags: []
   "support_enumeration" => 2-element BenchmarkTools.BenchmarkGroup:
-	  tags: ["support_enumeration"]
-	  "Rational" => 2-element BenchmarkTools.BenchmarkGroup:
-		  tags: []
-		  "(8, 8)" => Trial(442.854 ms)
-		  "(7, 7)" => Trial(97.427 ms)
-	  "Float" => 2-element BenchmarkTools.BenchmarkGroup:
-		  tags: []
-		  "(10, 10)" => Trial(207.076 ms)
-		  "(11, 11)" => Trial(867.757 ms)
+    tags: ["support_enumeration"]
+    "Rational" => 2-element BenchmarkTools.BenchmarkGroup:
+      tags: []
+      (8, 8) => Trial(128.530 ms)
+      (7, 7) => Trial(29.616 ms)
+    "Float" => 2-element BenchmarkTools.BenchmarkGroup:
+      tags: []
+      (10, 10) => Trial(96.379 ms)
+      (11, 11) => Trial(410.365 ms)
+...
 ```
 
 and for the target:
 
 ```jl
-julia> showall(jud.target_results.benchmarkgroup)
-1-element BenchmarkTools.BenchmarkGroup:
+julia> show(jud.target_results.benchmarkgroup)
+2-element BenchmarkTools.BenchmarkGroup:
   tags: []
   "support_enumeration" => 2-element BenchmarkTools.BenchmarkGroup:
-	  tags: ["support_enumeration"]
-	  "Rational" => 2-element BenchmarkTools.BenchmarkGroup:
-		  tags: []
-		  "(8, 8)" => Trial(434.614 ms)
-		  "(7, 7)" => Trial(95.789 ms)
-	  "Float" => 2-element BenchmarkTools.BenchmarkGroup:
-		  tags: []
-		  "(10, 10)" => Trial(189.223 ms)
-		  "(11, 11)" => Trial(772.689 ms)
+    tags: ["support_enumeration"]
+    "Rational" => 2-element BenchmarkTools.BenchmarkGroup:
+      tags: []
+      (8, 8) => Trial(135.496 ms)
+      (7, 7) => Trial(31.177 ms)
+    "Float" => 2-element BenchmarkTools.BenchmarkGroup:
+      tags: []
+      (10, 10) => Trial(95.419 ms)
+      (11, 11) => Trial(409.337 ms)
+...
+```
+
+To run a script file other than `benchmarks.jl`:
+
+```jl
+using GameTheory
+results = benchmarkpkg(
+    "GameTheory",
+    script="$(dirname(pathof(GameTheory)))/../benchmark/generators.jl"
+)
 ```
 
 For more usage information, see the [PkgBenchmark documentation](https://juliaci.github.io/PkgBenchmark.jl/stable).
