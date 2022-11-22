@@ -1,9 +1,9 @@
 ## Generate docs automatically
 
-To generate documentation for `Games.jl` locally, run
+To generate documentation for `GameTheory.jl` locally, run
 
 ```
-$ cd ~/.julia/v0.6/Games/docs
+$ cd ~/.julia/v0.6/GameTheory/docs
 $ julia make.jl
 ```
 
@@ -16,7 +16,7 @@ There are three parts to generate the documentation.
 
 ### auto_doc_gen.jl
 
-Main part of documentation generation. It reads `src/Games.jl` to find
+Main part of documentation generation. It reads `src/GameTheory.jl` to find
 out all the source files (include the ones used in submodules), and then
 write markdown files for each by the structure instructed by 
 `docs/build/Structure`, which will be utilized by "Documenter.jl" later.

@@ -42,6 +42,24 @@ Player{N,T}(player::Player{N,S}) where {N,T,S} =
 Base.convert(::Type{T}, player::Player) where {T<:Player} =
     player isa T ? player : T(player)
 
+"""
+    Player(T, player)
+
+Convert `player` into a new `Player` instance with eltype `T`.
+
+# Arguments
+
+- `T::Type`
+- `player::Player`
+
+# Returns
+
+- `::Player` : `Player` instance with eltype `T`.
+"""
+Player(::Type{T}, player::Player{N}) where {T<:Real,N} = Player{N,T}(player)
+
+Player(player::Player{N,T}) where {N,T} = Player{N,T}(player)
+
 num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents(::Player{N}) where {N} = N - 1
 
@@ -53,7 +71,11 @@ Base.summary(player::Player) =
 function Base.show(io::IO, player::Player)
     print(io, summary(player))
     println(io, ":")
-    Base.print_array(io, player.payoff_array)
+    X = player.payoff_array
+    if !haskey(io, :compact) && length(axes(X, 2)) > 1
+        io = IOContext(io, :compact => true)
+    end
+    Base.print_array(io, X)
 end
 
 # delete_action
@@ -79,18 +101,18 @@ from the action set of the player specified by `player_idx`.
 
 ```julia
 julia> player = Player([3 0; 0 3; 1 1])
-3×2 Player{2,Int64}:
+3×2 Player{2, Int64}:
  3  0
  0  3
  1  1
 
 julia> delete_action(player, 3)
-2×2 Player{2,Int64}:
+2×2 Player{2, Int64}:
  3  0
  0  3
 
 julia> delete_action(player, 1, 2)
-3×1 Player{2,Int64}:
+3×1 Player{2, Int64}:
  0
  3
  1
@@ -593,6 +615,30 @@ function NormalFormGame(payoffs::Matrix{T}) where T<:Real
     return NormalFormGame(player, player)
 end
 
+"""
+    NormalFormGame(payoffs)
+
+Construct an N-player NormalFormGame with an N-dimensional array `payoffs` of
+vectors, where `payoffs[a_1, a_2, ..., a_N]` contains a vector of N payoff
+values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
+
+# Arguments
+
+- `payoffs::Array{AbstractVector{T<:Real}}` : Array with ndims=N containing
+  payoff profiles as vectors.
+"""
+function NormalFormGame(payoffs::Array{TV,N}) where
+    {T<:Real,N,TV<:AbstractVector{T}}
+    g = NormalFormGame(T, size(payoffs))
+    for (i, player) in enumerate(g.players)
+        payoffs_permted = PermutedDimsArray(payoffs, (i:N..., 1:i-1...))
+        for a in eachindex(player.payoff_array)
+            player.payoff_array[a] = payoffs_permted[a][i]
+        end
+    end
+    return g
+end
+
 function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
     players_new = ntuple(i -> Player{N,T}(g.players[i]), Val(N))
     return NormalFormGame(players_new)
@@ -601,47 +647,71 @@ end
 Base.convert(::Type{T}, g::NormalFormGame) where {T<:NormalFormGame} =
     g isa T ? g : T(g)
 
+"""
+    NormalFormGame(T, g)
+
+Convert `g` into a new `NormalFormGame` instance with eltype `T`.
+
+# Arguments
+
+- `T::Type`
+- `g::NormalFormGame`
+
+# Returns
+
+- `::NormalFormGame` : `NormalFormGame` instance with eltype `T`.
+"""
+NormalFormGame(::Type{T}, g::NormalFormGame{N}) where {T<:Real,N} =
+    NormalFormGame{N,T}(g)
+
+NormalFormGame(g::NormalFormGame{N,T}) where {N,T} = NormalFormGame{N,T}(g)
+
 Base.summary(g::NormalFormGame) =
     string(Base.dims2string(g.nums_actions),
            " ",
            split(string(typeof(g)), ".")[end])
 
-# delete_action
+# payoff_profile_array
 
 """
-    delete_action(g, action, player_idx)
+    payoff_profile_array(g)
 
-Return a new `NormalFormGame` instance with the action(s) specified by `action`
-deleted from the action set of the player specified by `player_idx`.
+Return an N-dimensional array of vectors, whose (a\\_1, ..., a\\_N)-entry
+contains a vector of N payoff values, one for each player, for the action profile
+(a\\_1, ..., a\\_N).
 
 # Arguments
 
-- `g::NormalFormGame` : `NormalFormGame` instance.
-- `action::Union{PureAction, AbstractVector{<:PureAction}}` : The action(s) to
-  be deleted.
-- `player_idx::Integer` : Index of the player to delete action(s) for.
+- `g::NormalFormGame` : N-player `NormalFormGame` instance.
 
 # Returns
 
-- `::NormalFormGame` : `NormalFormGame` instance with the action(s) deleted as
-  specified.
+- `::Array{Vector,N}` : Array of payoff profiles.
 """
-function delete_action(g::NormalFormGame{N},
-                       action::AbstractVector{<:PureAction},
-                       player_idx::Integer) where N
-    players_new  = [delete_action(player, action,
-                    player_idx-i+1>0 ? player_idx-i+1 : player_idx-i+1+N)
-                    for (i, player) in enumerate(g.players)]
-    return NormalFormGame(players_new)
+function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
+    payoff_profile_array =
+        map(index -> Vector{T}(undef, N), CartesianIndices(g.nums_actions))
+    for (i, player) in enumerate(g.players)
+        for index in CartesianIndices(g.nums_actions)
+            payoff_profile_array[index][i] =
+                player.payoff_array[(index.I[i:end]..., index.I[1:i-1]...)...]
+        end
+    end
+    return payoff_profile_array
 end
 
-delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
-    delete_action(g, [action], player_idx)
-
-
-# TODO: add printout of payoff arrays
 function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
+end
+
+function Base.print(io::IO, g::NormalFormGame)
+    print(io, summary(g))
+    println(io, ":")
+    X = payoff_profile_array(g)
+    if !haskey(io, :compact) && length(axes(X, 2)) > 1
+        io = IOContext(io, :compact => true)
+    end
+    Base.print_array(io, X)
 end
 
 function Base.getindex(g::NormalFormGame{N,T},
@@ -690,6 +760,38 @@ Base.getindex(g::NormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
     g[to_indices(g, (ci,))...]
 Base.setindex!(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) where {N} =
     g[to_indices(g, (ci,))...] = v
+
+# delete_action
+
+"""
+    delete_action(g, action, player_idx)
+
+Return a new `NormalFormGame` instance with the action(s) specified by `action`
+deleted from the action set of the player specified by `player_idx`.
+
+# Arguments
+
+- `g::NormalFormGame` : `NormalFormGame` instance.
+- `action::Union{PureAction, AbstractVector{<:PureAction}}` : The action(s) to
+  be deleted.
+- `player_idx::Integer` : Index of the player to delete action(s) for.
+
+# Returns
+
+- `::NormalFormGame` : `NormalFormGame` instance with the action(s) deleted as
+  specified.
+"""
+function delete_action(g::NormalFormGame{N},
+                       action::AbstractVector{<:PureAction},
+                       player_idx::Integer) where N
+    players_new  = [delete_action(player, action,
+                    player_idx-i+1>0 ? player_idx-i+1 : player_idx-i+1+N)
+                    for (i, player) in enumerate(g.players)]
+    return NormalFormGame(players_new)
+end
+
+delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
+    delete_action(g, [action], player_idx)
 
 # is_nash
 
@@ -845,7 +947,7 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 
 """
     is_dominated(player, action; tol=1e-8,
-                 lp_solver=() -> Clp.Optimizer(LogLevel=0))
+                 lp_solver=GameTheory.highs_optimizer_silent)
 
 Determine whether `action` is strictly dominated by some mixed action.
 
@@ -854,11 +956,10 @@ Determine whether `action` is strictly dominated by some mixed action.
 - `player::Player` : Player instance.
 - `action::PureAction` : Integer representing a pure action.
 - `tol::Real` : Tolerance level used in determining domination.
-- `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
-  Linear programming solver to be used internally. Pass a
-  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
-  supply options.
+- `lp_solver` : Linear programming solver to be used internally. Pass a
+  `MathOptInterface.AbstractOptimizer` type (such as `HiGHS.Optimizer`) if no
+  option is needed, or a function (such as `GameTheory.highs_optimizer_silent`)
+  to supply options.
 
 # Returns
 
@@ -868,8 +969,8 @@ Determine whether `action` is strictly dominated by some mixed action.
 """
 function is_dominated(
     ::Type{T}, player::Player, action::PureAction; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {T<:Real,TO<:MOI.AbstractOptimizer}
+    lp_solver=highs_optimizer_silent
+) where {T<:Real}
     payoff_array = player.payoff_array
     m, n = size(payoff_array, 1) - 1, prod(size(payoff_array)[2:end])
 
@@ -887,7 +988,7 @@ function is_dominated(
     c = zeros(T, m+1)
     c[end] = 1
 
-    CACHE = MOIU.UniversalFallback(MOIU.Model{Float64}())
+    CACHE = MOIU.UniversalFallback(MOIU.Model{T}())
     optimizer = MOIU.CachingOptimizer(CACHE, lp_solver())
     x = MOI.add_variables(optimizer, m+1)
     MOI.set(optimizer, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
@@ -931,23 +1032,22 @@ end
 
 function is_dominated(
     ::Type{T}, player::Player{1}, action::PureAction; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {T<:Real,TO<:MOI.AbstractOptimizer}
+    lp_solver=highs_optimizer_silent
+) where {T<:Real}
         payoff_array = player.payoff_array
         return maximum(payoff_array) > payoff_array[action] + tol
 end
 
 is_dominated(
     player::Player, action::PureAction; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {TO<:MOI.AbstractOptimizer} =
-    is_dominated(Float64, player, action, tol=tol, lp_solver=lp_solver)
+    lp_solver=highs_optimizer_silent
+) = is_dominated(Float64, player, action, tol=tol, lp_solver=lp_solver)
 
 # dominated_actions
 
 """
     dominated_actions(player; tol=1e-8,
-                      lp_solver=() -> Clp.Optimizer(LogLevel=0))
+                      lp_solver=GameTheory.highs_optimizer_silent)
 
 Return a vector of actions that are strictly dominated by some mixed actions.
 
@@ -957,9 +1057,9 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 - `tol::Real` : Tolerance level used in determining domination.
 - `lp_solver::Union{Type{<:MathOptInterface.AbstractOptimizer},Function}` :
   Linear programming solver to be used internally. Pass a
-  `MathOptInterface.AbstractOptimizer` type (such as `Clp.Optimizer`) if no
-  option is needed, or a function (such as `() -> Clp.Optimizer(LogLevel=0)`) to
-  supply options.
+  `MathOptInterface.AbstractOptimizer` type (such as `HiGHS.Optimizer`) if no
+  option is needed, or a function (such as `GameTheory.highs_optimizer_silent`)
+  to supply options.
 
 # Returns
 
@@ -968,9 +1068,8 @@ Return a vector of actions that are strictly dominated by some mixed actions.
 
 """
 function dominated_actions(
-    ::Type{T}, player::Player; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {T<:Real,TO<:MOI.AbstractOptimizer}
+    ::Type{T}, player::Player; tol::Real=1e-8, lp_solver=highs_optimizer_silent
+) where {T<:Real}
     out = Int[]
     for action = 1:num_actions(player)
         if is_dominated(T, player, action, tol=tol, lp_solver=lp_solver)
@@ -982,7 +1081,5 @@ function dominated_actions(
 end
 
 dominated_actions(
-    player::Player; tol::Real=1e-8,
-    lp_solver::Union{Type{TO},Function}=() -> Clp.Optimizer(LogLevel=0)
-) where {TO<:MOI.AbstractOptimizer} =
-    dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)
+    player::Player; tol::Real=1e-8, lp_solver=highs_optimizer_silent
+) = dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)

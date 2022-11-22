@@ -6,7 +6,9 @@
 #       that multiple times for the same function if we have particular reason
 #       to believe there might be a type stability with that function.
 
-using Clp
+using MathOptInterface
+const MOI = MathOptInterface
+using HiGHS
 using CDDLib
 
 
@@ -80,6 +82,22 @@ using CDDLib
         end
 
         for T in [T1, T2]
+            player_new = Player(T, player)
+            @test eltype(player_new.payoff_array) == T
+            @test player_new.payoff_array == player.payoff_array
+
+            # Constructor always makes a copy
+            @test player_new.payoff_array !== player.payoff_array
+        end
+
+        player_new = @inferred Player(player)
+        @test eltype(player_new.payoff_array) == T1
+        @test player_new.payoff_array == player.payoff_array
+
+        # Constructor always makes a copy
+        @test player_new.payoff_array !== player.payoff_array
+
+        for T in [T1, T2]
             player_new = convert(Player{N,T}, player)
             @test eltype(player_new.payoff_array) == T
             @test player_new.payoff_array == player.payoff_array
@@ -131,6 +149,8 @@ using CDDLib
         g = @inferred(NormalFormGame(matching_pennies_bimatrix))
 
         @test g[2, 1] == [-1, 1]
+        payoff_profiles = @inferred payoff_profile_array(g)
+        @test payoff_profiles[2, 1] == [-1, 1]
         @test !(is_nash(g, (1, 1)))
         @test is_nash(g, ([1/2, 1/2], [1/2, 1/2]))
     end
@@ -146,6 +166,8 @@ using CDDLib
 
         @test @inferred(getindex(g, 1, 1, 2)) == [6, 4, 1]
         @test @inferred(getindex(g, CartesianIndex(1, 1, 2))) == [6, 4, 1]
+        payoff_profiles = @inferred payoff_profile_array(g)
+        @test payoff_profiles[1, 1, 2] == [6, 4, 1]
         @test @inferred is_nash(g, (1, 1, 1))
         @test @inferred !(is_nash(g, (1, 1, 2)))
 
@@ -182,6 +204,23 @@ using CDDLib
         @test is_nash(g, (2, 2))
     end
 
+    @testset "NormalFormGame payoff_profile_array constructor" begin
+        nums_actions = (2, 3, 4)
+        for N in 1:length(nums_actions)
+            payoff_arrays = [
+                reshape(collect(1:prod(nums_actions[1:N])),
+                        (nums_actions[i:N]..., nums_actions[1:(i-1)]...))
+                for i in 1:N
+            ]
+            players = [Player(payoff_array) for payoff_array in payoff_arrays]
+            g = NormalFormGame(players)
+            g_new = NormalFormGame(payoff_profile_array(g))
+            for (player_new, payoff_array) in zip(g_new.players, payoff_arrays)
+                    @test player_new.payoff_array == payoff_array
+            end
+        end
+    end
+
     @testset "convert for NormalFormGame" begin
         T1 = Int
         T2 = Float64
@@ -198,6 +237,26 @@ using CDDLib
                 # Constructor always makes a copy
                 @test player_new.payoff_array !== player.payoff_array
             end
+        end
+
+        for T in [T1, T2]
+            g_new = @inferred NormalFormGame(T, g)
+            for (player_new, player) in zip(g_new.players, players)
+                @test eltype(player_new.payoff_array) == T
+                @test player_new.payoff_array == player.payoff_array
+
+                # Constructor always makes a copy
+                @test player_new.payoff_array !== player.payoff_array
+            end
+        end
+
+        g_new = @inferred NormalFormGame(g)
+        for (player_new, player) in zip(g_new.players, players)
+            @test eltype(player_new.payoff_array) == T1
+            @test player_new.payoff_array == player.payoff_array
+
+            # Constructor always makes a copy
+            @test player_new.payoff_array !== player.payoff_array
         end
 
         for T in [T1, T2]
@@ -275,6 +334,8 @@ using CDDLib
         @test num_players(g) == 1
         @test g.players[1].payoff_array == [0, 1, 1]
         @test g[1] == 0
+        payoff_profiles = @inferred payoff_profile_array(g)
+        @test payoff_profiles[1] == [0]
         @test is_nash(g, 2)
         @test !(is_nash(g, 1))
         @test is_nash(g, [0, 1/2, 1/2])
@@ -331,7 +392,15 @@ using CDDLib
 
     @testset "is_dominated linprog error" begin
         player = Player([1. 1.; 0. -1.; -1. 0.])
-        lp_solver = () -> Clp.Optimizer(LogLevel=0, MaximumIterations=1)
+
+        function highs_optimizer_silent_simplex_maxiter1()
+            optimizer = HiGHS.Optimizer()
+            MOI.set(optimizer, MOI.Silent(), true)
+            MOI.set(optimizer, MOI.RawOptimizerAttribute("solver"), "simplex")
+            MOI.set(optimizer, MOI.RawOptimizerAttribute("simplex_iteration_limit"), 1)
+            return optimizer
+        end
+        lp_solver = highs_optimizer_silent_simplex_maxiter1
         @test_throws ErrorException is_dominated(player, 1,
                                                  lp_solver=lp_solver)
     end

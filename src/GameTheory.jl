@@ -1,4 +1,4 @@
-module Games
+module GameTheory
 
 # stdlib
 using LinearAlgebra, Random
@@ -13,10 +13,12 @@ using Distributions
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-using Clp
+using HiGHS
 
 # Geometry packages
 using Polyhedra
+using CDDLib
+using LRSLib
 
 # Type aliases #
 
@@ -62,12 +64,16 @@ Alias for `Union{PureActionProfile,MixedActionProfile}`.
 """
 const ActionProfile = Union{PureActionProfile,MixedActionProfile}
 
+const RatOrInt = Union{Rational,Int}
+
 # package code goes here
 include("normal_form_game.jl")
+include("lrsnash.jl")
 include("pure_nash.jl")
 include("repeated_game.jl")
 include("random.jl")
 include("support_enumeration.jl")
+include("util.jl")
 include("generators/Generators.jl")
 
 include("fictplay.jl")
@@ -86,6 +92,7 @@ export
     best_response, best_responses, is_best_response, payoff_vector,
     is_nash, pure2mixed, pure_strategy_NE, is_pareto_efficient,
     is_pareto_dominant, is_dominated, dominated_actions, delete_action,
+    payoff_profile_array,
 
     # General functions
     num_players, num_actions, num_opponents,
@@ -109,7 +116,10 @@ export
     # Support Enumeration
     support_enumeration, support_enumeration_task,
 
-    # Learning algorithm
+    # LRS
+    lrsnash,
+
+    # Learning algorithms
     play!, play, time_series,
     AbstractGain, DecreasingGain, ConstantGain,
     AbstractFictitiousPlay, FictitiousPlay, StochasticFictitiousPlay,

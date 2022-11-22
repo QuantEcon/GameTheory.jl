@@ -108,8 +108,8 @@ using Combinatorics: binomial
 
         @testset "test_seed" begin
             seed = 0
-            g1 = tournament_game(n, k; seed=seed)
-            g2 = tournament_game(n, k; seed=seed)
+            g1 = tournament_game(MersenneTwister(seed), n, k)
+            g2 = tournament_game(MersenneTwister(seed), n, k)
 
             for i in 1:2
                 @test g1.players[i].payoff_array == g2.players[i].payoff_array
