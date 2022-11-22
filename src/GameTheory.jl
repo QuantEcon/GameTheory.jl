@@ -7,6 +7,7 @@ using LinearAlgebra, Random
 using QuantEcon
 using Combinatorics
 using Parameters
+using Distributions
 
 # Optimization packages
 using MathOptInterface
@@ -75,12 +76,18 @@ include("support_enumeration.jl")
 include("util.jl")
 include("generators/Generators.jl")
 
+include("fictplay.jl")
+include("localint.jl")
+include("brd.jl")
+include("logitdyn.jl")
+
 export
     # Types
     Player, NormalFormGame,
 
     # Type aliases
-    Action, MixedAction, PureAction, ActionProfile,
+    Action, MixedAction, PureAction,
+    ActionProfile, MixedActionProfile, PureActionProfile,
 
     # Normal form game functions
     best_response, best_responses, is_best_response, payoff_vector,
@@ -111,6 +118,15 @@ export
     support_enumeration, support_enumeration_task,
 
     # LRS
-    lrsnash
+    lrsnash,
+
+    # Learning algorithms
+    play!, play, time_series,
+    AbstractGain, DecreasingGain, ConstantGain,
+    AbstractFictitiousPlay, FictitiousPlay, StochasticFictitiousPlay,
+    AbstractRevision, SimultaneousRevision, AsynchronousRevision,
+    LocalInteraction,
+    AbstractBRD, BRD, KMR, SamplingBRD,
+    LogitDynamics
 
 end # module
