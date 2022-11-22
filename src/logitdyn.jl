@@ -85,7 +85,7 @@ Return new action profile after `num_reps` iterations.
 
 - `rng::AbstractRNG` : Random number generator used.
 - `ld::LogitDynamics{N}` : `LogitDynamics` instance.
-- `init_actions::Games.PureActionProfile` : Initial action profile.
+- `init_actions::PureActionProfile` : Initial action profile.
 - `num_reps::Integer` : The number of iterations.
 
 # Returns
@@ -94,7 +94,7 @@ Return new action profile after `num_reps` iterations.
 """
 function play(rng::AbstractRNG,
               ld::LogitDynamics{N},
-              init_actions::Games.PureActionProfile;
+              init_actions::PureActionProfile;
               num_reps::Integer=1) where N
     actions = [m for m in init_actions]
     player_ind_seq = rand(rng, 1:N, num_reps)
@@ -104,7 +104,7 @@ function play(rng::AbstractRNG,
     return actions
 end
 
-play(ld::LogitDynamics, init_actions::Games.PureActionProfile;
+play(ld::LogitDynamics, init_actions::PureActionProfile;
      num_reps::Integer=1) =
     play(Random.GLOBAL_RNG, ld, init_actions, num_reps=num_reps)
 
@@ -153,7 +153,7 @@ Return a time series of action profiles.
 - `rng::AbstractRNG` : Random number generator used.
 - `ld::LogitDynamics{N}` : `LogitDynamics` instance.
 - `ts_length::Integer` : The length of time series.
-- `init_actions::Games.PureActionProfile` : Initial action profile.
+- `init_actions::PureActionProfile` : Initial action profile.
 
 # Returns
 
@@ -162,7 +162,7 @@ Return a time series of action profiles.
 function time_series(rng::AbstractRNG,
                      ld::LogitDynamics{N},
                      ts_length::Integer,
-                     init_actions::Games.PureActionProfile) where N
+                     init_actions::PureActionProfile) where N
     player_ind_seq = rand(rng, 1:N, ts_length-1)
     out = Matrix{Int}(undef, N, ts_length)
     for i in 1:N
@@ -172,5 +172,5 @@ function time_series(rng::AbstractRNG,
 end
 
 time_series(ld::LogitDynamics, ts_length::Integer,
-            init_actions::Games.PureActionProfile) =
+            init_actions::PureActionProfile) =
     time_series(Random.GLOBAL_RNG, ld, ts_length, init_actions)

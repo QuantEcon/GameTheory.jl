@@ -86,7 +86,8 @@ export
     Player, NormalFormGame,
 
     # Type aliases
-    Action, MixedAction, PureAction, ActionProfile,
+    Action, MixedAction, PureAction,
+    ActionProfile, MixedActionProfile, PureActionProfile,
 
     # Normal form game functions
     best_response, best_responses, is_best_response, payoff_vector,
