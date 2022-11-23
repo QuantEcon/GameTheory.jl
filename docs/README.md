@@ -62,4 +62,4 @@ called `Library Outline`, empty. It will be filled by `auto_doc_gen.jl` automati
 ### make.jl
 
 This file includes information for "Documenter.jl" to generate documentation.
-Details on how to use it can be found [here](https://juliadocs.github.io/Documenter.jl/stable/man/guide.html#Output-formats-1).
+Details on how to use it can be found [here](https://documenter.juliadocs.org/stable/man/guide/#Pages-in-the-Sidebar).
