@@ -10,7 +10,7 @@ Generate random NormalFormGame instances.
 
 Return a random N-player NormalFormGame instance where the payoffs are drawn
 independently from the uniform distribution on the set as determined by `S`.
-`S` is a range (such as `0:10`) or a subtype of `Integer` or `AbstractFloat`;
+`S` is a range (such as `0:9`) or a subtype of `Integer` or `AbstractFloat`;
 in the latter case, the set is [0, 1) for floats and `typemin(S):typemax(S)`
 for integers.
 
@@ -30,25 +30,25 @@ for integers.
 ```julia
 julia> using GameTheory, Random
 
-julia> rng = MersenneTwister(1234);
+julia> rng = MersenneTwister(12345);
 
 julia> g = random_game(rng, (4, 3));
 
 julia> println(g)
 4×3 NormalFormGame{2, Float64}:
- [0.590845, 0.066423]   [0.794026, 0.956753]  [0.246837, 0.646691]
- [0.766797, 0.112486]   [0.854147, 0.276021]  [0.579672, 0.651664]
- [0.566237, 0.0566425]  [0.200586, 0.842714]  [0.648882, 0.950498]
- [0.460085, 0.96467]    [0.298614, 0.945775]  [0.0109059, 0.789904]
+ [0.562714, 0.586598]  [0.381128, 0.0501668]  [0.922317, 0.61179]
+ [0.849939, 0.620099]  [0.365801, 0.215712]   [0.0404417, 0.569955]
+ [0.371605, 0.965631]  [0.835014, 0.364706]   [0.573382, 0.923602]
+ [0.283365, 0.754047]  [0.260024, 0.696476]   [0.981364, 0.0311643]
 
-julia> g = random_game(rng, 0:10, (4, 3));
+julia> g = random_game(rng, 0:9, (4, 3));
 
 julia> println(g)
 4×3 NormalFormGame{2, Int64}:
- [6, 6]  [10, 10]  [5, 3]
- [8, 1]  [0, 6]    [3, 10]
- [9, 5]  [10, 8]   [4, 0]
- [9, 4]  [3, 1]    [9, 8]
+ [1, 5]  [1, 2]  [6, 2]
+ [2, 5]  [0, 2]  [1, 0]
+ [0, 5]  [3, 9]  [1, 1]
+ [9, 5]  [2, 9]  [0, 6]
 ```
 """
 function random_game(rng::AbstractRNG, S::Union{Type{T},AbstractRange{T}},
@@ -97,6 +97,23 @@ multi-normal with the covariance of any pair of payoffs equal to
 # Returns
 
 - `::NormalFormGame`: The generated random N-player NormalFormGame.
+
+# Examples
+
+```julia
+julia> using GameTheory, Random
+
+julia> rng = MersenneTwister(12345);
+
+julia> g = covariance_game(rng, (4, 3), -0.7);
+
+julia> println(g)
+4×3 NormalFormGame{2, Float64}:
+ [1.17236, -0.211696]   [1.46647, -1.13947]    [0.378353, 0.603951]
+ [0.415565, 0.0779055]  [0.606808, 1.00812]    [1.12871, -1.03399]
+ [0.685759, -0.278449]  [-0.588508, 0.464548]  [-0.970332, -0.0319236]
+ [-1.47708, 1.12447]    [1.92585, -2.27959]    [-2.1476, 1.53569]
+```
 
 # References
 
