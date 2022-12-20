@@ -52,13 +52,20 @@ See the tutorials for further examples.
 
 ### Learning/evolutionary dynamics
 
-* `BRD`: Best response dynamics
-* `KMR`: Best response with mutations dynamics of Kandori-Mailath-Rob
-* `SamplingBRD`: Sampling best response dynamics
-* `FictitiousPlay`: Fictitious play
-* `StochasticFictitiousPlay`: Stochastic fictitious play
-* `LocalInteraction`: Local interaction dynamics
-* `LogitDynamics`: Logit dynamics
+* [`BRD`](https://quantecon.github.io/GameTheory.jl/stable/lib/learning_algorithms.html#GameTheory.BRD):
+  Best response dynamics
+* [`KMR`](https://quantecon.github.io/GameTheory.jl/stable/lib/learning_algorithms.html#GameTheory.KMR):
+  Best response with mutations dynamics of Kandori-Mailath-Rob
+* [`SamplingBRD`](https://quantecon.github.io/GameTheory.jl/stable/lib/learning_algorithms.html#GameTheory.SamplingBRD):
+  Sampling best response dynamics
+* [`FictitiousPlay`](https://quantecon.github.io/GameTheory.jl/stable/lib/learning_algorithms.html#GameTheory.FictitiousPlay):
+  Fictitious play
+* [`StochasticFictitiousPlay`](https://quantecon.github.io/GameTheory.jl/stable/lib/learning_algorithms.html#GameTheory.StochasticFictitiousPlay):
+  Stochastic fictitious play
+* [`LocalInteraction`](https://quantecon.github.io/GameTheory.jl/stable/lib/learning_algorithms.html#GameTheory.LocalInteraction):
+  Local interaction dynamics
+* [`LogitDynamics`](https://quantecon.github.io/GameTheory.jl/stable/lib/learning_algorithms.html#GameTheory.LogitDynamics):
+  Logit dynamics
 
 ### Repeated games
 
