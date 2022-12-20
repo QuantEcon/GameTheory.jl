@@ -33,7 +33,7 @@ struct SimultaneousRevision <: AbstractRevision end
 # LocalInteraction
 
 """
-　　LocalInteraction{N, T, S, A, TR}
+    LocalInteraction{N, T, S, A, TR}
 
 Type representing the local interaction model with N players.
 
