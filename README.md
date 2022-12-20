@@ -43,14 +43,17 @@ See the tutorials for further examples.
 
 ### Nash equilibrium computation
 
-* [`pure_nash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.pure_nash-Tuple{NormalFormGame})
-* [`support_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.support_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T)
-* [`lrsnash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lrsnash-Tuple{NormalFormGame{2,%20%3C:Union{Int64,%20Rational}}})
+* [`pure_nash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.pure_nash-Tuple{NormalFormGame}):
+  Find all pure-action Nash equilibria of an N-player game (if any)
+* [`support_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.support_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
+  Find all mixed-action Nash equilibria of a two-player nondegenerate game
+* [`lrsnash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lrsnash-Tuple{NormalFormGame{2,%20%3C:Union{Int64,%20Rational}}}):
+  Find all mixed-action Nash equilibria (or equilibrium components) of a two-player game
 
 ### Learning/evolutionary dynamics
 
 * `BRD`: Best response dynamics
-* `KMR`: Best response dynamics with mutations a la Kandori-Mailath-Rob
+* `KMR`: Best response with mutations dynamics of Kandori-Mailath-Rob
 * `SamplingBRD`: Sampling best response dynamics
 * `FictitiousPlay`: Fictitious play
 * `StochasticFictitiousPlay`: Stochastic fictitious play
@@ -65,3 +68,7 @@ See the tutorials for further examples.
 ## Tutorials
 
 * [Tools for Game Theory in GameTheory.jl](https://nbviewer.org/github/QuantEcon/game-theory-notebooks/blob/master/game_theory_jl.ipynb)
+
+See also the [`game_theory`](https://quanteconpy.readthedocs.io/en/latest/game_theory.html) submodule of
+[`QuantEcon.py`](https://github.com/QuantEcon/QuantEcon.py),
+the Python counterpart of this package.
