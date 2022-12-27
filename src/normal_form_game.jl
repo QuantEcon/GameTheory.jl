@@ -728,13 +728,13 @@ function Base.getindex(g::NormalFormGame{N,T},
 end
 
 # Trivial game with 1 player
-function Base.getindex(g::NormalFormGame{1,T}, index::Integer) where T
+function Base.getindex(g::NormalFormGame{1}, index::Integer)
     return g.players[1].payoff_array[index]
 end
 
-function Base.setindex!(g::NormalFormGame{N,T},
-                        payoff_profile::Vector{S},
-                        index::Integer...) where {N,T,S<:Real}
+function Base.setindex!(g::NormalFormGame{N},
+                        payoff_profile::AbstractVector{<:Real},
+                        index::Integer...) where N
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
     length(payoff_profile) != N &&
@@ -748,12 +748,16 @@ function Base.setindex!(g::NormalFormGame{N,T},
 end
 
 # Trivial game with 1 player
-function Base.setindex!(g::NormalFormGame{1,T},
-                        payoff::S,
-                        index::Integer) where {T,S<:Real}
+function Base.setindex!(g::NormalFormGame{1},
+                        payoff::Real,
+                        index::Integer)
     g.players[1].payoff_array[index] = payoff
     return payoff
 end
+
+Base.setindex!(g::NormalFormGame{N},
+               payoff_profile::NTuple{N}, index...) where N =
+    setindex!(g, collect(payoff_profile), index...)
 
 # Indexing with CartesianIndices
 Base.getindex(g::NormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
