@@ -11,15 +11,14 @@ Algorithms and data structures for game theory in Julia
 
 Create a `NormalFormGame`:
 
-```jl
+```jullia
 using GameTheory
 player1 = Player([3 3; 2 5; 0 6])
 player2 = Player([3 2 3; 2 6 1])
 g = NormalFormGame(player1, player2)
+println(g)
 ```
-
-```jl
-julia> println(g)
+```
 3×2 NormalFormGame{2, Int64}:
  [3, 3]  [3, 2]
  [2, 2]  [5, 6]
@@ -29,12 +28,54 @@ julia> println(g)
 `lrsnash` calls the Nash equilibrium computation routine in [lrslib](http://cgm.cs.mcgill.ca/~avis/C/lrs.html)
 (through its Julia wrapper [LRSLib.jl](https://github.com/JuliaPolyhedra/LRSLib.jl)):
 
-```jl
-julia> lrsnash(g)
+```julia
+lrsnash(g)
+```
+```
 3-element Vector{Tuple{Vector{Rational{BigInt}}, Vector{Rational{BigInt}}}}:
  ([4//5, 1//5, 0//1], [2//3, 1//3])
  ([0//1, 1//3, 2//3], [1//3, 2//3])
  ([1//1, 0//1, 0//1], [1//1, 0//1])
+```
+
+A 2x2x2 `NormalFormGame`:
+
+```julia
+g = NormalFormGame((2, 2, 2))
+g[1, 1, 1] = [9, 8, 12]
+g[2, 2, 1] = [9, 8, 2]
+g[1, 2, 2] = [3, 4, 6]
+g[2, 1, 2] = [3, 4, 4]
+println(g)
+```
+```
+2×2×2 NormalFormGame{3, Float64}:
+[:, :, 1] =
+ [9.0, 8.0, 12.0]  [0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0]   [9.0, 8.0, 2.0]
+
+[:, :, 2] =
+ [0.0, 0.0, 0.0]  [3.0, 4.0, 6.0]
+ [3.0, 4.0, 4.0]  [0.0, 0.0, 0.0]
+```
+
+`hc_solve` computes all isolated Nash equilibria of an N-player game by using
+[HomotopyContinuation.jl](https://github.com/JuliaHomotopyContinuation/HomotopyContinuation.jl):
+
+```julia
+NEs = hc_solve(g)
+```
+```
+9-element Vector{Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}:
+ ([2.63311e-36, 1.0], [0.333333, 0.666667], [0.333333, 0.666667])
+ ([0.25, 0.75], [1.0, 0.0], [0.25, 0.75])
+ ([0.0, 1.0], [0.0, 1.0], [1.0, 0.0])
+ ([0.25, 0.75], [0.5, 0.5], [0.333333, 0.666667])
+ ([0.5, 0.5], [0.5, 0.5], [1.0, 1.37753e-40])
+ ([1.0, 0.0], [0.0, 1.0], [0.0, 1.0])
+ ([0.5, 0.5], [0.333333, 0.666667], [0.25, 0.75])
+ ([1.0, 0.0], [1.0, 9.40395e-38], [1.0, -9.40395e-38])
+ ([0.0, 1.0], [1.0, 0.0], [0.0, 1.0])
 ```
 
 See the tutorials for further examples.
@@ -49,6 +90,8 @@ See the tutorials for further examples.
   Find all mixed-action Nash equilibria of a two-player nondegenerate game
 * [`lrsnash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lrsnash-Tuple{NormalFormGame{2,%20%3C:Union{Int64,%20Rational}}}):
   Find all mixed-action Nash equilibria (or equilibrium components) of a two-player game
+* `hc_solve`:
+  Find all isolated mixed-action Nash equilibria of an N-player game
 
 ### Learning/evolutionary dynamics
 
