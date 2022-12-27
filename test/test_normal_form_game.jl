@@ -188,7 +188,7 @@ using CDDLib
         g = @inferred NormalFormGame((2, 2))
         g[1, 1] = [0, 10]
         g[1, 2] = [0, 10]
-        g[2, 1] = [3, 5]
+        g[2, 1] = 3, 5
         g[CartesianIndex(2, 2)] = [-2, 0]
 
         @test g.players[1].payoff_array == [0 0; 3 -2]
