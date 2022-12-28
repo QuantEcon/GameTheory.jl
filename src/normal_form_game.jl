@@ -182,14 +182,16 @@ each own action, given a tuple of the opponents' mixed actions.
 
 - `::Vector` : Payoff vector.
 """
-function payoff_vector(player::Player{N,T1},
-                       opponents_actions::MixedActionProfile{T2}) where {N,T1,T2}
-    length(opponents_actions) != num_opponents(player) &&
+function payoff_vector(
+        player::Player{N1,T1},
+        opponents_actions::MixedActionProfile{N2,T2}
+    ) where {N1,N2,T1,T2}
+    N2 != num_opponents(player) &&
         throw(ArgumentError(
             "length of opponents_actions must be $(num_opponents(player))"
         ))
     S = promote_type(T1, T2)
-    payoffs::Array{S,N} = player.payoff_array
+    payoffs::Array{S,N1} = player.payoff_array
     for i in num_opponents(player):-1:1
         payoffs = _reduce_ith_opponent(payoffs, i, opponents_actions[i])
     end
