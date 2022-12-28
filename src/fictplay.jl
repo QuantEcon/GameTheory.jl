@@ -166,7 +166,7 @@ StochasticFictitiousPlay(fp::StochasticFictitiousPlay,
 
 function play!(rng::AbstractRNG,
                fp::FictitiousPlay{N},
-               actions::MixedActionProfile{TA,N},
+               actions::MixedActionProfile{N,TA},
                options::BROptions,
                brs::Vector{Int}, t::Integer) where {N,TA<:Real}
     for i in 1:N
@@ -185,7 +185,7 @@ end
 
 function play!(rng::AbstractRNG,
                fp::StochasticFictitiousPlay{N},
-               actions::MixedActionProfile{TA,N},
+               actions::MixedActionProfile{N,TA},
                options::BROptions,
                brs::Vector{Int}, t::Integer) where {N,TA<:Real}
     for i in 1:N
@@ -203,13 +203,13 @@ function play!(rng::AbstractRNG,
     return actions
 end
 
-play!(fp::StochasticFictitiousPlay{N}, actions::MixedActionProfile{TA,N},
+play!(fp::StochasticFictitiousPlay{N}, actions::MixedActionProfile{N,TA},
       options::BROptions, brs::Vector{Int}, t::Integer) where {N,TA<:Real} =
     play!(Random.GLOBAL_RNG, fp, actions, options, brs, t)
 
 function play!(rng::AbstractRNG,
                fp::AbstractFictitiousPlay{N},
-               actions::MixedActionProfile{TA,N},
+               actions::MixedActionProfile{N,TA},
                options::BROptions=BROptions();
                num_reps::Integer=1, t_init::Integer=1) where {N,TA<:Real}
     brs = Vector{Int}(undef, N)
@@ -228,7 +228,7 @@ Update action profile `num_reps` times.
 
 - `rng::AbstractRNG` : Random number generator used.
 - `fp::AbstractFictitiousPlay{N}` : `AbstractFictitiousPlay` instance.
-- `actions::MixedActionProfile{TA,N}` : Mixed action profile for each player.
+- `actions::MixedActionProfile{N,TA}` : Mixed action profile for each player.
 - `options::BROptions` : Options for `best_response` method.
 - `num_reps::Integer` : The number of iterations.
 - `t_init::Integer` : The period when the iteration starts.
@@ -243,7 +243,7 @@ Update action profile `num_reps` times.
 
 function play(rng::AbstractRNG,
               fp::AbstractFictitiousPlay{N},
-              actions::MixedActionProfile{TA,N},
+              actions::MixedActionProfile{N,TA},
               options::BROptions=BROptions();
               num_reps::Integer=1, t_init::Integer=1) where {N,TA<:Real}
     Tout = typeof(zero(TA)/one(TA))
@@ -359,7 +359,7 @@ function _copy_action_to!(dest::AbstractVector, src::PureAction)
 end
 
 for (ex_TAS, ex_where, ex_T) in (
-        (:(MixedActionProfile{TA,N}), (:(N), :(T<:Real), :(TA<:Real)), :(TA)),
+        (:(MixedActionProfile{N,TA}), (:(N), :(T<:Real), :(TA<:Real)), :(TA)),
         (:(PureActionProfile{N}), (:(N), :(T<:Real)), :(T))
     )
     @eval function time_series(rng::AbstractRNG,

@@ -182,14 +182,16 @@ each own action, given a tuple of the opponents' mixed actions.
 
 - `::Vector` : Payoff vector.
 """
-function payoff_vector(player::Player{N,T1},
-                       opponents_actions::MixedActionProfile{T2}) where {N,T1,T2}
-    length(opponents_actions) != num_opponents(player) &&
+function payoff_vector(
+        player::Player{N1,T1},
+        opponents_actions::MixedActionProfile{N2,T2}
+    ) where {N1,N2,T1,T2}
+    N2 != num_opponents(player) &&
         throw(ArgumentError(
             "length of opponents_actions must be $(num_opponents(player))"
         ))
     S = promote_type(T1, T2)
-    payoffs::Array{S,N} = player.payoff_array
+    payoffs::Array{S,N1} = player.payoff_array
     for i in num_opponents(player):-1:1
         payoffs = _reduce_ith_opponent(payoffs, i, opponents_actions[i])
     end
@@ -797,14 +799,18 @@ end
 delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
     delete_action(g, [action], player_idx)
 
+# get_action_profile
+
+get_opponents_actions(action_profile::ActionProfile{N}, i) where N =
+    Base.tail((action_profile[i:end]..., action_profile[1:i-1]...)::NTuple{N})
+
 # is_nash
 
 function is_nash(g::NormalFormGame, action_profile::ActionProfile;
                  tol::Real=1e-8)
     for (i, player) in enumerate(g.players)
         own_action = action_profile[i]
-        opponents_actions =
-            tuple(action_profile[i+1:end]..., action_profile[1:i-1]...)
+        opponents_actions = get_opponents_actions(action_profile, i)
         if !(is_best_response(player, own_action, opponents_actions, tol=tol))
             return false
         end

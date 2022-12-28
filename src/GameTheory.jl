@@ -51,18 +51,18 @@ Alias for `NTuple{N,T}` where `T<:PureAction`.
 PureActionProfile{N,T<:PureAction} = NTuple{N,T}
 
 """
-    MixedActionProfile{T,N}
+    MixedActionProfile{N,T}
 
 Alias for `NTuple{N,MixedAction{T}}` where `T<:Real`.
 """
-MixedActionProfile{T<:Real,N} = NTuple{N,MixedAction{T}}
+MixedActionProfile{N,T<:Real} = NTuple{N,MixedAction{T}}
 
 """
-    ActionProfile
+    ActionProfile{N,T}
 
-Alias for `Union{PureActionProfile,MixedActionProfile}`.
+Alias for `Union{PureActionProfile{N,T},MixedActionProfile{N,T}}`.
 """
-const ActionProfile = Union{PureActionProfile,MixedActionProfile}
+const ActionProfile{N,T} = Union{PureActionProfile{N,T},MixedActionProfile{N,T}}
 
 const RatOrInt = Union{Rational,Int}
 
