@@ -799,14 +799,18 @@ end
 delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
     delete_action(g, [action], player_idx)
 
+# get_action_profile
+
+get_opponents_actions(action_profile::ActionProfile{N}, i) where N =
+    Base.tail((action_profile[i:end]..., action_profile[1:i-1]...)::NTuple{N})
+
 # is_nash
 
 function is_nash(g::NormalFormGame, action_profile::ActionProfile;
                  tol::Real=1e-8)
     for (i, player) in enumerate(g.players)
         own_action = action_profile[i]
-        opponents_actions =
-            tuple(action_profile[i+1:end]..., action_profile[1:i-1]...)
+        opponents_actions = get_opponents_actions(action_profile, i)
         if !(is_best_response(player, own_action, opponents_actions, tol=tol))
             return false
         end

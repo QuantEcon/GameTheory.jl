@@ -6,6 +6,8 @@
 #       that multiple times for the same function if we have particular reason
 #       to believe there might be a type stability with that function.
 
+using GameTheory: get_opponents_actions
+
 using MathOptInterface
 const MOI = MathOptInterface
 using HiGHS
@@ -307,6 +309,23 @@ using CDDLib
             NormalFormGame(deleted_game_2).players[1].payoff_array
         @test g_new_2.players[2].payoff_array ==
             NormalFormGame(deleted_game_2).players[2].payoff_array
+    end
+
+    # get_opponents_actions
+
+    @testset "get_opponents_actions" begin
+        action_profiles = [(5, 6, 7),
+                           ([0.1, 0.2, 0.7], [0.2, 0.8], [0.3, 0.1, 0.1, 0.5])]
+        for action_profile in action_profiles
+            N = length(action_profile)
+            for i in 1:N
+                opponents_actions_expected =
+                    (action_profile[i+1:end]..., action_profile[1:i-1]...)
+                opponents_actions =
+                    @inferred get_opponents_actions(action_profile, i)
+                @test opponents_actions == opponents_actions_expected
+            end
+        end
     end
 
     # Trivial cases with one player #
