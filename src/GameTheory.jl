@@ -68,6 +68,7 @@ const RatOrInt = Union{Rational,Int}
 
 # package code goes here
 include("normal_form_game.jl")
+include("homotopy_continuation.jl")
 include("lrsnash.jl")
 include("pure_nash.jl")
 include("repeated_game.jl")
@@ -119,6 +120,9 @@ export
 
     # LRS
     lrsnash,
+
+    # Homotopy Continuation
+    hc_solve,
 
     # Learning algorithms
     play!, play, time_series,
