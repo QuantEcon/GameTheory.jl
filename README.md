@@ -11,7 +11,7 @@ Algorithms and data structures for game theory in Julia
 
 Create a `NormalFormGame`:
 
-```jullia
+```julia
 using GameTheory
 player1 = Player([3 3; 2 5; 0 6])
 player2 = Player([3 2 3; 2 6 1])
