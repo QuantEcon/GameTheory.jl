@@ -118,6 +118,7 @@ See the tutorials for further examples.
 ## Tutorials
 
 * [Tools for Game Theory in GameTheory.jl](https://nbviewer.org/github/QuantEcon/game-theory-notebooks/blob/main/game_theory_jl.ipynb)
+* [A Recursive Formulation of Repeated Games](https://nbviewer.org/github/QuantEcon/QuantEcon.notebooks/blob/master/recursive_repeated_games.ipynb)
 
 See also the [`game_theory`](https://quanteconpy.readthedocs.io/en/latest/game_theory.html) submodule of
 [`QuantEcon.py`](https://github.com/QuantEcon/QuantEcon.py),
