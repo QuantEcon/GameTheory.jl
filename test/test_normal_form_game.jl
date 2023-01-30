@@ -113,9 +113,12 @@ using CDDLib
         A = [1 2; 3 4]
         player = Player(A)
         r = repr("text/plain", A)
-        @test repr(player) ==
+        @test repr("text/plain", player) ==
             replace(r, string(typeof(A)) =>
                        split(string(typeof(player)), ".")[end])
+
+        player2 = eval(Meta.parse(repr(player)))
+        @test player2.payoff_array == player.payoff_array
     end
 
     @testset "Tests on delete_action for Player" begin
