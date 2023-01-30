@@ -276,6 +276,13 @@ using CDDLib
         end
     end
 
+    @testset "Test repr/print for NormalFormGame" begin
+        a = reshape([[1, 2], [3, 4], [5, 6], [7, 8]], (2, 2))
+        g = NormalFormGame(a)
+        @test occursin(string(typeof(g)), repr(g))
+        @test occursin(sprint(Base.print_array, a), sprint(print, g))
+    end
+
     @testset "Tests on delete_action for NormalFormGame" begin
         shapley_game = Array{Int}(undef, 3, 3, 2)
         shapley_game[:, 1, 1] = [0, 0, 1]
