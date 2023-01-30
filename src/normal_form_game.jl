@@ -63,12 +63,15 @@ Player(player::Player{N,T}) where {N,T} = Player{N,T}(player)
 num_actions(p::Player) = size(p.payoff_array, 1)
 num_opponents(::Player{N}) where {N} = N - 1
 
+Base.show(io::IO, player::Player) =
+    print(io, "Player(", player.payoff_array, ")")
+
 Base.summary(player::Player) =
     string(Base.dims2string(size(player.payoff_array)),
            " ",
            split(string(typeof(player)), ".")[end])
 
-function Base.show(io::IO, player::Player)
+function Base.show(io::IO, ::MIME"text/plain", player::Player)
     print(io, summary(player))
     println(io, ":")
     X = player.payoff_array
