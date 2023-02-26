@@ -30,7 +30,7 @@ nonlinear complementarity problem representation of Nash eqiulibrium, by using
 Consider the 3-player 2-action game with 9 Nash equilibria in McKelvey and
 McLennan (1996) "Computation of Equilibria in Finite Games":
 
-```jl
+```julia
 julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
 
 julia> g = NormalFormGame((2, 2, 2));
