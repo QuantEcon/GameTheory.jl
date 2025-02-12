@@ -94,6 +94,7 @@ function _support_enumeration_producer(c::Channel,
 
     nums_actions = size(payoff_matrices[1], 1), size(payoff_matrices[2], 1)
     n_min = min(nums_actions...)
+    flags_vecs = Tuple(BitVector(undef, n) for n in nums_actions)
     S = typeof(zero(T)/one(T))
 
     for k = 1:n_min
@@ -102,12 +103,14 @@ function _support_enumeration_producer(c::Channel,
         A = Matrix{S}(undef, k+1, k+1)
         b = Vector{S}(undef, k+1)
         while supps[1][end] <= nums_actions[1]
-            supps[2][:] = collect(1:k)
+            @inbounds for i in 1:k
+                supps[2][i] = i
+            end
             while supps[2][end] <= nums_actions[2]
-                if _indiff_mixed_action!(A, b, actions[2],
+                if _indiff_mixed_action!(A, b, flags_vecs[1], actions[2],
                                          payoff_matrices[1],
                                          supps[1], supps[2])
-                    if _indiff_mixed_action!(A, b, actions[1],
+                    if _indiff_mixed_action!(A, b, flags_vecs[2], actions[1],
                                              payoff_matrices[2],
                                              supps[2], supps[1])
                         out = (zeros(S, nums_actions[1]),
@@ -149,7 +152,8 @@ end
 end
 
 """
-    _indiff_mixed_action!(A, b, out, payoff_matrix, own_supp, opp_supp)
+    _indiff_mixed_action!(A, b, own_supp_flags, out,
+                          payoff_matrix, own_supp, opp_supp)
 
 Given a player's payoff matrix `payoff_matrix`, an array `own_supp`
 of this player's actions, and an array `opp_supp` of the opponent's
@@ -158,7 +162,7 @@ support equals `opp_supp` and for which the player is indifferent
 among the actions in `own_supp`, if any such exists. Return `true`
 if such a mixed action exists and actions in `own_supp` are indeed
 best responses to it, in which case the outcome is stored in `out`;
-`false` otherwise. Arrays `A` and `b` are used in intermediate
+`false` otherwise. Arrays `A`, `b`, `own_supp_flags` are used in intermediate
 steps.
 
 # Arguments
@@ -167,6 +171,8 @@ steps.
   `T<:Real`.
 - `b::Vector{T}`: Vector of length k+1 used in intermediate steps, where
   `T<:Real`.
+- `own_supp_flags::BitVector`: BitVector of length m used in intermediate
+  steps.
 - `out::Vector{T}`: Vector of length k to store the nonzero values of the
   desired mixed action, where `T<:Real`.
 - `payoff_matrix::Matrix`: The player's payoff matrix, of shape (m, n).
@@ -180,6 +186,7 @@ steps.
 - `::Bool`: `true` if a desired mixed action exists and `false` otherwise.
 """
 function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
+                               own_supp_flags::BitVector,
                                out::Vector{T},
                                payoff_matrix::Matrix,
                                own_supp::Vector{Int},
@@ -211,7 +218,7 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
         return true
     end
 
-    own_supp_flags = falses(m)
+    own_supp_flags[:] .= false
     own_supp_flags[own_supp] .= true
 
     for i = 1:m
