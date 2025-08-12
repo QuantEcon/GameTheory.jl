@@ -804,8 +804,10 @@ delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
 
 # get_action_profile
 
-get_opponents_actions(action_profile::ActionProfile{N}, i) where N =
-    Base.tail((action_profile[i:end]..., action_profile[1:i-1]...)::NTuple{N})
+get_opponents_actions(action_profile::ActionProfile{N,T}, i) where {N,T} =
+    Base.tail(
+        (action_profile[i:end]..., action_profile[1:i-1]...)::NTuple{N,T}
+    )
 
 # is_nash
 
