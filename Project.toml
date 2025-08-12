@@ -1,7 +1,7 @@
 name = "GameTheory"
 uuid = "64a4ffa8-f47c-4a47-8dad-aee7aadc3b51"
 repo = "https://github.com/QuantEcon/GameTheory.jl.git"
-version = "0.3.2"
+version = "0.3.3"
 
 [deps]
 CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
