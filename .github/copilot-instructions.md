@@ -181,5 +181,5 @@ When implementing new algorithms, ensure understanding of:
 - [Julia Documentation](https://docs.julialang.org/)
 - [Game Theory Textbooks]: Fudenberg & Tirole, Myerson, etc.
 - [Package Documentation](https://quantecon.github.io/GameTheory.jl/stable/)
-- [QuantEcon Lectures](https://lectures.quantecon.org/) for economic applications
+- [QuantEcon Lectures](https://julia.quantecon.org/) for economic applications
 - [Python version (QuantEcon.py game_theory submodule)](https://quanteconpy.readthedocs.io/en/latest/game_theory.html)
