@@ -619,9 +619,6 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
         p = polyhedron(V, plib)
 
         # check if it's converged
-        # first check if the numbers of vertices are the same
-        if size(v_new) == size(v_old)
-            # then check the euclidean distance
         # Use deduplicated vertices for convergence check
         v_dedup = V.V
         # first check if the numbers of vertices are the same
@@ -697,8 +694,6 @@ the best response for each player.
 """
 function _best_dev_gains(g::NormalFormGame{2, T}) where T
 
-    best_dev_gains1 = (maximum(g.players[1].payoff_array, 1)
-                       .- g.players[1].payoff_array)
     best_dev_gains1 = (maximum(g.players[1].payoff_array; dims=1)
                        .- g.players[1].payoff_array)
     best_dev_gains2 = (maximum(g.players[2].payoff_array; dims=1)
