@@ -694,7 +694,9 @@ function _best_dev_gains(g::NormalFormGame{2, T}) where T
 
     best_dev_gains1 = (maximum(g.players[1].payoff_array, 1)
                        .- g.players[1].payoff_array)
-    best_dev_gains2 = (maximum(g.players[2].payoff_array, 1)
+    best_dev_gains1 = (maximum(g.players[1].payoff_array; dims=1)
+                       .- g.players[1].payoff_array)
+    best_dev_gains2 = (maximum(g.players[2].payoff_array; dims=1)
                        .- g.players[2].payoff_array)
 
     return best_dev_gains1, best_dev_gains2
