@@ -622,7 +622,12 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
         # first check if the numbers of vertices are the same
         if size(v_new) == size(v_old)
             # then check the euclidean distance
-            if norm(v_new-v_old) < tol
+        # Use deduplicated vertices for convergence check
+        v_dedup = V.V
+        # first check if the numbers of vertices are the same
+        if size(v_dedup) == size(v_old)
+            # then check the euclidean distance
+            if norm(v_dedup-v_old) < tol
                 println("converged in $(iter) iterations")
                 break
             end
