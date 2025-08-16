@@ -57,5 +57,18 @@
         @test any(mybools)
     end
 
-end
+    #
+    # Test AS algorithm
+    #
+    @testset "Testing AS algorithm" begin
+        vertices = AS(rpd; tol=1e-9)
 
+        pts_sorted = [3.0 3.0;
+                      3.0 9.75;
+                      9.0 9.0;
+                      9.75 3.0]
+        @test size(vertices) == size(pts_sorted)
+        @test all(sortslices(round.(vertices, digits=5), dims=1) .≈ pts_sorted)
+    end
+
+end
