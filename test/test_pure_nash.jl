@@ -57,7 +57,7 @@ using Combinatorics
         for k in 2:N-2
             for ind in combinations(1:N, k)
                 a = fill(1, N)
-                a[ind] = 2
+                a[ind] .= 2
                 push!(Unanimity_NE, tuple(a...))
             end
         end
@@ -66,6 +66,30 @@ using Combinatorics
         ne = pure_nash(g_Unanimity)
 
         @test sort(ne) == sort(Unanimity_NE)
+    end
+
+    @testset "Tolerance" begin
+        epsilon = 1e-08
+
+        g = NormalFormGame((2, 2))
+        g[1, 1] = [1, 1]
+        g[1, 2] = [-2, 1 + epsilon]
+        g[2, 1] = [1 + epsilon, -2]
+        g[2, 2] = [0, 0];
+
+        NEs = [[(2, 2)]]
+        epsilon_NEs = [[(1, 1); (2, 2)]]
+
+        for (tol, answer) in zip([0 epsilon], [NEs epsilon_NEs])
+            @test sort(pure_nash(g, tol=tol)) ==  sort(answer)
+        end
+    end
+
+    @testset "Trivial game with 1 player" begin
+        n = 3
+        g1 = NormalFormGame(Player(collect(1:n)))
+        @test pure_nash(g1) == [(n,)]
+        @test sort(pure_nash(g1, tol=1.)) == [(n-1,), (n,)]
     end
 
 end

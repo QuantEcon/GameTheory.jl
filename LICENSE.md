@@ -1,4 +1,4 @@
-The Games.jl package is licensed under the BSD-3 License. All rights reserved.
+The GameTheory.jl package is licensed under the BSD-3 License. All rights reserved.
 
 > Copyright (c) 2016: The QuantEcon team
 >

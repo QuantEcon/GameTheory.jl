@@ -4,14 +4,15 @@ form game by support enumeration.
 
 Julia version of QuantEcon.py/support_enumeration.py
 
-Authors: Daisuke Oyama, Zejin Shi
-
 References
 ----------
 B. von Stengel, "Equilibrium Computation for Two-Player Games in
 Strategic and Extensive Form," Chapter 3, N. Nisan, T. Roughgarden, E.
 Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
 =#
+
+using LinearAlgebra: LAPACKException, SingularException
+using QuantEcon: next_k_array!
 
 """
     support_enumeration(g)
@@ -26,20 +27,20 @@ minus 1 such pairs. This should thus be used only for small games.
 
 # Arguments
 
-- `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
+- `g::NormalFormGame{2,T}`: 2-player NormalFormGame instance.
 
 # Returns
 
-- `::Vector{Tuple{Vector{Real}, Vector{Real}}}`: Mixed-action
-  Nash equilibria that are found.
+- `::Vector{NTuple{2,Vector{S}}}`: Mixed-action Nash equilibria that are found,
+  where `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
-function support_enumeration(g::NormalFormGame{2})
-
-    c = Channel(0)
+function support_enumeration(g::NormalFormGame{2,T}) where T
+    S = typeof(zero(T)/one(T))
+    c = Channel{Tuple{Vector{S},Vector{S}}}(0)
     task = support_enumeration_task(c, g)
     bind(c, task)
     schedule(task)
-    NEs = Tuple{Vector{Real}, Vector{Real}}[NE for NE in c]
+    NEs = collect(c)
 
     return NEs
 
@@ -79,13 +80,13 @@ Main body of `support_enumeration_task`.
 # Arguments
 
 - `c::Channel`: Channel to be binded with the support enumeration task.
-- `payoff_matrices::NTuple{2, Matrix{T}}`: Payoff matrices of player 1 and
-  player 2. T<:Real.
+- `payoff_matrices::NTuple{2,Matrix{T}}`: Payoff matrices of player 1 and
+  player 2, where `T<:Real`.
 
 # Puts
 
-- `Tuple{Vector{S},Vector{S}}`: Tuple of Nash equilibrium mixed actions.
-  `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
+- `NTuple{2,Vector{S}}`: Tuple of Nash equilibrium mixed actions, where `S` is
+  Float if `T` is Int or Float, and Rational if `T` is Rational.
 """
 function _support_enumeration_producer(c::Channel,
                                        payoff_matrices
@@ -93,20 +94,23 @@ function _support_enumeration_producer(c::Channel,
 
     nums_actions = size(payoff_matrices[1], 1), size(payoff_matrices[2], 1)
     n_min = min(nums_actions...)
+    flags_vecs = Tuple(BitVector(undef, n) for n in nums_actions)
     S = typeof(zero(T)/one(T))
 
     for k = 1:n_min
-        supps = (collect(1:k), Vector{Int}(k))
-        actions = (Vector{S}(k), Vector{S}(k))
-        A = Matrix{S}(k+1, k+1)
-        b = Vector{S}(k+1)
+        supps = (collect(1:k), Vector{Int}(undef, k))
+        actions = (Vector{S}(undef, k), Vector{S}(undef, k))
+        A = Matrix{S}(undef, k+1, k+1)
+        b = Vector{S}(undef, k+1)
         while supps[1][end] <= nums_actions[1]
-            supps[2][:] = collect(1:k)
+            @inbounds for i in 1:k
+                supps[2][i] = i
+            end
             while supps[2][end] <= nums_actions[2]
-                if _indiff_mixed_action!(A, b, actions[2],
+                if _indiff_mixed_action!(A, b, flags_vecs[1], actions[2],
                                          payoff_matrices[1],
                                          supps[1], supps[2])
-                    if _indiff_mixed_action!(A, b, actions[1],
+                    if _indiff_mixed_action!(A, b, flags_vecs[2], actions[1],
                                              payoff_matrices[2],
                                              supps[2], supps[1])
                         out = (zeros(S, nums_actions[1]),
@@ -118,17 +122,38 @@ function _support_enumeration_producer(c::Channel,
                         put!(c, out)
                     end
                 end
-                _next_k_array!(supps[2])
+                next_k_array!(supps[2])
             end
-            _next_k_array!(supps[1])
+            next_k_array!(supps[1])
         end
     end
 
 end
 
+function _solve!(A::Matrix{T}, b::Vector{T}) where T <: Union{Float64,Float32}
+    r = 0
+    try
+        LAPACK.gesv!(A, b)
+    catch LAPACKException
+        r = 1
+    end
+    return r
+end
+
+@inline function _solve!(A::Matrix{Rational{T}},
+                         b::Vector{Rational{T}}) where T <: Integer
+    r = 0
+    try
+        b[:] = ldiv!(lu!(A), b)
+    catch SingularException
+        r = 1
+    end
+    return r
+end
+
 """
-    _indiff_mixed_action!(A, b, out, payoff_matrix,
-                          own_supp, opp_supp)
+    _indiff_mixed_action!(A, b, own_supp_flags, out,
+                          payoff_matrix, own_supp, opp_supp)
 
 Given a player's payoff matrix `payoff_matrix`, an array `own_supp`
 of this player's actions, and an array `opp_supp` of the opponent's
@@ -137,24 +162,31 @@ support equals `opp_supp` and for which the player is indifferent
 among the actions in `own_supp`, if any such exists. Return `true`
 if such a mixed action exists and actions in `own_supp` are indeed
 best responses to it, in which case the outcome is stored in `out`;
-`false` otherwise. Arrays `A` and `b` are used in intermediate
+`false` otherwise. Arrays `A`, `b`, `own_supp_flags` are used in intermediate
 steps.
 
 # Arguments
 
-- `A::Matrix{T}`: Matrix used in intermediate steps. T<:Real.
-- `b::Vector{T}`: Vector used in intermediate steps. T<:Real.
-- `out::Vector{T}`: Vector to store the nonzero values of the
-  desired mixed action. T<:Real.
-- `payoff_matrix::Matrix`: The player's payoff matrix.
-- `own_supp::Vector{Int}`: Vector containing the player's action indices.
-- `opp_supp::Vector{Int}`: Vector containing the opponent's action indices.
+- `A::Matrix{T}`: Matrix of shape (k+1, k+1) used in intermediate steps, where
+  `T<:Real`.
+- `b::Vector{T}`: Vector of length k+1 used in intermediate steps, where
+  `T<:Real`.
+- `own_supp_flags::BitVector`: BitVector of length m used in intermediate
+  steps.
+- `out::Vector{T}`: Vector of length k to store the nonzero values of the
+  desired mixed action, where `T<:Real`.
+- `payoff_matrix::Matrix`: The player's payoff matrix, of shape (m, n).
+- `own_supp::Vector{Int}`: Vector containing the player's action indices, of
+  length k.
+- `opp_supp::Vector{Int}`: Vector containing the opponent's action indices, of
+  length k.
 
 # Returns
 
 - `::Bool`: `true` if a desired mixed action exists and `false` otherwise.
 """
 function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
+                               own_supp_flags::BitVector,
                                out::Vector{T},
                                payoff_matrix::Matrix,
                                own_supp::Vector{Int},
@@ -163,17 +195,17 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     m = size(payoff_matrix, 1)
     k = length(own_supp)
 
-    A[1:end-1, 1:end-1] = payoff_matrix[own_supp, opp_supp]
-    A[1:end-1, end] = -one(T)
-    A[end, 1:end-1] = one(T)
-    A[end, end] = zero(T)
-    b[1:end-1] = zero(T)
-    b[end] = one(T)
-    try
-        b = A_ldiv_B!(lufact!(A), b)
-    catch LinAlg.SingularException
-        return false
+    for j in 1:k, i in 1:k
+        A[i, j] = payoff_matrix[own_supp[i], opp_supp[j]]
     end
+    A[1:end-1, end] .= -one(T)
+    A[end, 1:end-1] .= one(T)
+    A[end, end] = zero(T)
+    b[1:end-1] .= zero(T)
+    b[end] = one(T)
+
+    r = _solve!(A, b)
+    r == 0 || return false  # A: singular
 
     for i in 1:k
         b[i] <= zero(T) && return false
@@ -186,8 +218,8 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
         return true
     end
 
-    own_supp_flags = falses(m)
-    own_supp_flags[own_supp] = true
+    own_supp_flags[:] .= false
+    own_supp_flags[own_supp] .= true
 
     for i = 1:m
         if !own_supp_flags[i]
@@ -202,94 +234,4 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
     end
 
     return true
-end
-
-"""
-    _next_k_combination(x)
-
-Find the next k-combination, as described by an integer in binary
-representation with the k set bits, by "Gosper's hack".
-
-Copy-paste from en.wikipedia.org/wiki/Combinatorial_number_system
-
-# Arguments
-
-- `x::Int`: Integer with k set bits.
-
-# Returns
-
-- `::Int`: Smallest integer > x with k set bits.
-"""
-function _next_k_combination(x::Int)
-
-    u = x & -x
-    v = u + x
-    return v + (fld((v ⊻ x), u) >> 2)
-
-end
-
-"""
-    _next_k_array!(a)
-
-Given an array `a` of k distinct nonnegative integers, return the
-next k-array in lexicographic ordering of the descending sequences
-of the elements. `a` is modified in place.
-
-# Arguments
-
-- `a::Vector{Int}`: Array of length k.
-
-# Returns
-
-- `:::Vector{Int}`: Next k-array of `a`.
-
-# Examples
-
-```julia
-julia> n, k = 4, 2
-(4,2)
-
-julia> a = collect(1:k)
-2-element Array{Int64,1}:
- 1
- 2
-
-julia> while a[end] < n + 1
-           @show a
-           _next_k_array!(a)
-       end
-a = [1,2]
-a = [1,3]
-a = [2,3]
-a = [1,4]
-a = [2,4]
-a = [3,4]
-```
-"""
-function _next_k_array!(a::Vector{Int})
-
-    k = length(a)
-    if k == 0
-        return a
-    end
-
-    x = 0
-    for i = 1:k
-        x += (1 << (a[i] - 1))
-    end
-
-    x = _next_k_combination(x)
-
-    pos = 0
-    for i = 1:k
-        while x & 1 == 0
-            x = x >> 1
-            pos += 1
-        end
-        a[i] = pos + 1
-        x = x >> 1
-        pos += 1
-    end
-
-    return a
 end
