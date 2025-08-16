@@ -458,7 +458,7 @@ Abreu and Sannikov (2014).
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
   docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
 - `tol::Float64` : Tolerance in differences of set.
-- `u` : The punishment payoff paif if any player deviates. In default,
+- `u` : The punishment payoff pair if any player deviates. In default,
   we use minimax payoff pair. If there is better guess, you can specify it
   by passing a `Vector{T}` with length 2.
 
@@ -491,7 +491,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
 
     for iter = 1:maxiter
 
-        v_new = Vector{T}(0) # to store new vertices
+        v_new = Vector{T}() # to store new vertices
         # step 1
         for a2 in 1:rpd.sg.nums_actions[2]
             for a1 in 1:rpd.sg.nums_actions[1]
@@ -510,7 +510,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
                 end
 
                 # find out the intersections of polyhedron and IC boundaries
-                p_IC = polyhedron(SimpleHRepresentation(-eye(2), -[IC1, IC2]), plib)
+                p_IC = polyhedron(SimpleHRepresentation(-Matrix{Float64}(I, 2, 2), -[IC1, IC2]), plib)
                 p_inter = intersect(p_IC, p)
                 V = SimpleVRepresentation(p_inter)
                 for i = 1:nvreps(V)
@@ -543,7 +543,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
 
         # check if maxiter is reached
         if iter == maxiter
-            warn("Maximum Iteration Reached")
+            @warn "Maximum Iteration Reached"
         end
 
         v_old = v_new
@@ -579,7 +579,7 @@ space.
 function _payoff_points(g::NormalFormGame{2, T}) where T
 
     nums_action_profiles = prod(g.nums_actions)
-    v = Matrix{T}(nums_action_profiles, 2)
+    v = Matrix{T}(undef, nums_action_profiles, 2)
     v[:, 1] = reshape(g.players[1].payoff_array, nums_action_profiles)
     v[:, 2] = reshape(g.players[2].payoff_array', nums_action_profiles)
 

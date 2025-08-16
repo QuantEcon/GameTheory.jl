@@ -68,7 +68,7 @@
                       3.0 3.0;
                       9.0 9.0;
                       9.75 3.0]
-        @test all(sortrows(vertices) .≈ pts_sorted)
+        @test all(sortslices(vertices, dims=1) .≈ pts_sorted)
     end
 
 end
