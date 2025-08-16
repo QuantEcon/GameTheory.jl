@@ -559,7 +559,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
     # Initialize W0 with each entries of payoff bimatrix
     v_old = _payoff_points(rpd.sg)
 
-    if u == nothing
+    if isnothing(u)
         u = [minimum(rpd.sg.players[1].payoff_array),
              minimum(rpd.sg.players[2].payoff_array)]
     end
