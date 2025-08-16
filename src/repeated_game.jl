@@ -559,7 +559,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
     # Initialize W0 with each entries of payoff bimatrix
     v_old = _payoff_points(rpd.sg)
 
-    if u == nothing
+    if isnothing(u)
         u = [minimum(rpd.sg.players[1].payoff_array),
              minimum(rpd.sg.players[2].payoff_array)]
     end
@@ -619,10 +619,12 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
         p = polyhedron(V, plib)
 
         # check if it's converged
+        # Use deduplicated vertices for convergence check
+        v_dedup = V.V
         # first check if the numbers of vertices are the same
-        if size(v_new) == size(v_old)
+        if size(v_dedup) == size(v_old)
             # then check the euclidean distance
-            if norm(v_new-v_old) < tol
+            if norm(v_dedup-v_old) < tol
                 println("converged in $(iter) iterations")
                 break
             end
@@ -692,9 +694,9 @@ the best response for each player.
 """
 function _best_dev_gains(g::NormalFormGame{2, T}) where T
 
-    best_dev_gains1 = (maximum(g.players[1].payoff_array, 1)
+    best_dev_gains1 = (maximum(g.players[1].payoff_array; dims=1)
                        .- g.players[1].payoff_array)
-    best_dev_gains2 = (maximum(g.players[2].payoff_array, 1)
+    best_dev_gains2 = (maximum(g.players[2].payoff_array; dims=1)
                        .- g.players[2].payoff_array)
 
     return best_dev_gains1, best_dev_gains2
