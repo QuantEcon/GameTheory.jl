@@ -61,7 +61,7 @@
     # Test AS algorithm
     #
     @testset "Testing AS algorithm" begin
-        vertices = AS(rpd; tol=1e-9)
+        vertices = @inferred(AS(rpd; tol=1e-9))
 
         pts_sorted = [3.0 3.0;
                       3.0 9.75;
