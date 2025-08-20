@@ -529,7 +529,7 @@ function outerapproximation(
 end
 
 """
-    AS(rpd; maxiter=1000, plib=default_library(2, T), tol=1e-5, u=nothing)
+    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5, u=nothing)
 
 Using AS algorithm to compute the set of payoff pairs of all pure-strategy
 subgame-perfect equilibria with public randomization for any repeated
@@ -547,25 +547,30 @@ Abreu and Sannikov (2014).
 - `tol::Float64` : Tolerance in differences of set.
 - `u` : The punishment payoff pair if any player deviates. In default,
   we use minimax payoff pair. If there is better guess, you can specify it
-  by passing a `Vector{T}` with length 2.
+  by passing a `Vector` with length 2.
 
 # Returns
 
 - `::Matrix{T}` : Vertices of the set of payoff pairs.
 """
-function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
-            plib=default_library(2, T), tol::Float64=1e-5, u=nothing) where T<:Real
+function AS(rpd::RepeatedGame{2}; maxiter::Integer=1000,
+            plib=default_library(2, Float64), tol::Float64=1e-5,
+            u::Union{AbstractVector{TU}, Nothing}=nothing) where {TU}
+
+    lib = similar_library(plib, 2, Float64)
 
     # Initialize W0 with each entries of payoff bimatrix
-    v_old = _payoff_points(rpd.sg)
+    v_old = _payoff_points(Float64, rpd.sg)
 
     if isnothing(u)
-        u = [minimum(rpd.sg.players[1].payoff_array),
-             minimum(rpd.sg.players[2].payoff_array)]
+        u = Float64[minimum(rpd.sg.players[1].payoff_array),
+                    minimum(rpd.sg.players[2].payoff_array)]
+    else
+        u = convert(Vector{Float64}, u)
     end
 
     # create VRepresentation and Polyhedron and get rid of redundant vertices
-    p = polyhedron(vrep(v_old), plib)
+    p = polyhedron(vrep(v_old), lib)
     removevredundancy!(p)
     H = hrep(p)
 
@@ -575,7 +580,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
 
     for iter = 1:maxiter
 
-        v_new = T[] # to store new vertices
+        v_new = Float64[] # to store new vertices
         # step 1
         for a2 in 1:rpd.sg.nums_actions[2]
             for a1 in 1:rpd.sg.nums_actions[1]
@@ -594,7 +599,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
                 end
 
                 # find out the intersections of polyhedron and IC boundaries
-                p_IC = polyhedron(hrep(-Matrix{Float64}(I, 2, 2), -[IC1, IC2]), plib)
+                p_IC = polyhedron(hrep(-Matrix{Float64}(I, 2, 2), -[IC1, IC2]), lib)
                 p_inter = intersect(p_IC, p)
                 Vmat = MixedMatVRep(vrep(p_inter)).V
                 for i in 1:size(Vmat, 1)
@@ -609,7 +614,7 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
         v_new = reshape(v_new, 2, :)'
 
         # get rid of redundant points
-        p = polyhedron(vrep(v_new), plib)
+        p = polyhedron(vrep(v_new), lib)
         removevredundancy!(p)
 
         # check if it's converged
@@ -642,25 +647,33 @@ function AS(rpd::RepeatedGame{2, T}; maxiter::Integer=1000,
 
     end
 
-    return MixedMatVRep(vrep(p)).V
+    # To ensure the return is Matrix{Float64}
+    vr = vrep(p)
+    pts = points(vr)
+    vertices = Matrix{Float64}(undef, (length(pts), 2))
+    for (i, pt) in enumerate(pts)
+        vertices[i, :] = pt
+    end
+
+    return vertices
 end
 
 """
-    _payoff_points(g)
+    _payoff_points(::Type{T}, g)
 
 Return a matrix with each row being a payoff pair point in the two dimensional
 space.
 
 # Arguments
 
-- `g::NormalFormGame{2, T}` : Two-player NormalFormGame.
+- `g::NormalFormGame{2}` : Two-player NormalFormGame.
 
 # Returns
 
 - `v::Matrix{T}` : Matrix with size n by 2, where n is the number of
   action profiles. Each row corresponds to one payoff pair.
 """
-function _payoff_points(g::NormalFormGame{2, T}) where T
+function _payoff_points(::Type{T}, g::NormalFormGame{2}) where T
 
     nums_action_profiles = prod(g.nums_actions)
     v = Matrix{T}(undef, nums_action_profiles, 2)
