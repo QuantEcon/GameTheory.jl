@@ -7,6 +7,8 @@ It currently only has tools for solving two player repeated
 games, but could be extended to do more with some effort.
 =#
 
+using Polyhedra
+
 """
     RepeatedGame{N,T}
 
@@ -524,4 +526,186 @@ function outerapproximation(
     vertices = unique(vertices, dims=1)
 
     return vertices
+end
+
+"""
+    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5, u=nothing)
+
+Using AS algorithm to compute the set of payoff pairs of all pure-strategy
+subgame-perfect equilibria with public randomization for any repeated
+two-player games with perfect monitoring and discounting, following
+Abreu and Sannikov (2014).
+
+# Arguments
+
+- `rpd::RepeatedGame{2, T}` : Two player repeated game with T<:Real.
+- `maxiter::Integer` : Maximum number of iterations.
+- `plib`: Allows users to choose a particular package for the geometry
+  computations.
+  (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
+  docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
+- `tol::Float64` : Tolerance in differences of set.
+- `u` : The punishment payoff pair if any player deviates. In default,
+  we use minimax payoff pair. If there is better guess, you can specify it
+  by passing a `Vector` with length 2.
+
+# Returns
+
+- `::Matrix{T}` : Vertices of the set of payoff pairs.
+"""
+function AS(rpd::RepeatedGame{2}; maxiter::Integer=1000,
+            plib=default_library(2, Float64), tol::Float64=1e-5,
+            u::Union{AbstractVector{TU}, Nothing}=nothing) where {TU}
+
+    lib = similar_library(plib, 2, Float64)
+
+    # Initialize W0 with each entries of payoff bimatrix
+    v_old = _payoff_points(Float64, rpd.sg)
+
+    if isnothing(u)
+        u = Float64[minimum(rpd.sg.players[1].payoff_array),
+                    minimum(rpd.sg.players[2].payoff_array)]
+    else
+        u = convert(Vector{Float64}, u)
+    end
+
+    # create VRepresentation and Polyhedron and get rid of redundant vertices
+    p = polyhedron(vrep(v_old), lib)
+    removevredundancy!(p)
+    H = hrep(p)
+
+    # calculate the best deviation gains
+    # normalize with (1-delta)/delta
+    best_dev_gains1, best_dev_gains2 = (1-rpd.delta)/rpd.delta .* _best_dev_gains(rpd.sg)
+
+    for iter = 1:maxiter
+
+        v_new = Float64[] # to store new vertices
+        # step 1
+        for a2 in 1:rpd.sg.nums_actions[2]
+            for a1 in 1:rpd.sg.nums_actions[1]
+                payoff1 = rpd.sg.players[1].payoff_array[a1, a2]
+                payoff2 = rpd.sg.players[2].payoff_array[a2, a1]
+                IC1 = u[1] + best_dev_gains1[a1, a2]
+                IC2 = u[2] + best_dev_gains2[a2, a1]
+
+                # check if the payoff point is interior
+                # first check if it satisifies IC
+                if all([payoff1, payoff2] .> [IC1, IC2])
+                    # then check if it is in the polyhedron
+                    if [payoff1, payoff2] in H
+                        push!(v_new, payoff1, payoff2)
+                    end
+                end
+
+                # find out the intersections of polyhedron and IC boundaries
+                p_IC = polyhedron(hrep(-Matrix{Float64}(I, 2, 2), -[IC1, IC2]), lib)
+                p_inter = intersect(p_IC, p)
+                Vmat = MixedMatVRep(vrep(p_inter)).V
+                for i in 1:size(Vmat, 1)
+                    if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
+                        push!(v_new, (rpd.delta * Vmat[i, :] +
+                                      (1 - rpd.delta) * [payoff1, payoff2])...)
+                    end
+                end
+            end
+        end
+
+        v_new = reshape(v_new, 2, :)'
+
+        # get rid of redundant points
+        p = polyhedron(vrep(v_new), lib)
+        removevredundancy!(p)
+
+        # check if it's converged
+        # Use deduplicated vertices for convergence check
+        v_dedup = MixedMatVRep(vrep(p)).V
+        # first check if the numbers of vertices are the same
+        if size(v_dedup) == size(v_old)
+            # then check the euclidean distance
+            if norm(v_dedup-v_old) < tol
+                println("converged in $(iter) iterations")
+                break
+            end
+        end
+
+        # check if maxiter is reached
+        if iter == maxiter
+            @warn "Maximum Iteration Reached"
+        end
+
+        v_old = v_dedup
+        H = hrep(p)
+
+        # step 2
+        # update u
+        u_ = [minimum(v_new[:, 1]),
+              minimum(v_new[:, 2])]
+        if any(u_ .> u)
+            u = u_
+        end
+
+    end
+
+    # To ensure the return is Matrix{Float64}
+    vr = vrep(p)
+    pts = points(vr)
+    vertices = Matrix{Float64}(undef, (length(pts), 2))
+    for (i, pt) in enumerate(pts)
+        vertices[i, :] = pt
+    end
+
+    return vertices
+end
+
+"""
+    _payoff_points(::Type{T}, g)
+
+Return a matrix with each row being a payoff pair point in the two dimensional
+space.
+
+# Arguments
+
+- `g::NormalFormGame{2}` : Two-player NormalFormGame.
+
+# Returns
+
+- `v::Matrix{T}` : Matrix with size n by 2, where n is the number of
+  action profiles. Each row corresponds to one payoff pair.
+"""
+function _payoff_points(::Type{T}, g::NormalFormGame{2}) where T
+
+    nums_action_profiles = prod(g.nums_actions)
+    v = Matrix{T}(undef, nums_action_profiles, 2)
+    v[:, 1] = reshape(g.players[1].payoff_array, nums_action_profiles)
+    v[:, 2] = reshape(g.players[2].payoff_array', nums_action_profiles)
+
+    return v
+end
+
+"""
+    _best_dev_gains(g)
+
+Calculate the payoff gains from deviating from the current action to
+the best response for each player.
+
+# Arguments
+
+- `g::NormalFormGame{2, T}` : Two-player NormalFormGame.
+
+# Returns
+
+- `::Tuple{Matrix{T}, Matrix{T}}` : Tuple of best deviating gain matrices
+  for two players. For example, for the first matrix `best_dev_gains1`,
+  `best_dev_gains1[i, j]` is the payoff gain for player 1 for deviating
+  to the best response from ith action given player 2 choosing jth action.
+"""
+function _best_dev_gains(g::NormalFormGame{2, T}) where T
+
+    best_dev_gains1 = (maximum(g.players[1].payoff_array; dims=1)
+                       .- g.players[1].payoff_array)
+    best_dev_gains2 = (maximum(g.players[2].payoff_array; dims=1)
+                       .- g.players[2].payoff_array)
+
+    return best_dev_gains1, best_dev_gains2
 end
