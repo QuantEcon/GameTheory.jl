@@ -8,10 +8,6 @@ games, but could be extended to do more with some effort.
 =#
 
 using Polyhedra
-using MathOptInterface
-using HiGHS
-
-const MOI = MathOptInterface
 
 """
     RepeatedGame{N,T,TD}
@@ -551,166 +547,7 @@ function outerapproximation(
 end
 
 """
-    _find_ic_boundary_points_optimization(p, IC1, IC2, S)
-
-Find intersection points on IC boundaries using optimization instead of 
-polyhedron intersection. This implements optimization 2 from PR #65 comment 5.
-
-For a given polyhedron p and IC constraints IC1, IC2, find points where:
-- v[1] = IC1 (vertical IC boundary)  
-- v[2] = IC2 (horizontal IC boundary)
-
-Uses linear programming to find extreme points on these boundaries.
-"""
-function _find_ic_boundary_points_optimization(p::Polyhedron, IC1::T, IC2::T, S::Type) where T<:Real
-    boundary_points = Vector{Vector{S}}()
-    
-    # Get the H-representation of the polyhedron
-    h = hrep(p)
-    if isempty(h)
-        return boundary_points
-    end
-    
-    try
-        # Extract constraint matrix A and vector b from Ax <= b
-        inequalities = collect(halfspaces(h))
-        if isempty(inequalities)
-            return boundary_points
-        end
-        
-        A = zeros(S, length(inequalities), 2)
-        b = zeros(S, length(inequalities))
-        
-        for (i, ineq) in enumerate(inequalities)
-            # inequality is of form a'x <= β
-            A[i, :] = ineq.a
-            b[i] = ineq.β
-        end
-        
-        # Setup optimizer
-        optimizer = HiGHS.Optimizer()
-        MOI.set(optimizer, MOI.Silent(), true)
-        
-        # Find points on v[1] = IC1 boundary (maximize and minimize v[2])
-        for objective_sense in [MOI.MAX_SENSE, MOI.MIN_SENSE]
-            model = MOI.instantiate(optimizer)
-            
-            # Variables: v = [v1, v2]
-            v = MOI.add_variables(model, 2)
-            
-            # Constraint: v[1] = IC1
-            MOI.add_constraint(model, v[1], MOI.EqualTo(S(IC1)))
-            
-            # Constraints from polyhedron: A*v <= b
-            for i in 1:size(A, 1)
-                MOI.add_constraint(model, 
-                    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(A[i, :], v), zero(S)),
-                    MOI.LessThan(b[i]))
-            end
-            
-            # Objective: maximize/minimize v[2] 
-            MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{S}}(),
-                    MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(S), v[2])], zero(S)))
-            MOI.set(model, MOI.ObjectiveSense(), objective_sense)
-            
-            MOI.optimize!(model)
-            
-            if MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
-                solution = MOI.get(model, MOI.VariablePrimal(), v)
-                # Check if this point is approximately on the IC1 boundary
-                if abs(solution[1] - IC1) < 1e-10
-                    push!(boundary_points, S[solution[1], solution[2]])
-                end
-            end
-        end
-        
-        # Find points on v[2] = IC2 boundary (maximize and minimize v[1])
-        for objective_sense in [MOI.MAX_SENSE, MOI.MIN_SENSE]
-            model = MOI.instantiate(optimizer)
-            
-            # Variables: v = [v1, v2]
-            v = MOI.add_variables(model, 2)
-            
-            # Constraint: v[2] = IC2
-            MOI.add_constraint(model, v[2], MOI.EqualTo(S(IC2)))
-            
-            # Constraints from polyhedron: A*v <= b
-            for i in 1:size(A, 1)
-                MOI.add_constraint(model, 
-                    MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(A[i, :], v), zero(S)),
-                    MOI.LessThan(b[i]))
-            end
-            
-            # Objective: maximize/minimize v[1]
-            MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{S}}(),
-                    MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(one(S), v[1])], zero(S)))
-            MOI.set(model, MOI.ObjectiveSense(), objective_sense)
-            
-            MOI.optimize!(model)
-            
-            if MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
-                solution = MOI.get(model, MOI.VariablePrimal(), v)
-                # Check if this point is approximately on the IC2 boundary
-                if abs(solution[2] - IC2) < 1e-10
-                    push!(boundary_points, S[solution[1], solution[2]])
-                end
-            end
-        end
-    catch e
-        # Fall back to empty result if optimization fails
-        return boundary_points
-    end
-    
-    # Remove duplicates
-    unique_points = Vector{Vector{S}}()
-    for pt in boundary_points
-        is_duplicate = false
-        for existing in unique_points
-            if norm(pt - existing) < 1e-10
-                is_duplicate = true
-                break
-            end
-        end
-        if !is_duplicate
-            push!(unique_points, pt)
-        end
-    end
-    
-    return unique_points
-end
-
-"""
-    _add_point_incremental!(p_current, new_point, lib, S)
-
-Add a point to the current polyhedron incrementally. This implements 
-optimization 1 from PR #65 comment 5.
-
-Returns updated polyhedron if point was added, or original polyhedron if point was redundant.
-"""
-function _add_point_incremental!(p_current::Polyhedron, new_point::AbstractVector, lib, S::Type)
-    # Check if point is already in the polyhedron
-    h = hrep(p_current)
-    if new_point in h
-        return p_current  # Point is redundant, don't add
-    end
-    
-    # Add the point to V-representation
-    v_current = vrep(p_current)
-    pts_current = points(v_current)
-    
-    # Create new points array with the additional point
-    new_points = [collect(pt) for pt in pts_current]
-    push!(new_points, collect(new_point))
-    
-    # Create new polyhedron
-    p_new = polyhedron(vrep(new_points), lib)
-    removevredundancy!(p_new)
-    
-    return p_new
-end
-
-"""
-    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5, u=nothing, verbose=false, use_optimization=false, incremental_redundancy=false)
+    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5, u=nothing, verbose=false)
 
 Using AS algorithm to compute the set of payoff pairs of all pure-strategy
 subgame-perfect equilibria with public randomization for any repeated
@@ -730,8 +567,6 @@ Abreu and Sannikov (2014).
   we use minimax payoff pair. If there is better guess, you can specify it
   by passing a `Vector` with length 2.
 - `verbose::Bool` : If true, print convergence information. Defaults to false.
-- `use_optimization::Bool` : If true, use optimization-based IC boundary intersection finding (PR #65 suggestion 2). Defaults to false.
-- `incremental_redundancy::Bool` : If true, use incremental redundancy removal (PR #65 suggestion 1). Defaults to false.
 
 # Returns
 
@@ -739,8 +574,7 @@ Abreu and Sannikov (2014).
 """
 function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
             plib=default_library(2, Float64), tol::Float64=1e-5,
-            u::Union{AbstractVector, Nothing}=nothing, verbose::Bool=false,
-            use_optimization::Bool=false, incremental_redundancy::Bool=false) where {T,TD}
+            u::Union{AbstractVector, Nothing}=nothing, verbose::Bool=false) where {T,TD}
 
     S = _coefficient_type(rpd)
     lib = similar_library(plib, 2, S)
@@ -766,15 +600,9 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
 
     for iter = 1:maxiter
 
-        if incremental_redundancy
-            # Optimization 1: Use incremental polyhedron construction
-            p_current = deepcopy(p)
-        else
-            v_new = S[] # to store new vertices
-            # Use sizehint! for better performance as suggested in PR #65
-            sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
-        end
-        
+        v_new = S[] # to store new vertices
+        # Use sizehint! for better performance as suggested in PR #65
+        sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
         # step 1
         for a2 in 1:rpd.sg.nums_actions[2]
             for a1 in 1:rpd.sg.nums_actions[1]
@@ -788,99 +616,32 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
                 if all([payoff1, payoff2] .> [IC1, IC2])
                     # then check if it is in the polyhedron
                     if [payoff1, payoff2] in H
-                        if incremental_redundancy
-                            p_current = _add_point_incremental!(p_current, S[payoff1, payoff2], lib, S)
-                        else
-                            push!(v_new, payoff1, payoff2)
-                        end
+                        push!(v_new, payoff1, payoff2)
                     end
                 end
 
                 # find out the intersections of polyhedron and IC boundaries
-                if use_optimization
-                    # Optimization 2: Use optimization-based boundary finding
-                    try
-                        boundary_points = _find_ic_boundary_points_optimization(p, IC1, IC2, S)
-                        if !isempty(boundary_points)
-                            for pt in boundary_points
-                                new_point = rpd.delta * pt + (one(S) - rpd.delta) * S[payoff1, payoff2]
-                                if incremental_redundancy
-                                    p_current = _add_point_incremental!(p_current, new_point, lib, S)
-                                else
-                                    push!(v_new, new_point...)
-                                end
-                            end
-                        else
-                            # Fallback to original method if optimization fails to find points
-                            p_IC = polyhedron(hrep(-Matrix{S}(I, 2, 2), -S[IC1, IC2]), lib)
-                            p_inter = intersect(p_IC, p)
-                            Vmat = MixedMatVRep(vrep(p_inter)).V
-                            for i in 1:size(Vmat, 1)
-                                if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
-                                    new_point = (rpd.delta * Vmat[i, :] +
-                                                  (one(S) - rpd.delta) * S[payoff1, payoff2])
-                                    if incremental_redundancy
-                                        p_current = _add_point_incremental!(p_current, new_point, lib, S)
-                                    else
-                                        push!(v_new, new_point...)
-                                    end
-                                end
-                            end
-                        end
-                    catch
-                        # Fallback to original method if optimization completely fails
-                        p_IC = polyhedron(hrep(-Matrix{S}(I, 2, 2), -S[IC1, IC2]), lib)
-                        p_inter = intersect(p_IC, p)
-                        Vmat = MixedMatVRep(vrep(p_inter)).V
-                        for i in 1:size(Vmat, 1)
-                            if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
-                                new_point = (rpd.delta * Vmat[i, :] +
-                                              (one(S) - rpd.delta) * S[payoff1, payoff2])
-                                if incremental_redundancy
-                                    p_current = _add_point_incremental!(p_current, new_point, lib, S)
-                                else
-                                    push!(v_new, new_point...)
-                                end
-                            end
-                        end
-                    end
-                else
-                    # Original method: construct p_IC and intersect
-                    p_IC = polyhedron(hrep(-Matrix{S}(I, 2, 2), -S[IC1, IC2]), lib)
-                    p_inter = intersect(p_IC, p)
-                    Vmat = MixedMatVRep(vrep(p_inter)).V
-                    for i in 1:size(Vmat, 1)
-                        if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
-                            new_point = (rpd.delta * Vmat[i, :] +
-                                          (one(S) - rpd.delta) * S[payoff1, payoff2])
-                            if incremental_redundancy
-                                p_current = _add_point_incremental!(p_current, new_point, lib, S)
-                            else
-                                push!(v_new, new_point...)
-                            end
-                        end
+                p_IC = polyhedron(hrep(-Matrix{S}(I, 2, 2), -S[IC1, IC2]), lib)
+                p_inter = intersect(p_IC, p)
+                Vmat = MixedMatVRep(vrep(p_inter)).V
+                for i in 1:size(Vmat, 1)
+                    if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
+                        push!(v_new, (rpd.delta * Vmat[i, :] +
+                                      (one(S) - rpd.delta) * S[payoff1, payoff2])...)
                     end
                 end
             end
         end
 
-        if incremental_redundancy
-            # Use the incrementally built polyhedron
-            p = p_current
-            v_dedup = MixedMatVRep(vrep(p)).V
-        else
-            v_new = reshape(v_new, 2, :)'
+        v_new = reshape(v_new, 2, :)'
 
-            # get rid of redundant points
-            p = polyhedron(vrep(v_new), lib)
-            removevredundancy!(p)
-
-            # check if it's converged
-            # Use deduplicated vertices for convergence check
-            v_dedup = MixedMatVRep(vrep(p)).V
-        end
+        # get rid of redundant points
+        p = polyhedron(vrep(v_new), lib)
+        removevredundancy!(p)
 
         # check if it's converged
+        # Use deduplicated vertices for convergence check
+        v_dedup = MixedMatVRep(vrep(p)).V
         # first check if the numbers of vertices are the same
         if size(v_dedup) == size(v_old)
             # then check the euclidean distance
@@ -900,15 +661,8 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
 
         # step 2
         # update u
-        if incremental_redundancy
-            # Extract vertices from the polyhedron for minimum calculation
-            v_matrix = MixedMatVRep(vrep(p)).V
-            u_ = [minimum(v_matrix[:, 1]),
-                  minimum(v_matrix[:, 2])]
-        else
-            u_ = [minimum(v_new[:, 1]),
-                  minimum(v_new[:, 2])]
-        end
+        u_ = [minimum(v_new[:, 1]),
+              minimum(v_new[:, 2])]
         if any(u_ .> u)
             u = u_
         end
