@@ -655,11 +655,8 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
         v_dedup = MixedMatVRep(vrep(p)).V
         # first check if the numbers of vertices are the same
         if size(v_dedup) == size(v_old)
-            # Sort rows before comparison since vertex order is not guaranteed
-            v_dedup_sorted = sortslices(v_dedup, dims=1)
-            v_old_sorted = sortslices(v_old, dims=1)
             # then check the euclidean distance
-            if norm(v_dedup_sorted - v_old_sorted) < tol
+            if norm(v_dedup-v_old) < tol
                 verbose && println("converged in $(iter) iterations")
                 break
             end
