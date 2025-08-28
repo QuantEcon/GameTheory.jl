@@ -84,9 +84,10 @@ the repeated game's payoff and delta types.
 
 # Returns
 
-- `::Type` : Rational{BigInt} if both payoffs and delta are rational, Float64 otherwise.
+- `::Type` : Rational{BigInt} if payoffs are rational/integer and delta is rational, 
+  Float64 otherwise.
 """
-_coefficient_type(::RepeatedGame{N, <:Rational, <:Rational}) where {N} = Rational{BigInt}
+_coefficient_type(::RepeatedGame{N, <:Union{Rational,Integer}, <:Rational}) where {N} = Rational{BigInt}
 _coefficient_type(::RepeatedGame) = Float64
 
 # Flow utility in terms of the players actions

@@ -106,6 +106,16 @@
             @test eltype(vertices) == Rational{BigInt}
         end
 
+        @testset "AS with Int payoffs and rational delta" begin
+            # Test the case with Int payoffs but rational delta (should use exact arithmetic)
+            nfg_int = NormalFormGame(Int, nfg)
+            rpd_int_rat = RepeatedGame(nfg_int, 3//4)  # Rational delta with Int payoffs
+            vertices = @inferred(AS(rpd_int_rat; tol=1e-9))
+            @test size(vertices) == size(pts_sorted)
+            # Should also use exact arithmetic and return Rational{BigInt}
+            @test eltype(vertices) == Rational{BigInt}
+        end
+
         @testset "AS with verbose output" begin
             # Test verbose parameter
             rpd_test = RepeatedGame(nfg, 0.75)
