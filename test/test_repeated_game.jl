@@ -57,5 +57,44 @@
         @test any(mybools)
     end
 
-end
+    #
+    # Test AS algorithm
+    #
+    @testset "Testing AS algorithm" begin
+        vertices = @inferred(AS(rpd; tol=1e-9))
 
+        pts_sorted = [3.0 3.0;
+                      3.0 9.75;
+                      9.0 9.0;
+                      9.75 3.0]
+        @test size(vertices) == size(pts_sorted)
+        @test all(sortslices(round.(vertices, digits=5), dims=1) .≈ pts_sorted)
+
+        @testset "AS with Int payoffs" begin
+            nfg_int = NormalFormGame(Int, nfg)
+            rpd_int = RepeatedGame(nfg_int, 0.75)
+            vertices = @inferred(AS(rpd_int; tol=1e-9))
+            @test size(vertices) == size(pts_sorted)
+            @test all(
+                sortslices(round.(vertices, digits=5), dims=1) .≈ pts_sorted
+            )
+
+            vertices_u = @inferred(AS(rpd_int; tol=1e-9, u=[0, 0]))
+            @test size(vertices_u) == size(pts_sorted)
+            @test all(
+                sortslices(round.(vertices_u, digits=5), dims=1) .≈ pts_sorted
+            )
+        end
+
+        @testset "AS with Rational payoffs" begin
+            nfg_rat = NormalFormGame(Rational{Int}, nfg)
+            rpd_rat = RepeatedGame(nfg_rat, 0.75)
+            vertices = @inferred(AS(rpd_rat; tol=1e-9))
+            @test size(vertices) == size(pts_sorted)
+            @test all(
+                sortslices(round.(vertices, digits=5), dims=1) .≈ pts_sorted
+            )
+        end
+    end
+
+end
