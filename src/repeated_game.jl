@@ -665,6 +665,7 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
               minimum(v_new[:, 2])]
         if any(u_ .> u)
             u = u_
+        end
     end
 
     # Return matrix with coefficient type S
