@@ -554,6 +554,10 @@ subgame-perfect equilibria with public randomization for any repeated
 two-player games with perfect monitoring and discounting, following
 Abreu and Sannikov (2014).
 
+If the payoffs are Integer or Rational and the discount factor is Rational, 
+this function performs exact arithmetic and returns a `Matrix{Rational{BigInt}}`. 
+Otherwise, it defaults to `Float64` computation.
+
 # Arguments
 
 - `rpd::RepeatedGame{2, T, TD}` : Two player repeated game with T<:Real, TD<:Real.
@@ -570,7 +574,9 @@ Abreu and Sannikov (2014).
 
 # Returns
 
-- `::Matrix{S}` : Vertices of the set of payoff pairs, where S is determined by _coefficient_type(rpd).
+- `::Matrix{S}` : Vertices of the set of payoff pairs, where `S` is
+  `Rational{BigInt}` if the payoffs are Integer or Rational and the discount
+  factor is Rational, and `Float64` otherwise.
 """
 function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
             plib=default_library(2, Float64), tol::Float64=1e-5,
@@ -584,7 +590,7 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
 
     if isnothing(u)
         u = S[minimum(rpd.sg.players[1].payoff_array),
-                    minimum(rpd.sg.players[2].payoff_array)]
+              minimum(rpd.sg.players[2].payoff_array)]
     else
         u = convert(Vector{S}, u)
     end
@@ -597,6 +603,10 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     # calculate the best deviation gains
     # normalize with (1-delta)/delta
     best_dev_gains1, best_dev_gains2 = (one(S)-rpd.delta)/rpd.delta .* _best_dev_gains(rpd.sg)
+
+    # Precompute A_IC matrix and preallocate payoffs vector for performance
+    A_IC = -Matrix{S}(I, 2, 2)
+    payoffs = Vector{S}(undef, 2)
 
     for iter = 1:maxiter
 
@@ -613,15 +623,16 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
 
                 # check if the payoff point is interior
                 # first check if it satisifies IC
-                if all([payoff1, payoff2] .> [IC1, IC2])
+                if payoff1 > IC1 && payoff2 > IC2
                     # then check if it is in the polyhedron
-                    if [payoff1, payoff2] in H
+                    payoffs[1] = payoff1; payoffs[2] = payoff2
+                    if payoffs in H
                         push!(v_new, payoff1, payoff2)
                     end
                 end
 
                 # find out the intersections of polyhedron and IC boundaries
-                p_IC = polyhedron(hrep(-Matrix{S}(I, 2, 2), -S[IC1, IC2]), lib)
+                p_IC = polyhedron(hrep(A_IC, -S[IC1, IC2]), lib)
                 p_inter = intersect(p_IC, p)
                 Vmat = MixedMatVRep(vrep(p_inter)).V
                 for i in 1:size(Vmat, 1)
@@ -644,8 +655,11 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
         v_dedup = MixedMatVRep(vrep(p)).V
         # first check if the numbers of vertices are the same
         if size(v_dedup) == size(v_old)
+            # Sort rows before comparison since vertex order is not guaranteed
+            v_dedup_sorted = sortslices(v_dedup, dims=1)
+            v_old_sorted = sortslices(v_old, dims=1)
             # then check the euclidean distance
-            if norm(v_dedup-v_old) < tol
+            if norm(v_dedup_sorted - v_old_sorted) < tol
                 verbose && println("converged in $(iter) iterations")
                 break
             end
@@ -671,7 +685,7 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     # Return matrix with coefficient type S
     vr = vrep(p)
     pts = points(vr)
-    vertices = Matrix{S}(undef, (length(pts), 2))
+    vertices = Matrix{S}(undef, (npoints(vr), 2))
     for (i, pt) in enumerate(pts)
         vertices[i, :] = S.(pt)
     end
@@ -698,6 +712,7 @@ function uniquetolrows(V::AbstractMatrix{T}, tol::Real) where T
     Vr = round.(V; digits=digits)
     return unique(Vr; dims=1)
 end
+
 """
     _payoff_points(::Type{T}, g)
 
