@@ -95,6 +95,40 @@
                 sortslices(round.(vertices, digits=5), dims=1) .≈ pts_sorted
             )
         end
+
+        @testset "AS with rational payoffs and rational delta" begin
+            # Test the case described in the issue with both rational payoffs and delta
+            nfg_rat = NormalFormGame(Rational{Int}, nfg)
+            rpd_rat = RepeatedGame(nfg_rat, 3//4)  # Rational delta
+            vertices = @inferred(AS(rpd_rat; tol=1e-9))
+            @test size(vertices) == size(pts_sorted)
+            # For rational case, the result should be Matrix{Rational{BigInt}}
+            @test eltype(vertices) == Rational{BigInt}
+        end
+
+        @testset "AS with verbose output" begin
+            # Test verbose parameter
+            rpd_test = RepeatedGame(nfg, 0.75)
+            # Should run without error and print convergence message
+            vertices = @inferred(AS(rpd_test; tol=1e-9, verbose=true))
+            @test size(vertices) == size(pts_sorted)
+        end
+
+        @testset "uniquetolrows function" begin
+            # Test the uniquetolrows utility function 
+            V = [1.0001 2.0002; 1.0 2.0; 3.0 4.0; 1.00009 2.00008]
+            tol = 1e-3
+            V_unique = uniquetolrows(V, tol)
+            # Should remove the near-duplicate rows
+            @test size(V_unique, 1) == 3  # One duplicate should be removed
+            
+            # Test with the example from the issue
+            tol = 1e-9
+            rpd_test = RepeatedGame(nfg, 0.75)
+            V_test = AS(rpd_test; tol=tol)
+            V_approx = uniquetolrows(V_test, tol)
+            @test size(V_approx, 1) <= size(V_test, 1)  # Should not increase size
+        end
     end
 
 end

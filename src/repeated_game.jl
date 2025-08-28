@@ -600,6 +600,8 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     for iter = 1:maxiter
 
         v_new = S[] # to store new vertices
+        # Use sizehint! for better performance as suggested in PR #65
+        sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
         # step 1
         for a2 in 1:rpd.sg.nums_actions[2]
             for a1 in 1:rpd.sg.nums_actions[1]
