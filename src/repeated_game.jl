@@ -555,9 +555,10 @@ subgame-perfect equilibria with public randomization for any repeated
 two-player games with perfect monitoring and discounting, following
 Abreu and Sannikov (2014).
 
-If the payoffs are Integer or Rational and the discount factor is Rational, 
-this function performs exact arithmetic and returns a `Matrix{Rational{BigInt}}`. 
-Otherwise, it defaults to `Float64` computation.
+If the payoffs are Integer or Rational and the discount factor is Rational
+(and the library specified by `plib` supports exact arithmetic), this function
+performs exact arithmetic and returns a `Matrix{Rational{BigInt}}`.  Otherwise,
+it defaults to `Float64` computation.
 
 # Arguments
 
