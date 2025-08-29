@@ -569,7 +569,8 @@ Otherwise, it defaults to `Float64` computation.
 - `tol::Float64` : Tolerance in differences of set.
 - `u` : The punishment payoff pair if any player deviates. In default,
   we use minimax payoff pair. If there is better guess, you can specify it
-  by passing a `Vector` with length 2.
+  by passing a `Vector` with length 2 (it will be clamped to the minimum
+  payoffs internally if it is otherwise lower).
 - `verbose::Bool` : If true, print convergence information. Defaults to false.
 
 # Returns
@@ -588,11 +589,13 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     # Initialize W0 with each entries of payoff bimatrix
     v_old = _payoff_points(S, rpd.sg)
 
+    mins = [minimum(rpd.sg.players[1].payoff_array),
+            minimum(rpd.sg.players[2].payoff_array)]
+
     if isnothing(u)
-        u = S[minimum(rpd.sg.players[1].payoff_array),
-              minimum(rpd.sg.players[2].payoff_array)]
+        u = convert(Vector{S}, mins)
     else
-        u = convert(Vector{S}, u)
+        u = convert(Vector{S}, max.(u, mins))
     end
 
     # create VRepresentation and Polyhedron and get rid of redundant vertices
