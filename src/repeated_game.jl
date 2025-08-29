@@ -547,7 +547,8 @@ function outerapproximation(
 end
 
 """
-    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5, u=nothing, verbose=false)
+    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5,
+       u=nothing, verbose=false)
 
 Using AS algorithm to compute the set of payoff pairs of all pure-strategy
 subgame-perfect equilibria with public randomization for any repeated
@@ -565,7 +566,7 @@ Otherwise, it defaults to `Float64` computation.
 - `plib`: Allows users to choose a particular package for the geometry
   computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
+  docs for more info). By default, it chooses to use `default_library`.
 - `tol::Float64` : Tolerance in differences of set.
 - `u` : The punishment payoff pair if any player deviates. In default,
   we use minimax payoff pair. If there is better guess, you can specify it
@@ -578,6 +579,58 @@ Otherwise, it defaults to `Float64` computation.
 - `::Matrix{S}` : Vertices of the set of payoff pairs, where `S` is
   `Rational{BigInt}` if the payoffs are Integer or Rational and the discount
   factor is Rational, and `Float64` otherwise.
+
+# Examples
+
+For Prisoners' Dilemma state game:
+
+```julia
+julia> pd_payoff = [9.0 1.0; 10.0 3.0];
+
+julia> g = NormalFormGame(pd_payoff)  # symmetric 2-player game
+2×2 NormalFormGame{2, Float64}
+
+julia> rpd = RepeatedGame(g, 0.75);
+
+julia> vertices = AS(rpd; tol=1e-9)
+4×2 Matrix{Float64}:
+ 3.0   3.0
+ 3.0   9.75
+ 9.0   9.0
+ 9.75  3.0
+```
+
+If payoffs are Integer or Rational and the discount factor is Rational,
+the computation will be in exact arithmetic:
+
+```julia
+julia> g_int = NormalFormGame(Int, g)  # convert to Int-valued game
+2×2 NormalFormGame{2, Int64}
+
+julia> rpd_rat = RepeatedGame(g_int, 3//4);  # discount factor as Rational
+
+julia> using CDDLib
+
+julia> vertices_rat = AS(rpd_rat; tol=1e-9, plib=CDDLib.Library());
+
+julia> typeof(vertices_rat)
+Matrix{Rational{BigInt}} (alias for Array{Rational{BigInt}, 2})
+
+julia> size(vertices_rat)
+(6, 2)
+```
+
+There is a utility `uniquetolrows` which can be used to remove approximately
+duplicate rows:
+
+```julia
+julia> uniquetolrows(vertices_rat, 1e-8)
+4×2 Matrix{BigFloat}:
+ 9.0   9.0
+ 9.75  3.0
+ 3.0   9.75
+ 3.0   3.0
+ ```
 """
 function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
             plib=default_library(2, Float64), tol::Float64=1e-5,
