@@ -761,7 +761,7 @@ Remove near-duplicate rows from matrix V using tolerance-based deduplication.
 
 # Returns
 
-- `::Matrix{T}` : Matrix with duplicate rows removed within tolerance.
+- `::Matrix` : Matrix of floats with duplicate rows removed within tolerance.
 """
 function uniquetolrows(V::AbstractMatrix{T}, tol::Real) where T
     digits = max(0, floor(Int, -log10(tol)))
