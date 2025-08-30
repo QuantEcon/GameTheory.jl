@@ -10,19 +10,19 @@ games, but could be extended to do more with some effort.
 using Polyhedra
 
 """
-    RepeatedGame{N,T}
+    RepeatedGame{N,T,TD}
 
 Type representing an N-player repeated game.
 
 # Fields
 
 - `sg::NormalFormGame{N, T}` : The stage game used to create the repeated game.
-- `delta::Float64` : The common discount rate at which all players discount the
+- `delta::TD` : The common discount rate at which all players discount the
   future.
 """
-struct RepeatedGame{N, T<:Real}
+struct RepeatedGame{N, T<:Real, TD<:Real}
     sg::NormalFormGame{N, T}
-    delta::Float64
+    delta::TD
 end
 
 # Type alias for 2 player game
@@ -46,14 +46,14 @@ Helper constructor that builds a repeated game for two players.
 
 - `p1::Player` : The first player.
 - `p2::Player` : The second player.
-- `delta::Float64` : The common discount rate at which all players discount the
+- `delta::TD` : The common discount rate at which all players discount the
   future.
 
 # Returns
 
 - `::RepeatedGame` : The repeated game.
 """
-RepeatedGame(p1::Player, p2::Player, delta::Float64) =
+RepeatedGame(p1::Player, p2::Player, delta::TD) where TD =
     RepeatedGame(NormalFormGame((p1, p2)), delta)
 
 """
@@ -67,10 +67,28 @@ Helper function that unpacks the elements of a repeated game.
 
 # Returns
 
-- `::Tuple{NormalFormGame, Float64}` : A tuple containing the stage game
+- `::Tuple{NormalFormGame, TD}` : A tuple containing the stage game
   and the delta.
 """
 unpack(rpd::RepeatedGame) = (rpd.sg, rpd.delta)
+
+"""
+    _coefficient_type(rpd)
+
+Helper function that determines the coefficient type for computations based on 
+the repeated game's payoff and delta types.
+
+# Arguments
+
+- `rpd::RepeatedGame` : The repeated game.
+
+# Returns
+
+- `::Type` : Rational{BigInt} if payoffs are rational/integer and delta is rational, 
+  Float64 otherwise.
+"""
+_coefficient_type(::RepeatedGame{N, <:Union{Rational,Integer}, <:Rational}) where {N} = Rational{BigInt}
+_coefficient_type(::RepeatedGame) = Float64
 
 # Flow utility in terms of the players actions
 flow_u_1(rpd::RepGame2, a1::Int, a2::Int) =
@@ -529,44 +547,109 @@ function outerapproximation(
 end
 
 """
-    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5, u=nothing)
+    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5,
+       u=nothing, verbose=false)
 
 Using AS algorithm to compute the set of payoff pairs of all pure-strategy
 subgame-perfect equilibria with public randomization for any repeated
 two-player games with perfect monitoring and discounting, following
 Abreu and Sannikov (2014).
 
+If the payoffs are Integer or Rational and the discount factor is Rational
+(and the library specified by `plib` supports exact arithmetic), this function
+performs exact arithmetic and returns a `Matrix{Rational{BigInt}}`.  Otherwise,
+it defaults to `Float64` computation.
+
 # Arguments
 
-- `rpd::RepeatedGame{2, T}` : Two player repeated game with T<:Real.
+- `rpd::RepeatedGame{2, T, TD}` : Two player repeated game with T<:Real, TD<:Real.
 - `maxiter::Integer` : Maximum number of iterations.
 - `plib`: Allows users to choose a particular package for the geometry
   computations.
   (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use SimplePolyhedraLibrary.
+  docs for more info). By default, it chooses to use `default_library`.
 - `tol::Float64` : Tolerance in differences of set.
 - `u` : The punishment payoff pair if any player deviates. In default,
   we use minimax payoff pair. If there is better guess, you can specify it
-  by passing a `Vector` with length 2.
+  by passing a `Vector` with length 2 (it will be clamped to the minimum
+  payoffs internally if it is otherwise lower).
+- `verbose::Bool` : If true, print convergence information. Defaults to false.
 
 # Returns
 
-- `::Matrix{T}` : Vertices of the set of payoff pairs.
-"""
-function AS(rpd::RepeatedGame{2}; maxiter::Integer=1000,
-            plib=default_library(2, Float64), tol::Float64=1e-5,
-            u::Union{AbstractVector{TU}, Nothing}=nothing) where {TU}
+- `::Matrix{S}` : Vertices of the set of payoff pairs, where `S` is
+  `Rational{BigInt}` if the payoffs are Integer or Rational and the discount
+  factor is Rational, and `Float64` otherwise.
 
-    lib = similar_library(plib, 2, Float64)
+# Examples
+
+For Prisoners' Dilemma state game:
+
+```julia
+julia> pd_payoff = [9.0 1.0; 10.0 3.0];
+
+julia> g = NormalFormGame(pd_payoff)  # symmetric 2-player game
+2×2 NormalFormGame{2, Float64}
+
+julia> rpd = RepeatedGame(g, 0.75);
+
+julia> vertices = AS(rpd; tol=1e-9)
+4×2 Matrix{Float64}:
+ 3.0   3.0
+ 3.0   9.75
+ 9.0   9.0
+ 9.75  3.0
+```
+
+If payoffs are Integer or Rational and the discount factor is Rational,
+the computation will be in exact arithmetic:
+
+```julia
+julia> g_int = NormalFormGame(Int, g)  # convert to Int-valued game
+2×2 NormalFormGame{2, Int64}
+
+julia> rpd_rat = RepeatedGame(g_int, 3//4);  # discount factor as Rational
+
+julia> using CDDLib
+
+julia> vertices_rat = AS(rpd_rat; tol=1e-9, plib=CDDLib.Library());
+
+julia> typeof(vertices_rat)
+Matrix{Rational{BigInt}} (alias for Array{Rational{BigInt}, 2})
+
+julia> size(vertices_rat)
+(6, 2)
+```
+
+There is a utility `uniquetolrows` which can be used to remove approximately
+duplicate rows:
+
+```julia
+julia> uniquetolrows(vertices_rat, 1e-8)
+4×2 Matrix{BigFloat}:
+ 9.0   9.0
+ 9.75  3.0
+ 3.0   9.75
+ 3.0   3.0
+ ```
+"""
+function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
+            plib=default_library(2, Float64), tol::Float64=1e-5,
+            u::Union{AbstractVector, Nothing}=nothing, verbose::Bool=false) where {T,TD}
+
+    S = _coefficient_type(rpd)
+    lib = similar_library(plib, 2, S)
 
     # Initialize W0 with each entries of payoff bimatrix
-    v_old = _payoff_points(Float64, rpd.sg)
+    v_old = _payoff_points(S, rpd.sg)
+
+    mins = [minimum(rpd.sg.players[1].payoff_array),
+            minimum(rpd.sg.players[2].payoff_array)]
 
     if isnothing(u)
-        u = Float64[minimum(rpd.sg.players[1].payoff_array),
-                    minimum(rpd.sg.players[2].payoff_array)]
+        u = convert(Vector{S}, mins)
     else
-        u = convert(Vector{Float64}, u)
+        u = convert(Vector{S}, max.(u, mins))
     end
 
     # create VRepresentation and Polyhedron and get rid of redundant vertices
@@ -576,11 +659,17 @@ function AS(rpd::RepeatedGame{2}; maxiter::Integer=1000,
 
     # calculate the best deviation gains
     # normalize with (1-delta)/delta
-    best_dev_gains1, best_dev_gains2 = (1-rpd.delta)/rpd.delta .* _best_dev_gains(rpd.sg)
+    best_dev_gains1, best_dev_gains2 = (one(S)-rpd.delta)/rpd.delta .* _best_dev_gains(rpd.sg)
+
+    # Precompute A_IC matrix and preallocate payoffs vector for performance
+    A_IC = -Matrix{S}(I, 2, 2)
+    payoffs = Vector{S}(undef, 2)
 
     for iter = 1:maxiter
 
-        v_new = Float64[] # to store new vertices
+        v_new = S[] # to store new vertices
+        # Use sizehint! for better performance as suggested in PR #65
+        sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
         # step 1
         for a2 in 1:rpd.sg.nums_actions[2]
             for a1 in 1:rpd.sg.nums_actions[1]
@@ -591,21 +680,22 @@ function AS(rpd::RepeatedGame{2}; maxiter::Integer=1000,
 
                 # check if the payoff point is interior
                 # first check if it satisifies IC
-                if all([payoff1, payoff2] .> [IC1, IC2])
+                if payoff1 > IC1 && payoff2 > IC2
                     # then check if it is in the polyhedron
-                    if [payoff1, payoff2] in H
+                    payoffs[1] = payoff1; payoffs[2] = payoff2
+                    if payoffs in H
                         push!(v_new, payoff1, payoff2)
                     end
                 end
 
                 # find out the intersections of polyhedron and IC boundaries
-                p_IC = polyhedron(hrep(-Matrix{Float64}(I, 2, 2), -[IC1, IC2]), lib)
+                p_IC = polyhedron(hrep(A_IC, -S[IC1, IC2]), lib)
                 p_inter = intersect(p_IC, p)
                 Vmat = MixedMatVRep(vrep(p_inter)).V
                 for i in 1:size(Vmat, 1)
                     if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
                         push!(v_new, (rpd.delta * Vmat[i, :] +
-                                      (1 - rpd.delta) * [payoff1, payoff2])...)
+                                      (one(S) - rpd.delta) * S[payoff1, payoff2])...)
                     end
                 end
             end
@@ -622,9 +712,12 @@ function AS(rpd::RepeatedGame{2}; maxiter::Integer=1000,
         v_dedup = MixedMatVRep(vrep(p)).V
         # first check if the numbers of vertices are the same
         if size(v_dedup) == size(v_old)
+            # Sort rows before comparison since vertex order is not guaranteed
+            v_dedup_sorted = sortslices(v_dedup, dims=1)
+            v_old_sorted = sortslices(v_old, dims=1)
             # then check the euclidean distance
-            if norm(v_dedup-v_old) < tol
-                println("converged in $(iter) iterations")
+            if norm(v_dedup_sorted - v_old_sorted) < tol
+                verbose && println("converged in $(iter) iterations")
                 break
             end
         end
@@ -644,18 +737,37 @@ function AS(rpd::RepeatedGame{2}; maxiter::Integer=1000,
         if any(u_ .> u)
             u = u_
         end
-
     end
 
-    # To ensure the return is Matrix{Float64}
+    # Return matrix with coefficient type S
     vr = vrep(p)
     pts = points(vr)
-    vertices = Matrix{Float64}(undef, (length(pts), 2))
+    vertices = Matrix{S}(undef, (npoints(vr), 2))
     for (i, pt) in enumerate(pts)
-        vertices[i, :] = pt
+        vertices[i, :] = S.(pt)
     end
 
     return vertices
+end
+
+"""
+    uniquetolrows(V, tol)
+
+Remove near-duplicate rows from matrix V using tolerance-based deduplication.
+
+# Arguments
+
+- `V::AbstractMatrix{T}` : Input matrix where T<:Real.
+- `tol::Real` : Tolerance for considering points as duplicates.
+
+# Returns
+
+- `::Matrix` : Matrix of floats with duplicate rows removed within tolerance.
+"""
+function uniquetolrows(V::AbstractMatrix{T}, tol::Real) where T
+    digits = max(0, floor(Int, -log10(tol)))
+    Vr = round.(V; digits=digits)
+    return unique(Vr; dims=1)
 end
 
 """
