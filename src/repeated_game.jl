@@ -635,7 +635,7 @@ julia> uniquetolrows(vertices_rat, 1e-8)
  9.75  3.0
  3.0   9.75
  3.0   3.0
- ```
+```
 """
 function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
             plib=default_library(2, Float64), tol::Float64=1e-5,
