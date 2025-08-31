@@ -588,8 +588,12 @@ For Prisoners' Dilemma state game:
 ```julia
 julia> pd_payoff = [9.0 1.0; 10.0 3.0];
 
-julia> g = NormalFormGame(pd_payoff)  # symmetric 2-player game
-2×2 NormalFormGame{2, Float64}
+julia> g = NormalFormGame(pd_payoff);  # symmetric 2-player game
+
+julia> println(g)
+2×2 NormalFormGame{2, Float64}:
+ [9.0, 9.0]   [1.0, 10.0]
+ [10.0, 1.0]  [3.0, 3.0]
 
 julia> rpd = RepeatedGame(g, 0.75);
 
