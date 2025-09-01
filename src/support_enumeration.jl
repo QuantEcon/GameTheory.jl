@@ -33,6 +33,30 @@ minus 1 such pairs. This should thus be used only for small games.
 
 - `::Vector{NTuple{2,Vector{S}}}`: Mixed-action Nash equilibria that are found,
   where `S` is Float if `T` is Int or Float, and Rational if `T` is Rational.
+
+# Examples
+
+```julia
+julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
+
+julia> player1 = Player([3 3; 2 5; 0 6]);
+
+julia> player2 = Player([3 2 3; 2 6 1]);
+
+julia> g = NormalFormGame(player1, player2);
+
+julia> println(g)
+3×2 NormalFormGame{2, Int64}:
+ [3, 3]  [3, 2]
+ [2, 2]  [5, 6]
+ [0, 3]  [6, 1]
+
+julia> support_enumeration(g)
+3-element Vector{Tuple{Vector{Float64}, Vector{Float64}}}:
+ ([1.0, 0.0, 0.0], [1.0, 0.0])
+ ([0.8, 0.2, 0.0], [0.666667, 0.333333])
+ ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
+```
 """
 function support_enumeration(g::NormalFormGame{2,T}) where T
     S = typeof(zero(T)/one(T))
@@ -59,6 +83,37 @@ Task version of `support_enumeration`.
 # Returns
 
 - `::Task`: Runnable task for generating Nash equilibria.
+
+# Examples
+
+```julia
+julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
+
+julia> player1 = Player([3 3; 2 5; 0 6]);
+
+julia> player2 = Player([3 2 3; 2 6 1]);
+
+julia> g = NormalFormGame(player1, player2);
+
+julia> println(g)
+3×2 NormalFormGame{2, Int64}:
+ [3, 3]  [3, 2]
+ [2, 2]  [5, 6]
+ [0, 3]  [6, 1]
+
+julia> c = Channel{Tuple{Vector{Float64},Vector{Float64}}}(0);
+
+julia> t = support_enumeration_task(c, g);
+
+julia> bind(c, t); schedule(t);
+
+julia> for NE in c
+           display(NE)
+       end
+([1.0, 0.0, 0.0], [1.0, 0.0])
+([0.8, 0.2, 0.0], [0.666667, 0.333333])
+([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
+```
 """
 function support_enumeration_task(c::Channel,
                                   g::NormalFormGame{2})
