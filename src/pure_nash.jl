@@ -17,6 +17,47 @@ will change in the future.
 
 # Returns
 - `ne::Vector{NTuple{N,Int}}`: Vector of pure action Nash equilibria.
+
+# Examples
+
+A 4-player unanimity game example:
+
+```julia
+julia> g = NormalFormGame((2, 2, 2, 2));
+
+julia> g[1, 1, 1, 1] = 3, 3, 3, 3;
+
+julia> g[2, 2, 2, 2] = 4, 4, 4, 4;
+
+julia> println(g)
+2×2×2×2 NormalFormGame{4, Float64}:
+[:, :, 1, 1] =
+ [3.0, 3.0, 3.0, 3.0]  [0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0]  [0.0, 0.0, 0.0, 0.0]
+
+[:, :, 2, 1] =
+ [0.0, 0.0, 0.0, 0.0]  [0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0]  [0.0, 0.0, 0.0, 0.0]
+
+[:, :, 1, 2] =
+ [0.0, 0.0, 0.0, 0.0]  [0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0]  [0.0, 0.0, 0.0, 0.0]
+
+[:, :, 2, 2] =
+ [0.0, 0.0, 0.0, 0.0]  [0.0, 0.0, 0.0, 0.0]
+ [0.0, 0.0, 0.0, 0.0]  [4.0, 4.0, 4.0, 4.0]
+
+julia> pure_nash(g)
+8-element Vector{NTuple{4, Int64}}:
+ (1, 1, 1, 1)
+ (2, 2, 1, 1)
+ (2, 1, 2, 1)
+ (1, 2, 2, 1)
+ (2, 1, 1, 2)
+ (1, 2, 1, 2)
+ (1, 1, 2, 2)
+ (2, 2, 2, 2)
+```
 """
 function pure_nash(nfg::NormalFormGame; ntofind=prod(nfg.nums_actions),
                    tol::Real=1e-8)
