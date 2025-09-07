@@ -2,14 +2,14 @@
 
 ## Exported
 ```@autodocs
-Modules = [GameTheory, GameTheory.Generators]
+Modules = [GameTheory]
 Pages   = ["brd.jl", "fictplay.jl", "localint.jl", "logitdyn.jl"]
 Private = false
 ```
 
 ## Internal
 ```@autodocs
-Modules = [GameTheory, GameTheory.Generators]
+Modules = [GameTheory]
 Pages   = ["brd.jl", "fictplay.jl", "localint.jl", "logitdyn.jl"]
 Public = false
 ```

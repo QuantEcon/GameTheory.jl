@@ -5,7 +5,7 @@ This is documentation for `util.jl`.
 ## Exported
 
 ```@autodocs
-Modules = [GameTheory, GameTheory.Generators]
+Modules = [GameTheory]
 Pages   = ["util.jl"]
 Private = false
 ```
@@ -13,7 +13,7 @@ Private = false
 ## Internal
 
 ```@autodocs
-Modules = [GameTheory, GameTheory.Generators]
+Modules = [GameTheory]
 Pages   = ["util.jl"]
 Public = false
 ```
