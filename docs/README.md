@@ -7,33 +7,15 @@ This directory contains the documentation for GameTheory.jl, built using [Docume
 The documentation uses a static structure with manually maintained pages:
 
 - `src/index.md` - Main homepage with installation, usage examples, and library outline
-- `src/lib/` - Library documentation pages organized by topic:
-  - `base_types_and_methods.md` - Core types and basic operations
-  - `game_generators.md` - Tools for generating games
-  - `computing_nash_equilibria.md` - Nash equilibrium algorithms  
-  - `learning_algorithms.md` - Learning and evolutionary dynamics
-  - `repeated_games.md` - Repeated games functionality
-  - `util.md` - Utility functions
-  - `index.md` - Library index page
+- `src/lib/` - Library documentation pages organized by topic
 
 ## Local Build Instructions
 
-To build the documentation locally:
+To build the documentation locally from the repository root:
 
-1. Navigate to the docs directory:
-   ```bash
-   cd docs/
-   ```
-
-2. Install documentation dependencies:
-   ```bash
-   julia --project=. -e "import Pkg; Pkg.instantiate()"
-   ```
-
-3. Build the documentation:
-   ```bash
-   julia --project=. make.jl
-   ```
+```bash
+julia --project=docs -e 'using Pkg; Pkg.instantiate(); include("docs/make.jl")'
+```
 
 The generated documentation will be available in `docs/build/index.html`.
 
