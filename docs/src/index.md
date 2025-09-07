@@ -61,3 +61,27 @@ Some notebooks for demonstration are available:
 
 ## Library Outline
 
+* [Base Types and Methods](@ref base_types_and_methods)
+
+* [Game Generators](@ref game_generators)
+
+* [Computing Nash Equilibria](@ref computing_nash_equilibria)
+
+* [Learning Algorithms](@ref learning_algorithms)
+
+* [Repeated Games](@ref repeated_games)
+
+* [Utilities](@ref util)
+
+* [Base Types and Methods](@ref base_types_and_methods)
+
+* [Game Generators](@ref game_generators)
+
+* [Computing Nash Equilibria](@ref computing_nash_equilibria)
+
+* [Learning Algorithms](@ref learning_algorithms)
+
+* [Repeated Games](@ref repeated_games)
+
+* [Utilities](@ref util)
+
