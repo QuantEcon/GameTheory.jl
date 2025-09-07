@@ -1,65 +1,63 @@
-## Generate docs automatically
+# GameTheory.jl Documentation
 
-To generate documentation for `GameTheory.jl` locally, run
+This directory contains the documentation for GameTheory.jl, built using [Documenter.jl](https://documenter.juliadocs.org/).
 
-```
-$ cd ~/.julia/v0.6/GameTheory/docs
-$ julia make.jl
-```
+## Documentation Structure
 
-Note that we can only generate documentations for the installed package.
+The documentation uses a static structure with manually maintained pages:
 
-The generated docs can be accessed in `docs/build/index.html`, and subpages in
-`docs/build/lib/page_name.html`.
+- `src/index.md` - Main homepage with installation, usage examples, and library outline
+- `src/lib/` - Library documentation pages organized by topic:
+  - `base_types_and_methods.md` - Core types and basic operations
+  - `game_generators.md` - Tools for generating games
+  - `computing_nash_equilibria.md` - Nash equilibrium algorithms  
+  - `learning_algorithms.md` - Learning and evolutionary dynamics
+  - `repeated_games.md` - Repeated games functionality
+  - `util.md` - Utility functions
+  - `index.md` - Library index page
 
-There are three parts to generate the documentation.
+## Local Build Instructions
 
-### auto_doc_gen.jl
+To build the documentation locally:
 
-Main part of documentation generation. It reads `src/GameTheory.jl` to find
-out all the source files (include the ones used in submodules), and then
-write markdown files for each by the structure instructed by 
-`docs/build/Structure`, which will be utilized by "Documenter.jl" later.
+1. Navigate to the docs directory:
+   ```bash
+   cd docs/
+   ```
 
-Note that the pattern of each page can be modified by changing the
-strings in `auto_doc_gen.jl` called `file_page` and `section_page`.
+2. Install documentation dependencies:
+   ```bash
+   julia --project=. -e "import Pkg; Pkg.instantiate()"
+   ```
 
-### manually written files
+3. Build the documentation:
+   ```bash
+   julia --project=. make.jl
+   ```
 
-Two files should be written manually:
+The generated documentation will be available in `docs/build/index.html`.
 
-#### structure
+## Contributing to Documentation
 
-You may modify `Structure` to arrange the structure of the website to be generated.
-For example:
+### Adding New Content
 
-```
-Order: Base Types and Methods, Game Generators, Computing Nash Equilibria, Repeated Games
-Base Types and Methods: normal_form_game
-Game Generators: random, generators/bimatrix_generators
-Computing Nash Equilibria: pure_nash, support_enumeration
-Repeated Games: repeated_game_util, repeated_game
-```
+To add documentation for new functionality:
 
-The first line sets the order of pages. You can add a file name if you want it to
-generate a single page, or the name of the section you want to create. In the following
-you need to declare which files are included in each section. Note that you should not
-put a comma or dot at the end of each line.
+1. **For new library functions/types**: Add docstrings to the source code and ensure they appear in the appropriate `docs/src/lib/*.md` file by including the source file in the `@autodocs` block.
 
-It is not necessary to declare the structure of every file included in the main module.
-A separate single page will be generated for each file not mentioned in `Structure`
-automatically.
+2. **For new major features**: Create a new page in `docs/src/lib/` and add it to the `pages` array in `make.jl`.
 
-However, you must specify the structure for files in each submodule. If you want to let
-a submodule to be a seperate section, please state this in `Structure`, with the submodule
-name as the section name.
+3. **For examples or tutorials**: Add to the main `docs/src/index.md` or create dedicated pages as needed.
 
-#### Homepage
+### Editing Existing Pages
 
-The Homepage is written in `/docs/src/index.md`. Please keep the last part in Homepage,
-called `Library Outline`, empty. It will be filled by `auto_doc_gen.jl` automatically.
+- **Homepage**: Edit `docs/src/index.md` for installation instructions, basic usage, and overview
+- **Library pages**: Edit files in `docs/src/lib/` to modify section organization or add manual content
+- **Structure**: Modify the `pages` array in `make.jl` to change page ordering or add new sections
 
-### make.jl
+### Documentation Standards
 
-This file includes information for "Documenter.jl" to generate documentation.
-Details on how to use it can be found [here](https://documenter.juliadocs.org/stable/man/guide/#Pages-in-the-Sidebar).
+- Use `@autodocs` blocks to automatically include docstrings from source files
+- Maintain consistent section structure across library pages (Exported/Internal)
+- Include practical examples in docstrings where helpful
+- Keep the library outline in `index.md` synchronized with actual pages
