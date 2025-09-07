@@ -1,12 +1,21 @@
 using Documenter, GameTheory
 
-include("auto_doc_gen.jl")
-
 makedocs(
     modules = [GameTheory],
     format = Documenter.HTML(prettyurls = false),
     sitename = "GameTheory.jl",
-    pages = PAGES,
+    pages = [
+        "Home" => "index.md",
+        "Library" => [
+            "lib/base_types_and_methods.md",
+            "lib/game_generators.md", 
+            "lib/computing_nash_equilibria.md",
+            "lib/learning_algorithms.md",
+            "lib/repeated_games.md",
+            "lib/util.md",
+            "lib/index.md"
+        ]
+    ],
 )
 
 deploydocs(
