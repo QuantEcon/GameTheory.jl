@@ -114,6 +114,8 @@ See the tutorials for further examples.
 
 * [`outerapproximation`](https://quantecon.github.io/GameTheory.jl/stable/lib/repeated_games.html#GameTheory.outerapproximation-Tuple{RepeatedGame{2}}):
   Equilibrium payoff computation algorithm by Judd-Yeltekin-Conklin
+* [`AS`](https://quantecon.github.io/GameTheory.jl/stable/lib/repeated_games.html#GameTheory.AS-Union{Tuple{RepeatedGame{2,%20T,%20TD}},%20Tuple{TD},%20Tuple{T}}%20where%20{T,%20TD}):
+  Equilibrium payoff computation algorithm by Abreu-Sannikov
 
 ## Tutorials
 
