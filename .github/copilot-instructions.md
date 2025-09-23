@@ -90,7 +90,7 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 
 ### Optimization Libraries
 - `MathOptInterface` (MOI): Abstract interface for optimization problems
-- `HiGHS`: High-performance linear/mixed-integer programming solver
+- `Clp`: High-performance linear programming solver
 - `Polyhedra`: Geometric computations with polytopes
 - `CDDLib`: Convex hull and vertex enumeration
 - `LRSLib`: Linear reverse search for vertex/facet enumeration

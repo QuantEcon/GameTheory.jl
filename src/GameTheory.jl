@@ -13,7 +13,7 @@ using Distributions
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
-using HiGHS
+using Clp
 
 # Geometry packages
 using Polyhedra
