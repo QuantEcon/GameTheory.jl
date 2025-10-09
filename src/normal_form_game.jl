@@ -35,6 +35,8 @@ struct Player{N,T<:Real}
 end
 
 Player(payoff_array::Array{T,N}) where {T<:Real,N} = Player{N,T}(payoff_array)
+Player(payoff_array::AbstractArray{T,N}) where {T<:Real,N} =
+    Player{N,T}(convert(Array{T,N}, payoff_array))
 
 Player{N,T}(player::Player{N,S}) where {N,T,S} =
     Player(Array{T}(player.payoff_array))
