@@ -68,6 +68,13 @@ using CDDLib
         @test @inferred(dominated_actions(player)) == Int[]
     end
 
+    @testset "Player construction with AbstractArray" begin
+        A = [4 0; 3 2]
+        A_T = transpose(A)  # !(A_T isa Array)
+        player_T = @inferred Player(A_T)
+        @test player_T.payoff_array[1, 2] == A[2, 1]
+    end
+
     @testset "convert for Player" begin
         T1 = Int
         T2 = Float64
