@@ -34,28 +34,28 @@ const PureAction = Integer
 
 Alias for `Vector{T}` where `T<:Real`.
 """
-MixedAction{T<:Real} = Vector{T}
+const MixedAction{T<:Real} = Vector{T}
 
 """
     Action{T}
 
 Alias for `Union{PureAction,MixedAction{T}}` where `T<:Real`.
 """
-Action{T<:Real} = Union{PureAction,MixedAction{T}}
+const Action{T<:Real} = Union{PureAction,MixedAction{T}}
 
 """
     PureActionProfile{N,T}
 
 Alias for `NTuple{N,T}` where `T<:PureAction`.
 """
-PureActionProfile{N,T<:PureAction} = NTuple{N,T}
+const PureActionProfile{N,T<:PureAction} = NTuple{N,T}
 
 """
     MixedActionProfile{N,T}
 
 Alias for `NTuple{N,MixedAction{T}}` where `T<:Real`.
 """
-MixedActionProfile{N,T<:Real} = NTuple{N,MixedAction{T}}
+const MixedActionProfile{N,T<:Real} = NTuple{N,MixedAction{T}}
 
 """
     ActionProfile{N,T}
