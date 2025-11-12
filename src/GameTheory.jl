@@ -73,6 +73,7 @@ include("lrsnash.jl")
 include("pure_nash.jl")
 include("repeated_game.jl")
 include("random.jl")
+include("lemke_howson.jl")
 include("support_enumeration.jl")
 include("util.jl")
 include("generators/Generators.jl")
@@ -114,6 +115,9 @@ export
     # Random Games
     random_game, covariance_game,
     random_pure_actions, random_mixed_actions,
+
+    # Lemke-Howson
+    lemke_howson,
 
     # Support Enumeration
     support_enumeration, support_enumeration_task,
