@@ -1,7 +1,7 @@
 name = "GameTheory"
 uuid = "64a4ffa8-f47c-4a47-8dad-aee7aadc3b51"
-repo = "https://github.com/QuantEcon/GameTheory.jl.git"
 version = "0.3.6"
+repo = "https://github.com/QuantEcon/GameTheory.jl.git"
 
 [deps]
 CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
@@ -31,7 +31,7 @@ LRSLib = "0.8"
 MathOptInterface = "1"
 Parameters = "0.12"
 Polyhedra = "0.7, 0.8"
-QuantEcon = "0.16.0"
+QuantEcon = "0.16.0, 0.17"
 StatsBase = "0.33, 0.34"
 julia = "1.6"
 
