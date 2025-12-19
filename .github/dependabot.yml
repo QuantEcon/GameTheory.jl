@@ -5,6 +5,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "saturday"
     commit-message:
       prefix: "ci"
       include: "scope"
