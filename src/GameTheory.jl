@@ -2,6 +2,7 @@ module GameTheory
 
 # stdlib
 using LinearAlgebra, Random
+using Markdown
 
 # Packages
 using QuantEcon
@@ -75,6 +76,7 @@ include("repeated_game.jl")
 include("random.jl")
 include("lemke_howson.jl")
 include("support_enumeration.jl")
+include("vertex_enumeration.jl")
 include("util.jl")
 include("generators/Generators.jl")
 
@@ -121,6 +123,9 @@ export
 
     # Support Enumeration
     support_enumeration, support_enumeration_task,
+
+    # Vertex Enumeration
+    vertex_enumeration, vertex_enumeration_task,
 
     # LRS
     lrsnash,
