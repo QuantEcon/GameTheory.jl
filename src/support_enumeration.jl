@@ -195,8 +195,7 @@ function _solve!(A::Matrix{T}, b::Vector{T}) where T <: Union{Float64,Float32}
     return r
 end
 
-@inline function _solve!(A::Matrix{Rational{T}},
-                         b::Vector{Rational{T}}) where T <: Integer
+@inline function _solve!(A::Matrix, b::Vector)
     r = 0
     try
         b[:] = ldiv!(lu!(A), b)
