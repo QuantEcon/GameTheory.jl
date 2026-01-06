@@ -17,6 +17,21 @@ To build the documentation locally from the repository root:
 julia --project=docs -e 'using Pkg; Pkg.instantiate(); include("docs/make.jl")'
 ```
 
+This will build the docs with the version that `docs/Manifest.toml` currently resolves
+(e.g. a released version of GameTheory.jl).
+
+If you are editing the source code and want the docs to reflect your local checkout:
+
+```bash
+julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate(); include("docs/make.jl")'
+```
+
+To revert this (go back to the registry-resolved version in the `docs` environment):
+
+```bash
+julia --project=docs -e 'using Pkg; Pkg.free("GameTheory"); Pkg.instantiate()'
+```
+
 The generated documentation will be available in `docs/build/index.html`.
 
 ## Contributing to Documentation
