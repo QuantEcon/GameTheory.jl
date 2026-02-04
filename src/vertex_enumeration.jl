@@ -250,6 +250,72 @@ Main body of `vertex_enumeration_task`.
 - `NTuple{2,Vector{T}}`: Tuple of Nash equilibrium mixed actions.
 """
 function _vertex_enumeration_producer(
+        c::Channel, brps::NTuple{2,BestResponsePolytope{T,<:CDDLib.Polyhedron{T}}}
+    ) where {T}
+    m, n = brps[1].ndim, brps[2].ndim
+    @assert m + n <= 64 "Implemented only for games with sum(g.nums_actions) <= 64"
+    ZERO_LABELING2_BITS = ((UInt64(1) << UInt64(n)) - UInt64(1)) << UInt64(m)
+    COMPLETE_LABELING_BITS = (UInt64(1) << UInt64(m + n)) - UInt64(1)
+
+    warned1 = warned2 = false
+
+    hincidence2 = copyincidence(brps[2].poly.poly)  # Vector{BitSet}
+    labelings_bits_dict2 = Dict{UInt64,Int}()
+    sizehint!(labelings_bits_dict2, length(hincidence2))
+    for (j, indices) in enumerate(hincidence2)
+        num_indices = length(indices)
+        if num_indices > n && !warned2
+            @warn "Payoff degeneracy detected for Player 2"
+            warned2 = true
+            _delete_smallest_k!(indices, num_indices-n)
+        end
+        bits2 = indices.bits[1] >> 1
+        bits2 == ZERO_LABELING2_BITS && continue
+        labelings_bits_dict2[bits2] = j
+    end
+
+    hincidence1 = copyincidence(brps[1].poly.poly)  # Vector{BitSet}
+    for (i, indices) in enumerate(hincidence1)
+        num_indices = length(indices)
+        if num_indices > m && !warned1
+            @warn "Payoff degeneracy detected for Player 1"
+            warned1 = true
+            _delete_largest_k!(indices, num_indices-m)
+        end
+        bits1 = indices.bits[1] >> 1
+
+        complement1 = xor(bits1, COMPLETE_LABELING_BITS)
+        j = get(labelings_bits_dict2, complement1, 0)
+        j === 0 && continue
+        pt1 = get(brps[1].poly, Polyhedra.Index{T,Vector{T}}(i))
+        pt2 = get(brps[2].poly, Polyhedra.Index{T,Vector{T}}(j))
+        put!(c, (pt1/sum(pt1), pt2/sum(pt2)))
+    end
+end
+
+
+function _clear_lowest_k_setbits(x::UInt64, k::Integer)
+    for _ in 1:k
+        x &= x - 1
+        x == 0 && break
+    end
+    return x
+end
+
+function _delete_smallest_k!(indices::BitSet, k::Integer)
+    indices.bits[1] = _clear_lowest_k_setbits(indices.bits[1], k)
+    return indices
+end
+
+function _delete_largest_k!(indices::BitSet, k::Integer)
+    indices.bits[1] = bitreverse(
+        _clear_lowest_k_setbits(bitreverse(indices.bits[1]), k)
+    )
+    return indices
+end
+
+
+function _vertex_enumeration_producer(
         c::Channel, brps::NTuple{2,BestResponsePolytope{T,PT}}
     ) where {T,PT}
     m, n = brps[1].ndim, brps[2].ndim

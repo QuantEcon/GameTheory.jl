@@ -33,13 +33,18 @@ using LRSLib
     end
 
     @testset "3x2 degenerate game" begin
-        g = NormalFormGame(Player([3 3; 2 5; 0 6]),
+        g1 = NormalFormGame(Player([3 3; 2 5; 0 6]),
                            Player([3 2 3; 3 6 1]))
+        g2 = NormalFormGame(g1.players[2], g1.players[1])
 
-        # Not guaranteed to find all equilibria
-        NEs_computed = @inferred vertex_enumeration(g)
-        for NE in NEs_computed
-            @test is_nash(g, NE)
+        for g in [g1, g2]
+            for plib in [CDDLib.Library(), default_library(2, Float64)]
+                # Not guaranteed to find all equilibria
+                NEs_computed = @inferred vertex_enumeration(g, plib=plib)
+                for NE in NEs_computed
+                    @test is_nash(g, NE)
+                end
+            end
         end
     end
 
