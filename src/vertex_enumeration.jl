@@ -44,11 +44,13 @@ conducts vertex enumeration.
 
 # Fields
 
+- `idx::Int`: Player index in the normal form game, either 1 or 2.
 - `ndim::Int`: Dimension of the polytope.
 - `poly::PT`: `Polyhedra.Polyhedron{T}` instance representing the best response
   polytope.
 """
 struct BestResponsePolytope{T,PT<:Polyhedron{T}}
+    idx::Int
     ndim::Int
     poly::PT
 end
@@ -106,9 +108,8 @@ function BestResponsePolytope(opponent_player::Player{2,T}; idx=1,
 
     hr = hrep(D, b)
     poly = polyhedron(hr, lib)
-    vrep(poly)
 
-    return BestResponsePolytope{S,typeof(poly)}(m, poly)
+    return BestResponsePolytope{S,typeof(poly)}(idx, m, poly)
 end
 
 
@@ -234,6 +235,82 @@ function vertex_enumeration_task(c::Channel,
 end
 
 
+mutable struct LabelBitsIterator{T,PT<:Polyhedron{T}}
+    brp::BestResponsePolytope{T,PT}
+    num_vertices::Int
+    hincidence::Vector{BitSet}
+    warned::Bool
+end
+
+_copyincidence(poly::CDDLib.Polyhedron) = copyincidence(CDDLib.getpoly(poly))
+
+function LabelBitsIterator(
+    brp::BestResponsePolytope{T,PT}
+) where {T,PT<:CDDLib.Polyhedron{T}}
+    hincidence = _copyincidence(brp.poly)
+    num_vertices = length(hincidence)
+    return LabelBitsIterator{T,PT}(brp, num_vertices, hincidence, false)
+end
+
+function LabelBitsIterator(brp::BestResponsePolytope{T,PT}) where {T,PT}
+    num_vertices = npoints(vrep(brp.poly))
+    hincidence = BitSet[]
+    return LabelBitsIterator{T,PT}(brp, num_vertices, hincidence, false)
+end
+
+Base.IteratorEltype(::Type{<:LabelBitsIterator}) = Base.HasEltype()
+Base.eltype(::Type{<:LabelBitsIterator}) = UInt64
+
+Base.IteratorSize(::Type{<:LabelBitsIterator}) = Base.HasLength()
+Base.length(it::LabelBitsIterator) = it.num_vertices
+
+function Base.iterate(
+    it::LabelBitsIterator{T,<:CDDLib.Polyhedron{T}}, state::Int=1
+) where {T}
+    state > it.num_vertices && return nothing
+
+    indices = it.hincidence[state]
+    num_indices = length(indices)
+    ndim = it.brp.ndim
+    if num_indices > ndim
+        if it.brp.idx == 1
+            _delete_largest_k!(indices, num_indices-ndim)
+        else
+            _delete_smallest_k!(indices, num_indices-ndim)
+        end
+        if !it.warned
+            @warn "Payoff degeneracy detected for Player $(it.brp.idx)"
+            it.warned = true
+        end
+    end
+    bits = indices.bits[1] >> 1
+    return (bits, state+1)
+end
+
+function Base.iterate(it::LabelBitsIterator{T,PT}, state::Int=1) where {T,PT}
+    state > it.num_vertices && return nothing
+
+    idx = Polyhedra.Index{T,Vector{T}}(state)
+    indices = incidenthalfspaceindices(it.brp.poly, idx)
+    num_indices = length(indices)
+    ndim = it.brp.ndim
+    if num_indices > ndim
+        if it.brp.idx == 1
+            bits = _indices_to_bits(@view indices[1:ndim])
+        else
+            bits = _indices_to_bits(@view indices[end-ndim+1:end])
+        end
+        if !it.warned
+            @warn "Payoff degeneracy detected for Player $(it.brp.idx)"
+            it.warned = true
+        end
+    else
+        bits = _indices_to_bits(indices)
+    end
+    return (bits, state+1)
+end
+
+
 """
     _vertex_enumeration_producer(c, brps)
 
@@ -250,43 +327,27 @@ Main body of `vertex_enumeration_task`.
 - `NTuple{2,Vector{T}}`: Tuple of Nash equilibrium mixed actions.
 """
 function _vertex_enumeration_producer(
-        c::Channel, brps::NTuple{2,BestResponsePolytope{T,<:CDDLib.Polyhedron{T}}}
-    ) where {T}
+        c::Channel, brps::NTuple{2,BestResponsePolytope{T,PT}}
+    ) where {T,PT}
     m, n = brps[1].ndim, brps[2].ndim
-    @assert m + n <= 64 "Implemented only for games with sum(g.nums_actions) <= 64"
+    @assert m + n <= 63 "Implemented only for games with sum(g.nums_actions) <= 63"
+
     ZERO_LABELING2_BITS = ((UInt64(1) << UInt64(n)) - UInt64(1)) << UInt64(m)
     COMPLETE_LABELING_BITS = (UInt64(1) << UInt64(m + n)) - UInt64(1)
 
-    warned1 = warned2 = false
-
-    hincidence2 = copyincidence(brps[2].poly.poly)  # Vector{BitSet}
+    it2 = LabelBitsIterator(brps[2])
     labelings_bits_dict2 = Dict{UInt64,Int}()
-    sizehint!(labelings_bits_dict2, length(hincidence2))
-    for (j, indices) in enumerate(hincidence2)
-        num_indices = length(indices)
-        if num_indices > n && !warned2
-            @warn "Payoff degeneracy detected for Player 2"
-            warned2 = true
-            _delete_smallest_k!(indices, num_indices-n)
-        end
-        bits2 = indices.bits[1] >> 1
-        bits2 == ZERO_LABELING2_BITS && continue
+    sizehint!(labelings_bits_dict2, length(it2))
+    @inbounds for (j, bits2) in enumerate(it2)
         labelings_bits_dict2[bits2] = j
     end
+    delete!(labelings_bits_dict2, ZERO_LABELING2_BITS)
 
-    hincidence1 = copyincidence(brps[1].poly.poly)  # Vector{BitSet}
-    for (i, indices) in enumerate(hincidence1)
-        num_indices = length(indices)
-        if num_indices > m && !warned1
-            @warn "Payoff degeneracy detected for Player 1"
-            warned1 = true
-            _delete_largest_k!(indices, num_indices-m)
-        end
-        bits1 = indices.bits[1] >> 1
-
+    it1 = LabelBitsIterator(brps[1])
+    @inbounds for (i, bits1) in enumerate(it1)
         complement1 = xor(bits1, COMPLETE_LABELING_BITS)
         j = get(labelings_bits_dict2, complement1, 0)
-        j === 0 && continue
+        j == 0 && continue
         pt1 = get(brps[1].poly, Polyhedra.Index{T,Vector{T}}(i))
         pt2 = get(brps[2].poly, Polyhedra.Index{T,Vector{T}}(j))
         put!(c, (pt1/sum(pt1), pt2/sum(pt2)))
@@ -312,49 +373,6 @@ function _delete_largest_k!(indices::BitSet, k::Integer)
         _clear_lowest_k_setbits(bitreverse(indices.bits[1]), k)
     )
     return indices
-end
-
-
-function _vertex_enumeration_producer(
-        c::Channel, brps::NTuple{2,BestResponsePolytope{T,PT}}
-    ) where {T,PT}
-    m, n = brps[1].ndim, brps[2].ndim
-    @assert m + n <= 64 "Implemented only for games with sum(g.nums_actions) <= 64"
-    ZERO_LABELING2_BITS = ((UInt64(1) << UInt64(n)) - UInt64(1)) << UInt64(m)
-    COMPLETE_LABELING_BITS = (UInt64(1) << UInt64(m + n)) - UInt64(1)
-
-    warned1 = warned2 = false
-
-    viter2 = Polyhedra.Indices{T,Vector{T}}(brps[2].poly)
-    labelings_bits_dict2 = Dict{UInt64,Int}()
-    sizehint!(labelings_bits_dict2, length(viter2))
-    for idx in viter2
-        indices = incidenthalfspaceindices(brps[2].poly, idx)
-        if length(indices) > n && !warned2
-            @warn "Payoff degeneracy detected for Player 2"
-            warned2 = true
-        end
-        bits2 = _indices_to_bits(@view indices[end-n+1:end])
-        bits2 == ZERO_LABELING2_BITS && continue
-        labelings_bits_dict2[bits2] = idx.value
-    end
-
-    viter1 = Polyhedra.Indices{T,Vector{T}}(brps[1].poly)
-    for idx in viter1
-        indices = incidenthalfspaceindices(brps[1].poly, idx)
-        if length(indices) > m && !warned1
-            @warn "Payoff degeneracy detected for Player 1"
-            warned1 = true
-        end
-        bits1 = _indices_to_bits(@view indices[1:m])
-
-        complement1 = xor(bits1, COMPLETE_LABELING_BITS)
-        j = get(labelings_bits_dict2, complement1, 0)
-        j === 0 && continue
-        pt1 = get(brps[1].poly, idx)
-        pt2 = get(brps[2].poly, Polyhedra.Index{T,Vector{T}}(j))
-        put!(c, (pt1/sum(pt1), pt2/sum(pt2)))
-    end
 end
 
 
