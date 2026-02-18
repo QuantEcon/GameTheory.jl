@@ -73,6 +73,11 @@ using CDDLib
         A_T = transpose(A)  # !(A_T isa Array)
         player_T = @inferred Player(A_T)
         @test player_T.payoff_array[1, 2] == A[2, 1]
+
+        T = Float64
+        player_F = @inferred Player(T, A_T)
+        @test eltype(player_F.payoff_array) == T
+        @test player_F.payoff_array == Array{T}(A_T)
     end
 
     @testset "convert for Player" begin
