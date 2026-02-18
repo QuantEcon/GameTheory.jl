@@ -75,6 +75,7 @@ include("repeated_game.jl")
 include("random.jl")
 include("lemke_howson.jl")
 include("support_enumeration.jl")
+include("gametracer.jl")
 include("util.jl")
 include("generators/Generators.jl")
 
