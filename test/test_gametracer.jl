@@ -40,6 +40,14 @@ using Random
                 @test g_from_p.players[i].payoff_array ==
                       g.players[i].payoff_array
             end
+
+            # Make an AbstractVector (SubArray) that equals payoffs1d
+            payoffs1d_view = vcat([-999], payoffs1d, [999])[2:end-1]
+
+            p = @inferred GamPayoffVector(nums_actions, payoffs1d_view)
+
+            @test p.nums_actions == nums_actions
+            @test p.payoffs == payoffs1d
         end
 
         @testset "Round trip: N=$(length(ns))" for ns in [(4, 3), (2, 2, 3, 2)]
