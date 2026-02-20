@@ -1,7 +1,7 @@
-# GamPayoffVector #
+# GAMPayoffVector #
 
 """
-    GamPayoffVector{N,T}
+    GAMPayoffVector{N,T}
 
 Internal intermediate representation that stores payoffs in a single flat
 vector.
@@ -17,11 +17,11 @@ Payoff values are ordered as in the GameTracer .gam format:
   player.
 - `payoffs::Vector{T}` : Vector storing payoffs in .gam order.
 """
-struct GamPayoffVector{N,T<:Real}
+struct GAMPayoffVector{N,T<:Real}
     nums_actions::NTuple{N,Int}
     payoffs::Vector{T}
 
-    function GamPayoffVector{N,T}(
+    function GAMPayoffVector{N,T}(
         nums_actions::NTuple{N,Int}, payoffs::Vector{T}
     ) where {N,T<:Real}
         any(n -> n <= 0, nums_actions) &&
@@ -34,19 +34,19 @@ struct GamPayoffVector{N,T<:Real}
     end
 end
 
-num_players(::GamPayoffVector{N}) where {N} = N
+num_players(::GAMPayoffVector{N}) where {N} = N
 
-GamPayoffVector(
+GAMPayoffVector(
     nums_actions::NTuple{N,Int}, payoffs::Vector{T}
-) where {N,T<:Real} = GamPayoffVector{N,T}(nums_actions, payoffs)
+) where {N,T<:Real} = GAMPayoffVector{N,T}(nums_actions, payoffs)
 
-GamPayoffVector(
+GAMPayoffVector(
     ::Type{T}, nums_actions::NTuple{N,Int}, payoffs::AbstractVector
 ) where {N,T<:Real} =
-    GamPayoffVector{N,T}(nums_actions, convert(Vector{T}, payoffs))
-GamPayoffVector(
+    GAMPayoffVector{N,T}(nums_actions, convert(Vector{T}, payoffs))
+GAMPayoffVector(
     nums_actions::NTuple{N,Int}, payoffs::AbstractVector{T}
-) where {N,T<:Real} = GamPayoffVector(T, nums_actions, payoffs)
+) where {N,T<:Real} = GAMPayoffVector(T, nums_actions, payoffs)
 
 
 # Forward: (i, i+1, ..., N, 1, ..., i-1)
@@ -59,9 +59,9 @@ GamPayoffVector(
 
 
 """
-    GamPayoffVector([T], g)
+    GAMPayoffVector([T], g)
 
-Construct a GamPayoffVector (of eltype `T` if specified) from a NormalFormGame
+Construct a GAMPayoffVector (of eltype `T` if specified) from a NormalFormGame
 `g`.
 
 # Examples
@@ -79,13 +79,13 @@ julia> println(g)
  [2, 8]  [5, 11]
  [3, 9]  [6, 12]
 
-julia> p = GamPayoffVector(g);
+julia> p = GAMPayoffVector(g);
 
 julia> @show p.payoffs;
 p.payoffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 ```
 """
-function GamPayoffVector(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
+function GAMPayoffVector(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
     nums_actions = g.nums_actions
     na = prod(nums_actions)
     payoffs = Vector{T}(undef, na*N)
@@ -98,16 +98,16 @@ function GamPayoffVector(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
         nothing
     end
 
-    return GamPayoffVector{N,T}(nums_actions, payoffs)
+    return GAMPayoffVector{N,T}(nums_actions, payoffs)
 end
 
-GamPayoffVector(g::NormalFormGame{N,T}) where {N,T<:Real} = GamPayoffVector(T, g)
+GAMPayoffVector(g::NormalFormGame{N,T}) where {N,T<:Real} = GAMPayoffVector(T, g)
 
 
 """
     NormalFormGame([T], p)
 
-Construct a NormalFormGame (of eltype `T` if specified) from a GamPayoffVector
+Construct a NormalFormGame (of eltype `T` if specified) from a GAMPayoffVector
 `p`.
 
 # Examples
@@ -120,7 +120,7 @@ julia> payoffs = collect(1:12);
 julia> @show payoffs;
 payoffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
-julia> p = GamPayoffVector(nums_actions, payoffs);
+julia> p = GAMPayoffVector(nums_actions, payoffs);
 
 julia> g = NormalFormGame(p);
 
@@ -131,7 +131,7 @@ julia> println(g)
  [3, 9]  [6, 12]
 ```
 """
-function NormalFormGame(::Type{T}, p::GamPayoffVector{N}) where {N,T<:Real}
+function NormalFormGame(::Type{T}, p::GAMPayoffVector{N}) where {N,T<:Real}
     nums_actions = p.nums_actions
     na = prod(nums_actions)
 
@@ -148,4 +148,4 @@ function NormalFormGame(::Type{T}, p::GamPayoffVector{N}) where {N,T<:Real}
     return NormalFormGame{N,T}(players, nums_actions)
 end
 
-NormalFormGame(p::GamPayoffVector{N,T}) where {N,T<:Real} = NormalFormGame(T, p)
+NormalFormGame(p::GAMPayoffVector{N,T}) where {N,T<:Real} = NormalFormGame(T, p)

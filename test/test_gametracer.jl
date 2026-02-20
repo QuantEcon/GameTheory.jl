@@ -1,10 +1,10 @@
-using GameTheory: GamPayoffVector
+using GameTheory: GAMPayoffVector
 
 using Random
 
 @testset "gametracer.jl" begin
 
-    @testset "GamPayoffVector" begin
+    @testset "GAMPayoffVector" begin
         @testset "Golden: N=3" begin
             nums_actions = (2, 3, 4)
             N = length(nums_actions)
@@ -16,7 +16,7 @@ using Random
 
             payoffs1d = vcat(vec(A1), vec(A2), vec(A3))
 
-            p = @inferred GamPayoffVector(nums_actions, payoffs1d)
+            p = @inferred GAMPayoffVector(nums_actions, payoffs1d)
 
             @test p.nums_actions == nums_actions
             @test p.payoffs == payoffs1d
@@ -28,7 +28,7 @@ using Random
             payoffs4d[:, :, :, 3] .= A3
 
             g = NormalFormGame(payoffs4d)
-            p = @inferred GamPayoffVector(g)
+            p = @inferred GAMPayoffVector(g)
 
             @test p.nums_actions == nums_actions
             @test p.payoffs == payoffs1d
@@ -44,7 +44,7 @@ using Random
             # Make an AbstractVector (SubArray) that equals payoffs1d
             payoffs1d_view = @view vcat([-999], payoffs1d, [999])[2:end-1]
 
-            p = @inferred GamPayoffVector(nums_actions, payoffs1d_view)
+            p = @inferred GAMPayoffVector(nums_actions, payoffs1d_view)
 
             @test p.nums_actions == nums_actions
             @test p.payoffs == payoffs1d
@@ -54,10 +54,10 @@ using Random
             N = length(ns)
             rng = MersenneTwister(12345)
             g = random_game(rng, 0:99, ns)
-            p = @inferred GamPayoffVector(g)
+            p = @inferred GAMPayoffVector(g)
             g2 = @inferred NormalFormGame(p)
 
-            p_BI = @inferred GamPayoffVector(BigInt, g)
+            p_BI = @inferred GAMPayoffVector(BigInt, g)
             g3 = @inferred NormalFormGame(Int, p_BI)
 
             for g_new in [g2, g3]
@@ -73,10 +73,10 @@ using Random
             payoffs = [1., 2., 3.]
             nums_actions = (3,)
 
-            p1 = GamPayoffVector(nums_actions, payoffs)
+            p1 = GAMPayoffVector(nums_actions, payoffs)
 
             g = NormalFormGame(Player(payoffs))
-            p2 = GamPayoffVector(g)
+            p2 = GAMPayoffVector(g)
 
             for p in [p1, p2]
                 @test p.nums_actions == nums_actions
@@ -85,8 +85,8 @@ using Random
         end
 
         @testset "Invalid inputs" begin
-            @test_throws ArgumentError GamPayoffVector((2, 2), [1, 2, 3])
-            @test_throws ArgumentError GamPayoffVector((2, 0), Int[])
+            @test_throws ArgumentError GAMPayoffVector((2, 2), [1, 2, 3])
+            @test_throws ArgumentError GAMPayoffVector((2, 0), Int[])
         end
     end
 
