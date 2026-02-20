@@ -39,10 +39,14 @@ num_players(::GamPayoffVector{N}) where {N} = N
 GamPayoffVector(
     nums_actions::NTuple{N,Int}, payoffs::Vector{T}
 ) where {N,T<:Real} = GamPayoffVector{N,T}(nums_actions, payoffs)
+
 GamPayoffVector(
-    nums_actions::NTuple{N,Int}, payoffs::AbstractVector{T}
+    ::Type{T}, nums_actions::NTuple{N,Int}, payoffs::AbstractVector
 ) where {N,T<:Real} =
     GamPayoffVector{N,T}(nums_actions, convert(Vector{T}, payoffs))
+GamPayoffVector(
+    nums_actions::NTuple{N,Int}, payoffs::AbstractVector{T}
+) where {N,T<:Real} = GamPayoffVector(T, nums_actions, payoffs)
 
 
 # Forward: (i, i+1, ..., N, 1, ..., i-1)
