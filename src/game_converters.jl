@@ -1,4 +1,32 @@
 """
+Write GameTracer `.gam` text for `x` to `io`.
+
+Step IR boundary:
+- `p = GamPayoffVector(x)` must yield:
+  - `p.nums_actions::NTuple{N,Int}`
+  - `p.payoffs::Vector{<:Real}` already in `.gam` flat order.
+
+This writer does not reorder; it only serializes.
+No trailing newline is written.
+"""
+function write_gam(io::IO, x)
+    p = GamPayoffVector(x)  # supports NormalFormGame and GamPayoffVector
+
+    N = length(p.nums_actions)
+
+    # Header
+    print(io, N, '\n')
+    join(io, p.nums_actions, ' ')
+    print(io, "\n\n")
+
+    # Payoffs (already `.gam`-ordered)
+    join(io, p.payoffs, ' ')
+
+    return nothing
+end
+
+
+"""
     read_gam(io::IO) -> NormalFormGame
 
 Read a GameTracer `.gam` payload from an IO stream, funneling through the IR:
