@@ -3,13 +3,15 @@
 ## Exported
 ```@autodocs
 Modules = [GameTheory]
-Pages   = ["pure_nash.jl", "lemke_howson.jl", "support_enumeration.jl", "lrsnash.jl", "homotopy_continuation.jl"]
+Pages   = ["pure_nash.jl", "lemke_howson.jl", "support_enumeration.jl", "lrsnash.jl",
+           "homotopy_continuation.jl", "gametracer.jl"]
 Private = false
 ```
 
 ## Internal
 ```@autodocs
 Modules = [GameTheory]
-Pages   = ["pure_nash.jl", "lemke_howson.jl", "support_enumeration.jl", "lrsnash.jl", "homotopy_continuation.jl"]
+Pages   = ["pure_nash.jl", "lemke_howson.jl", "support_enumeration.jl", "lrsnash.jl",
+           "homotopy_continuation.jl", "gametracer.jl"]
 Public = false
 ```
