@@ -50,11 +50,11 @@ GAMPayoffVector(
 
 
 # Forward: (i, i+1, ..., N, 1, ..., i-1)
-@inline perm_fwd(::Val{N}, ::Val{i}) where {N,i} =
+@inline _perm_fwd(::Val{N}, ::Val{i}) where {N,i} =
     ntuple(k -> mod1(i + k - 1, N), Val(N))
 
 # Backward: inverse rotation
-@inline perm_back(::Val{N}, ::Val{i}) where {N,i} =
+@inline _perm_back(::Val{N}, ::Val{i}) where {N,i} =
     ntuple(k -> mod1(k - i + 1, N), Val(N))
 
 
@@ -93,7 +93,7 @@ function GAMPayoffVector(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
     ntuple(Val(N)) do i
         copyto!(
             reshape(view(payoffs, na*(i-1)+1:na*i), nums_actions),
-            PermutedDimsArray(g.players[i].payoff_array, perm_back(Val(N), Val(i)))
+            PermutedDimsArray(g.players[i].payoff_array, _perm_back(Val(N), Val(i)))
         )
         nothing
     end
@@ -140,7 +140,7 @@ function NormalFormGame(::Type{T}, p::GAMPayoffVector{N}) where {N,T<:Real}
             T,
             PermutedDimsArray(
                 reshape(view(p.payoffs, na*(i-1)+1:na*i), nums_actions),
-                perm_fwd(Val(N), Val(i))
+                _perm_fwd(Val(N), Val(i))
             )
         )
     end
