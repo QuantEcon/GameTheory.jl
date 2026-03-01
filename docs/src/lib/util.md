@@ -6,7 +6,7 @@ This is documentation for `util.jl`.
 
 ```@autodocs
 Modules = [GameTheory]
-Pages   = ["util.jl"]
+Pages   = ["game_converters.jl", "util.jl"]
 Private = false
 ```
 
@@ -14,6 +14,6 @@ Private = false
 
 ```@autodocs
 Modules = [GameTheory]
-Pages   = ["util.jl"]
+Pages   = ["game_converters.jl", "util.jl"]
 Public = false
 ```

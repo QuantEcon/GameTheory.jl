@@ -2,7 +2,7 @@ using GameTheory: GAMPayoffVector
 
 using Random
 
-@testset "gametracer.jl" begin
+@testset "game_converters.jl" begin
 
     @testset "GAMPayoffVector" begin
         @testset "Golden: N=3" begin
