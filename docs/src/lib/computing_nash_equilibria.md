@@ -4,7 +4,7 @@
 ```@autodocs
 Modules = [GameTheory]
 Pages   = ["pure_nash.jl", "lemke_howson.jl", "support_enumeration.jl", "lrsnash.jl",
-           "homotopy_continuation.jl", "gametracer.jl"]
+           "homotopy_continuation.jl"]
 Private = false
 ```
 
@@ -12,6 +12,6 @@ Private = false
 ```@autodocs
 Modules = [GameTheory]
 Pages   = ["pure_nash.jl", "lemke_howson.jl", "support_enumeration.jl", "lrsnash.jl",
-           "homotopy_continuation.jl", "gametracer.jl"]
+           "homotopy_continuation.jl"]
 Public = false
 ```
