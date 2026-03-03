@@ -18,7 +18,7 @@ _coeftype(::Type{<:AbstractFloat}) = Float64
 _coeftype(::Type{<:Integer}) = Float64
 
 
-@doc doc"""
+raw"""
     BestResponsePolytope{T,PT}
 
 Type that represents the best response polytope for a player in a two-player
@@ -181,7 +181,7 @@ Task version of `vertex_enumeration`.
 
 # Arguments
 
-- `c::Channel`: Channel to be binded with the support enumeration task.
+- `c::Channel`: Channel to be bound to the vertex enumeration task.
 - `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
 - `plib::Polyhedra.Library`: Allows to choose a particular package for
   polyhedral computation.
@@ -318,7 +318,7 @@ Main body of `vertex_enumeration_task`.
 
 # Arguments
 
-- `c::Channel`: Channel to be binded with the support enumeration task.
+- `c::Channel`: Channel to be bound to the vertex enumeration task.
 - `brps::NTuple{2,BestResponsePolytope{T,PT}}`: Tuple of Best response
   polytopes of player 1 and player 2, where `PT<:Polyhedron{T}`.
 
@@ -330,7 +330,12 @@ function _vertex_enumeration_producer(
         c::Channel, brps::NTuple{2,BestResponsePolytope{T,PT}}
     ) where {T,PT}
     m, n = brps[1].ndim, brps[2].ndim
-    @assert m + n <= 63 "Implemented only for games with sum(g.nums_actions) <= 63"
+    if m + n > 63
+        throw(ArgumentError(
+            "vertex_enumeration is implemented only for games with " *
+            "sum(nums_actions) <= 63; got sum(nums_actions) = $(m + n)"
+        ))
+    end
 
     ZERO_LABELING2_BITS = ((UInt64(1) << UInt64(n)) - UInt64(1)) << UInt64(m)
     COMPLETE_LABELING_BITS = (UInt64(1) << UInt64(m + n)) - UInt64(1)
