@@ -77,7 +77,7 @@ Task version of `support_enumeration`.
 
 # Arguments
 
-- `c::Channel`: Channel to be binded with the support enumeration task.
+- `c::Channel`: Channel to be bound to the support enumeration task.
 - `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
 
 # Returns
@@ -134,7 +134,7 @@ Main body of `support_enumeration_task`.
 
 # Arguments
 
-- `c::Channel`: Channel to be binded with the support enumeration task.
+- `c::Channel`: Channel to be bound to the support enumeration task.
 - `payoff_matrices::NTuple{2,Matrix{T}}`: Payoff matrices of player 1 and
   player 2, where `T<:Real`.
 
