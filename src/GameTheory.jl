@@ -2,7 +2,6 @@ module GameTheory
 
 # stdlib
 using LinearAlgebra, Random
-using Markdown
 
 # Packages
 using QuantEcon
