@@ -295,7 +295,7 @@ using CDDLib
         @test occursin(sprint(Base.print_array, a), sprint(print, g))
         @test sprint(print, g) == sprint(show, g)
 
-        # See pull request #217
+        # See pull request #218
         g1 = NormalFormGame((3,))
         @test sprint(show, g1) isa String
     end
