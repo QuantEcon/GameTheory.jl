@@ -237,6 +237,13 @@ using CDDLib
         @test g_r[1, 1] == [1//3, 2//3]
         @test eltype(g_r.players[1].payoff_array) == Rational{Int}
 
+        # Mixed-type tuples (Int, Float64) should promote
+        g_m = NormalFormGame([(2, 3.5) (1, 2.0);
+                              (3, 1.5) (0, 4.0)])
+        @test num_players(g_m) == 2
+        @test g_m[1, 1] == [2.0, 3.5]
+        @test eltype(g_m.players[1].payoff_array) == Float64
+
     end
 
     @testset "NormalFormGame constant payoffs" begin
