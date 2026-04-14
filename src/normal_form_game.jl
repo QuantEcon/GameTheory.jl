@@ -680,7 +680,7 @@ Base.summary(g::NormalFormGame) =
            " ",
            split(string(typeof(g)), ".")[end])
 
-# payoff_profile_array
+
 
 """
     payoff_profile_array(g)
@@ -709,14 +709,25 @@ function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
     return payoff_profile_array
 end
 
-function Base.show(io::IO, g::NormalFormGame)
-    print(io, summary(g))
+"""
+LazyProfileArray
+
+Construct a lazily-evaluated array of payoff profiles. Each profile is a Vector that is created when getindex is called.
+
+This is meant to aid in printing without allocating large arrays
+"""
+struct LazyProfileArray{N,T,G<:NormalFormGame{N,T}} <: AbstractArray{Vector{T},N}
+    g::G
 end
 
-function Base.print(io::IO, g::NormalFormGame)
+Base.size(a::LazyProfileArray) = a.g.nums_actions
+Base.getindex(a::LazyProfileArray, index::Int...) = a.g[index...]
+Base.getindex(a::LazyProfileArray{N}, ci::CartesianIndex{N}) where {N} = a.g[ci]
+
+function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
     println(io, ":")
-    X = payoff_profile_array(g)
+    X = LazyProfileArray(g)
     if !haskey(io, :compact) && length(axes(X, 2)) > 1
         io = IOContext(io, :compact => true)
     end
