@@ -212,6 +212,33 @@ using CDDLib
         @test g.players[2].payoff_array == [10 5; 10 0]
     end
 
+    @testset "NormalFormGame tuple constructor" begin
+        # Int payoffs
+        g = NormalFormGame([(3,3) (3,2);
+                            (2,2) (5,6);
+                            (0,3) (6,1)])
+        @test num_players(g) == 2
+        @test g.nums_actions == (3, 2)
+        @test g[1, 1] == [3, 3]
+        @test g[3, 2] == [6, 1]
+        @test eltype(g.players[1].payoff_array) == Int
+
+        # Float64 payoffs
+        g_f = NormalFormGame([(1.0,0.5) (0.5,1.0);
+                              (0.5,1.0) (1.0,0.5)])
+        @test num_players(g_f) == 2
+        @test g_f.nums_actions == (2, 2)
+        @test g_f[1, 1] == [1.0, 0.5]
+        @test eltype(g_f.players[1].payoff_array) == Float64
+
+        # Rational payoffs
+        g_r = NormalFormGame([(1//3, 2//3) (1//2, 1//2);
+                              (2//3, 1//3) (1//4, 3//4)])
+        @test g_r[1, 1] == [1//3, 2//3]
+        @test eltype(g_r.players[1].payoff_array) == Rational{Int}
+
+    end
+
     @testset "NormalFormGame constant payoffs" begin
         g = NormalFormGame((2, 2))
 
