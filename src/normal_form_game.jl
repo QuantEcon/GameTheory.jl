@@ -648,6 +648,36 @@ function NormalFormGame(payoffs::Array{TV,N}) where
     return g
 end
 
+"""
+    NormalFormGame(payoffs)
+
+Construct a NormalFormGame with an Array of Tuples representing payoffs.
+
+For an N-player game, `payoffs[a_1, a_2, ..., a_N]` contains a Tuple of N payoff
+values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
+
+# Arguments
+
+- `payoffs::Array{NTuple{N,T<:Real}}` : Array with ndims=N containing payoff
+  profiles as tuples.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame([(3,3) (3,2); (2,2) (5,6); (0,3) (6,1)])
+3×2 NormalFormGame{2, Int64}
+
+julia> print(g)
+3×2 NormalFormGame{2, Int64}:
+ [3, 3]  [3, 2]
+ [2, 2]  [5, 6]
+ [0, 3]  [6, 1]
+```
+"""
+function NormalFormGame(payoffs::Array{NTuple{N,T},N}) where {N,T<:Real}
+    NormalFormGame(map(collect, payoffs))
+end
+
 function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
     players_new = ntuple(i -> Player{N,T}(g.players[i]), Val(N))
     return NormalFormGame(players_new)
