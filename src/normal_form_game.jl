@@ -714,7 +714,7 @@ LazyProfileArray
 
 Construct a lazily-evaluated array of payoff profiles. Each profile is a Vector that is created when getindex is called.
 
-This is meant to aid in printing without allocating large arrays
+This is meant to aid in printing without allocating large arrays.
 """
 struct LazyProfileArray{N,T} <: AbstractArray{Vector{T},N}
     g::NormalFormGame{N,T}
