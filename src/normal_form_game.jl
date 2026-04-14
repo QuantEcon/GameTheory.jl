@@ -716,19 +716,19 @@ Construct a lazily-evaluated array of payoff profiles. Each profile is a Vector 
 
 This is meant to aid in printing without allocating large arrays
 """
-struct LazyProfileArray{N,T,G<:NormalFormGame{N,T}} <: AbstractArray{Vector{T},N}
-    g::G
+struct LazyProfileArray{N,T} <: AbstractArray{Vector{T},N}
+    g::NormalFormGame{N,T}
 end
 
 Base.size(a::LazyProfileArray) = a.g.nums_actions
-Base.getindex(a::LazyProfileArray, index::Int...) = a.g[index...]
-Base.getindex(a::LazyProfileArray{N}, ci::CartesianIndex{N}) where {N} = a.g[ci]
+Base.getindex(a::LazyProfileArray{N}, index::Vararg{Int,N}) where {N} = a.g[index...]
+Base.getindex(a::LazyProfileArray{1}, index::Int) = [a.g[index]]
 
 function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
     println(io, ":")
     X = LazyProfileArray(g)
-    if !haskey(io, :compact) && length(axes(X, 2)) > 1
+    if !haskey(io, :compact) && ndims(X) >= 2 && length(axes(X, 2)) > 1
         io = IOContext(io, :compact => true)
     end
     Base.print_array(io, X)
