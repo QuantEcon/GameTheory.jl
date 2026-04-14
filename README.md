@@ -13,7 +13,9 @@ Create a `NormalFormGame` from an array of payoff tuples:
 
 ```julia
 using GameTheory
-g = NormalFormGame([(3,3) (3,2); (2,2) (5,6); (0,3) (6,1)])
+g = NormalFormGame([(3,3) (3,2)
+                    (2,2) (5,6)
+                    (0,3) (6,1)])
 println(g)
 ```
 ```

@@ -664,7 +664,9 @@ values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
 # Examples
 
 ```julia
-julia> g = NormalFormGame([(3,3) (3,2); (2,2) (5,6); (0,3) (6,1)])
+julia> g = NormalFormGame([(3,3) (3,2)
+                           (2,2) (5,6)
+                           (0,3) (6,1)])
 3×2 NormalFormGame{2, Int64}
 
 julia> print(g)

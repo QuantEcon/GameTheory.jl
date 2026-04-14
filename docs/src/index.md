@@ -35,7 +35,8 @@ print(g)
 or by passing an array of tuples representing payoff profiles:
 
 ```@example 1
-g = NormalFormGame([(3,2) (1,1); (0,0) (2,3)])
+g = NormalFormGame([(3,2) (1,1)
+                    (0,0) (2,3)])
 print(g)
 ```
 
