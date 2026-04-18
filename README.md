@@ -16,7 +16,6 @@ using GameTheory
 player1 = Player([3 3; 2 5; 0 6])
 player2 = Player([3 2 3; 2 6 1])
 g = NormalFormGame(player1, player2)
-println(g)
 ```
 ```
 3×2 NormalFormGame{2, Int64}:
@@ -46,7 +45,7 @@ g[1, 1, 1] = [9, 8, 12]
 g[2, 2, 1] = [9, 8, 2]
 g[1, 2, 2] = [3, 4, 6]
 g[2, 1, 2] = [3, 4, 4]
-println(g)
+g
 ```
 ```
 2×2×2 NormalFormGame{3, Float64}:
