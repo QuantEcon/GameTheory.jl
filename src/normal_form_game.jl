@@ -726,12 +726,21 @@ Base.getindex(a::LazyProfileArray{1}, index::Int) = [a.g[index]]
 
 function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
+end
+
+function Base.print(io::IO, g::NormalFormGame)
+    print(io, summary(g))
     println(io, ":")
     X = LazyProfileArray(g)
     if !haskey(io, :compact) && ndims(X) >= 2 && length(axes(X, 2)) > 1
         io = IOContext(io, :compact => true)
     end
     Base.print_array(io, X)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
+    get(io, :compact, false) && return show(io, g)
+    print(io, g)
 end
 
 function Base.getindex(g::NormalFormGame{N,T},
