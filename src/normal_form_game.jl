@@ -586,7 +586,7 @@ payoff values.
 
 - `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
 """
-function NormalFormGame(payoffs::Array{T,M}) where {T<:Real,M}
+function NormalFormGame(payoffs::AbstractArray{T,M}) where {T<:Real,M}
     N = M - 1
     dims = Base.front(size(payoffs))
     colons = Base.front(ntuple(j -> Colon(), M))
@@ -615,7 +615,7 @@ Construct a symmetric 2-player NormalFormGame with a square matrix.
 - `payoffs::Matrix{T<:Real}` : Square matrix representing each player's payoff
   matrix.
 """
-function NormalFormGame(payoffs::Matrix{T}) where T<:Real
+function NormalFormGame(payoffs::AbstractMatrix{T}) where T<:Real
     n, m = size(payoffs)
     n != m && throw(ArgumentError(
         "symmetric two-player game must be represented by a square matrix"
@@ -636,7 +636,7 @@ values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
 - `payoffs::Array{AbstractVector{T<:Real}}` : Array with ndims=N containing
   payoff profiles as vectors.
 """
-function NormalFormGame(payoffs::Array{TV,N}) where
+function NormalFormGame(payoffs::AbstractArray{TV,N}) where
     {T<:Real,N,TV<:AbstractVector{T}}
     g = NormalFormGame(T, size(payoffs))
     for (i, player) in enumerate(g.players)
@@ -646,6 +646,42 @@ function NormalFormGame(payoffs::Array{TV,N}) where
         end
     end
     return g
+end
+
+"""
+    NormalFormGame(payoffs)
+
+Construct a NormalFormGame with an Array of Tuples representing payoffs.
+
+For an N-player game, `payoffs[a_1, a_2, ..., a_N]` contains a Tuple of N payoff
+values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
+
+# Arguments
+
+- `payoffs::AbstractArray{NTuple{N,T<:Real}}` : Array with ndims=N containing payoff
+  profiles as tuples.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame([(3,3) (3,2)
+                           (2,2) (5,6)
+                           (0,3) (6,1)])
+3×2 NormalFormGame{2, Int64}
+
+julia> print(g)
+3×2 NormalFormGame{2, Int64}:
+ [3, 3]  [3, 2]
+ [2, 2]  [5, 6]
+ [0, 3]  [6, 1]
+```
+"""
+function NormalFormGame(payoffs::AbstractArray{NTuple{N,T},N}) where {N,T<:Real}
+    NormalFormGame(map(collect, payoffs))
+end
+
+function NormalFormGame(payoffs::AbstractArray{<:Tuple,N}) where N
+    NormalFormGame(map(t -> collect(promote(t...)), payoffs))
 end
 
 function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
