@@ -680,7 +680,7 @@ Base.summary(g::NormalFormGame) =
            " ",
            split(string(typeof(g)), ".")[end])
 
-# payoff_profile_array
+
 
 """
     payoff_profile_array(g)
@@ -709,15 +709,26 @@ function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
     return payoff_profile_array
 end
 
-function Base.show(io::IO, g::NormalFormGame)
-    print(io, summary(g))
+"""
+LazyProfileArray
+
+Construct a lazily-evaluated array of payoff profiles. Each profile is an SVector that is created when getindex is called.
+
+This is meant to aid in printing without allocating large arrays.
+"""
+struct LazyProfileArray{N,T} <: AbstractArray{SVector{N,T},N}
+    g::NormalFormGame{N,T}
 end
 
-function Base.print(io::IO, g::NormalFormGame)
+Base.size(a::LazyProfileArray) = a.g.nums_actions
+Base.getindex(a::LazyProfileArray{N}, index::Vararg{Int,N}) where {N} = a.g[index...]
+Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = SVector{1,T}(a.g[index])
+
+function Base.show(io::IO, g::NormalFormGame)
     print(io, summary(g))
     println(io, ":")
-    X = payoff_profile_array(g)
-    if !haskey(io, :compact) && length(axes(X, 2)) > 1
+    X = LazyProfileArray(g)
+    if !haskey(io, :compact) && ndims(X) >= 2 && length(axes(X, 2)) > 1
         io = IOContext(io, :compact => true)
     end
     Base.print_array(io, X)
@@ -728,12 +739,10 @@ function Base.getindex(g::NormalFormGame{N,T},
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
 
-    payoff_profile = Array{T}(undef, N)
-    for (i, player) in enumerate(g.players)
-        payoff_profile[i] =
-            player.payoff_array[(index[i:end]..., index[1:i-1]...)...]
-    end
-    return payoff_profile
+    return SVector{N,T}(ntuple(
+        i -> g.players[i].payoff_array[ntuple(k -> index[mod1(k+i-1, N)], Val(N))...],
+        Val(N),
+    ))
 end
 
 # Trivial game with 1 player

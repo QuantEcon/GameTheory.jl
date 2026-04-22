@@ -8,6 +8,7 @@ using QuantEcon
 using Combinatorics
 using Parameters
 using Distributions
+using StaticArrays
 
 # Optimization packages
 using MathOptInterface

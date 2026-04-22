@@ -293,6 +293,11 @@ using CDDLib
         g = NormalFormGame(a)
         @test occursin(string(typeof(g)), repr(g))
         @test occursin(sprint(Base.print_array, a), sprint(print, g))
+        @test sprint(print, g) == sprint(show, g)
+
+        # See pull request #218
+        g1 = NormalFormGame((3,))
+        @test sprint(show, g1) isa String
     end
 
     @testset "Tests on delete_action for NormalFormGame" begin

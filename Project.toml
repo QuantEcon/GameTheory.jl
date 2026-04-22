@@ -18,6 +18,7 @@ Polyhedra = "67491407-f73d-577b-9b50-8179a7c68029"
 QuantEcon = "fcd29c91-0bd7-5a09-975d-7ac3f643a60c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
@@ -32,6 +33,7 @@ MathOptInterface = "1"
 Parameters = "0.12"
 Polyhedra = "0.7, 0.8"
 QuantEcon = "0.17"
+StaticArrays = "1"
 StatsBase = "0.33, 0.34"
 julia = "1.10"
 
