@@ -724,7 +724,7 @@ Base.size(a::LazyProfileArray) = a.g.nums_actions
 Base.getindex(a::LazyProfileArray{N}, index::Vararg{Int,N}) where {N} = a.g[index...]
 Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = SVector{1,T}(a.g[index])
 
-function Base.show(io::IO, g::NormalFormGame)
+function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
     print(io, summary(g))
     println(io, ":")
     X = LazyProfileArray(g)
