@@ -745,6 +745,22 @@ function Base.getindex(g::NormalFormGame{N,T},
     ))
 end
 
+struct LazyTupleArray{N,T} <: AbstractArray{NTuple{N,T},N}
+    g::NormalFormGame{N,T}
+end
+
+Base.size(a::LazyTupleArray) = a.g.nums_actions
+
+function Base.getindex(a::LazyTupleArray{N,T}, index::Vararg{Int,N}) where {N,T}
+    return ntuple(i -> a.g.players[i].payoff_array[
+        ntuple(k -> index[mod1(k + i - 1, N)], Val(N))...
+    ], Val(N))
+end
+
+function Base.show(io::IO, g::NormalFormGame)
+    print(io, "NormalFormGame(", LazyTupleArray(g), ")")
+end
+
 # Trivial game with 1 player
 function Base.getindex(g::NormalFormGame{1}, index::Integer)
     return g.players[1].payoff_array[index]
