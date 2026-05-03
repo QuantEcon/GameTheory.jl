@@ -664,9 +664,9 @@ values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
 # Examples
 
 ```julia
-julia> g = NormalFormGame([(3,3) (3,2)
-                           (2,2) (5,6)
-                           (0,3) (6,1)])
+julia> g = NormalFormGame([(3, 3) (3, 2)
+                           (2, 2) (5, 6)
+                           (0, 3) (6, 1)])
 3×2 NormalFormGame{2, Int64}
 
 julia> print(g)
@@ -681,6 +681,11 @@ function NormalFormGame(payoffs::AbstractArray{NTuple{N,T},N}) where {N,T<:Real}
 end
 
 function NormalFormGame(payoffs::AbstractArray{<:Tuple,N}) where N
+    for t in payoffs
+        if length(t) != N
+            throw(ArgumentError("each payoff tuple must have length $N"))
+        end
+    end
     NormalFormGame(map(t -> collect(promote(t...)), payoffs))
 end
 
