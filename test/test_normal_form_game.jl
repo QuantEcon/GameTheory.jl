@@ -289,6 +289,24 @@ using CDDLib
         @test_throws ArgumentError NormalFormGame(fill((1, 2, 3, 4), 2, 2, 2))
     end
 
+    @testset "NormalFormGame tuple constructor with N=1" begin
+        # length-3 vector of NTuple{1,Int}
+        payoffs_1p = [(10,), (20,), (30,)]
+
+        g1 = @inferred NormalFormGame(payoffs_1p)
+        @test @inferred(num_players(g1)) == 1
+        @test g1.nums_actions == (3,)
+        @test @inferred(getindex(g1, 1)) == 10
+        @test g1[2] == 20
+        @test g1[3] == 30
+        @test eltype(g1.players[1].payoff_array) == Int
+        @test size(g1.players[1].payoff_array) == (3,)
+
+        # Tuple-length mismatch should throw ArgumentError
+        # length 2 in a 1D array
+        @test_throws ArgumentError NormalFormGame([(1, 2), (3, 4), (5, 6)])
+    end
+
     @testset "NormalFormGame constant payoffs" begin
         g = NormalFormGame((2, 2))
 
