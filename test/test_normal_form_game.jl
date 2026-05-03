@@ -243,7 +243,68 @@ using CDDLib
         @test num_players(g_m) == 2
         @test g_m[1, 1] == [2.0, 3.5]
         @test eltype(g_m.players[1].payoff_array) == Float64
+    end
 
+    @testset "NormalFormGame tuple constructor with N=3" begin
+        # 2×3×4 array of NTuple{3,Int}
+        payoffs_3p = [(1, 11, 21) (1, 12, 21) (1, 13, 21);
+                      (2, 11, 21) (2, 12, 21) (2, 13, 21);;;
+                      (1, 11, 22) (1, 12, 22) (1, 13, 22);
+                      (2, 11, 22) (2, 12, 22) (2, 13, 22);;;
+                      (1, 11, 23) (1, 12, 23) (1, 13, 23);
+                      (2, 11, 23) (2, 12, 23) (2, 13, 23);;;
+                      (1, 11, 24) (1, 12, 24) (1, 13, 24);
+                      (2, 11, 24) (2, 12, 24) (2, 13, 24)]
+
+        g3 = @inferred NormalFormGame(payoffs_3p)
+        @test num_players(g3) == 3
+        @test g3.nums_actions == (2, 3, 4)
+        @test g3[1, 1, 1] == [1, 11, 21]
+        @test g3[2, 1, 1] == [2, 11, 21]
+        @test g3[1, 3, 1] == [1, 13, 21]
+        @test g3[1, 1, 4] == [1, 11, 24]
+        @test g3[2, 3, 4] == [2, 13, 24]
+        @test eltype(g3.players[1].payoff_array) == Int
+        @test size(g3.players[1].payoff_array) == (2, 3, 4)
+        @test size(g3.players[2].payoff_array) == (3, 4, 2)
+        @test size(g3.players[3].payoff_array) == (4, 2, 3)
+
+        # Drop the first action of player 3: 2×3×3 view (a SubArray)
+        payoffs_3p_view = view(payoffs_3p, :, :, 2:4)
+        @test !(payoffs_3p_view isa Array)
+        g3_view = @inferred NormalFormGame(payoffs_3p_view)
+        @test num_players(g3_view) == 3
+        @test g3_view.nums_actions == (2, 3, 3)
+        @test g3_view[1, 1, 1] == [1, 11, 22]   # payoffs_3p[1, 1, 2]
+        @test g3_view[2, 3, 3] == [2, 13, 24]   # payoffs_3p[2, 3, 4]
+        @test g3_view[1, 2, 2] == [1, 12, 23]   # payoffs_3p[1, 2, 3]
+        @test size(g3_view.players[1].payoff_array) == (2, 3, 3)
+        @test size(g3_view.players[2].payoff_array) == (3, 3, 2)
+        @test size(g3_view.players[3].payoff_array) == (3, 2, 3)
+
+        # Tuple-length mismatch should throw ArgumentError
+        # length 2 in a 3D array
+        @test_throws ArgumentError NormalFormGame(fill((1, 2), 2, 2, 2))
+        # length 4 in a 3D array
+        @test_throws ArgumentError NormalFormGame(fill((1, 2, 3, 4), 2, 2, 2))
+    end
+
+    @testset "NormalFormGame tuple constructor with N=1" begin
+        # length-3 vector of NTuple{1,Int}
+        payoffs_1p = [(10,), (20,), (30,)]
+
+        g1 = @inferred NormalFormGame(payoffs_1p)
+        @test num_players(g1) == 1
+        @test g1.nums_actions == (3,)
+        @test g1[1] == 10
+        @test g1[2] == 20
+        @test g1[3] == 30
+        @test eltype(g1.players[1].payoff_array) == Int
+        @test size(g1.players[1].payoff_array) == (3,)
+
+        # Tuple-length mismatch should throw ArgumentError
+        # length 2 in a 1D array
+        @test_throws ArgumentError NormalFormGame([(1, 2), (3, 4), (5, 6)])
     end
 
     @testset "NormalFormGame constant payoffs" begin
