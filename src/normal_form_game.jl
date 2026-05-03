@@ -584,7 +584,9 @@ payoff values.
 
 # Arguments
 
-- `payoffs::Array{T<:Real}` : Array with ndims=N+1 containing payoff profiles.
+- `payoffs::AbstractArray{T,M}` : Abstract array with `M = N + 1` dimensions
+  containing payoff profiles. This accepts any `AbstractArray` of real numbers,
+  including views and subarrays.
 """
 function NormalFormGame(payoffs::AbstractArray{T,M}) where {T<:Real,M}
     N = M - 1
@@ -612,8 +614,8 @@ Construct a symmetric 2-player NormalFormGame with a square matrix.
 
 # Arguments
 
-- `payoffs::Matrix{T<:Real}` : Square matrix representing each player's payoff
-  matrix.
+- `payoffs::AbstractMatrix{T}` where `T<:Real` : Square matrix representing each
+  player's payoff matrix.
 """
 function NormalFormGame(payoffs::AbstractMatrix{T}) where T<:Real
     n, m = size(payoffs)
