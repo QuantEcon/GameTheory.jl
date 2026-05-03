@@ -20,8 +20,8 @@ Type representing a player in an N-player normal form game.
 
 # Fields
 
-- `payoff_array::Array{T<:Real}` : Array representing the player's payoff
-  function.
+- `payoff_array::Array{T,N}` : Array representing the player's payoff function,
+  where `T<:Real`.
 """
 struct Player{N,T<:Real}
     payoff_array::Array{T,N}
@@ -474,7 +474,7 @@ Type representing an N-player normal form game.
 
 # Fields
 
-- `players::NTuple{N,Player{N,T<:Real}}` : Tuple of Player instances.
+- `players::NTuple{N,Player{N,T}}` : Tuple of Player instances, where `T<:Real`.
 - `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for each
   player.
 """
