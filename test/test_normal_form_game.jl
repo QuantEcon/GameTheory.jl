@@ -257,9 +257,9 @@ using CDDLib
                       (2, 11, 24) (2, 12, 24) (2, 13, 24)]
 
         g3 = @inferred NormalFormGame(payoffs_3p)
-        @test @inferred(num_players(g3)) == 3
+        @test num_players(g3) == 3
         @test g3.nums_actions == (2, 3, 4)
-        @test @inferred(getindex(g3, 1, 1, 1)) == [1, 11, 21]
+        @test g3[1, 1, 1] == [1, 11, 21]
         @test g3[2, 1, 1] == [2, 11, 21]
         @test g3[1, 3, 1] == [1, 13, 21]
         @test g3[1, 1, 4] == [1, 11, 24]
@@ -294,9 +294,9 @@ using CDDLib
         payoffs_1p = [(10,), (20,), (30,)]
 
         g1 = @inferred NormalFormGame(payoffs_1p)
-        @test @inferred(num_players(g1)) == 1
+        @test num_players(g1) == 1
         @test g1.nums_actions == (3,)
-        @test @inferred(getindex(g1, 1)) == 10
+        @test g1[1] == 10
         @test g1[2] == 20
         @test g1[3] == 30
         @test eltype(g1.players[1].payoff_array) == Int
