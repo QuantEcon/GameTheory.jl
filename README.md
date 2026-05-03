@@ -9,13 +9,13 @@ Algorithms and data structures for game theory in Julia
 
 ## Example usage
 
-Create a `NormalFormGame`:
+Create a `NormalFormGame` from an array of payoff tuples:
 
 ```julia
 using GameTheory
-player1 = Player([3 3; 2 5; 0 6])
-player2 = Player([3 2 3; 2 6 1])
-g = NormalFormGame(player1, player2)
+g = NormalFormGame([(3, 3) (3, 2)
+                    (2, 2) (5, 6)
+                    (0, 3) (6, 1)])
 println(g)
 ```
 ```
@@ -23,6 +23,14 @@ println(g)
  [3, 3]  [3, 2]
  [2, 2]  [5, 6]
  [0, 3]  [6, 1]
+```
+
+Or from `Player` instances:
+
+```julia
+player1 = Player([3 3; 2 5; 0 6])
+player2 = Player([3 2 3; 2 6 1])
+g = NormalFormGame(player1, player2)
 ```
 
 `lrsnash` calls the Nash equilibrium computation routine in [lrslib](http://cgm.cs.mcgill.ca/~avis/C/lrs.html)
