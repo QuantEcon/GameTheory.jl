@@ -635,8 +635,8 @@ values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
 
 # Arguments
 
-- `payoffs::Array{AbstractVector{T<:Real}}` : Array with ndims=N containing
-  payoff profiles as vectors.
+- `payoffs::AbstractArray{TV,N}` : Abstract array with N dimensions containing
+  payoff profiles as vectors, where `TV<:AbstractVector{T}` and `T<:Real`.
 """
 function NormalFormGame(payoffs::AbstractArray{TV,N}) where
     {T<:Real,N,TV<:AbstractVector{T}}
@@ -660,8 +660,8 @@ values, one for each player, for the action profile (a\\_1, a\\_2, ..., a\\_N).
 
 # Arguments
 
-- `payoffs::AbstractArray{NTuple{N,T<:Real}}` : Array with ndims=N containing payoff
-  profiles as tuples.
+- `payoffs::AbstractArray{NTuple{N,T},N}` : Abstract array with N dimensions
+  containing payoff profiles as tuples, where `T<:Real`.
 
 # Examples
 
