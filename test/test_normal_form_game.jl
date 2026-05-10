@@ -8,6 +8,7 @@
 
 using GameTheory: get_opponents_actions
 
+using Random
 using MathOptInterface
 const MOI = MathOptInterface
 using Clp
@@ -397,6 +398,44 @@ using CDDLib
         # See pull request #218
         g1 = NormalFormGame((3,))
         @test sprint(show, g1) isa String
+    end
+
+    @testset "Test repr/parse round-trip for NormalFormGame" begin
+        @testset "N=1" begin
+            g = NormalFormGame(Player([10, 20, 30]))
+            g_round = eval(Meta.parse(repr(g)))
+            @test typeof(g_round) == typeof(g)
+            @test g_round.players[1].payoff_array == g.players[1].payoff_array
+        end
+
+        @testset "N=2" begin
+            N = 2
+            g_I = NormalFormGame(
+                    Player([1 2; 3 4; 5 6]), Player([11 12 13; 14 15 16])
+            )
+            g_R = NormalFormGame([(1//3, 2//3) (1//2, 1//2);
+                                  (2//3, 1//3) (1//4, 3//4)])
+            for g in [g_I, g_R]
+                g_round = eval(Meta.parse(repr(g)))
+                @test typeof(g_round) == typeof(g)
+                for i in 1:N
+                    @test g_round.players[i].payoff_array ==
+                          g.players[i].payoff_array
+                end
+            end
+        end
+
+        @testset "N=3" begin
+            N = 3
+            rng = MersenneTwister(12345)
+            g = random_game(rng, (2, 3, 4))
+            g_round = eval(Meta.parse(repr(g)))
+            @test typeof(g_round) == typeof(g)
+            for i in 1:N
+                @test g_round.players[i].payoff_array ==
+                      g.players[i].payoff_array
+            end
+        end
     end
 
     @testset "Tests on delete_action for NormalFormGame" begin
