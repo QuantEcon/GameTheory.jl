@@ -383,11 +383,15 @@ using CDDLib
         end
     end
 
-    @testset "Test repr/print for NormalFormGame" begin
+    @testset "Test repr/show/print for NormalFormGame" begin
         a = reshape([[1, 2], [3, 4], [5, 6], [7, 8]], (2, 2))
+        a_tuples = Tuple.(a)
         g = NormalFormGame(a)
-        @test occursin(string(typeof(g)), repr(g))
-        @test occursin(sprint(Base.print_array, a), sprint(print, g))
+        s = repr(g)
+        @test startswith(s, "NormalFormGame(") && endswith(s, ")")
+        @test occursin(string(typeof(g)), sprint(show, MIME("text/plain"), g))
+        @test occursin(sprint(Base.print_array, a_tuples),
+                       sprint(show, MIME("text/plain"), g))
         @test sprint(print, g) == sprint(show, g)
 
         # See pull request #218

@@ -753,19 +753,28 @@ function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
 end
 
 """
-LazyProfileArray
+    LazyProfileArray
 
-Construct a lazily-evaluated array of payoff profiles. Each profile is an SVector that is created when getindex is called.
+Construct a lazily-evaluated array of payoff profiles. Each profile is an NTuple
+that is created when getindex is called.
 
 This is meant to aid in printing without allocating large arrays.
 """
-struct LazyProfileArray{N,T} <: AbstractArray{SVector{N,T},N}
+struct LazyProfileArray{N,T} <: AbstractArray{NTuple{N,T},N}
     g::NormalFormGame{N,T}
 end
 
 Base.size(a::LazyProfileArray) = a.g.nums_actions
-Base.getindex(a::LazyProfileArray{N}, index::Vararg{Int,N}) where {N} = a.g[index...]
-Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = SVector{1,T}(a.g[index])
+function Base.getindex(a::LazyProfileArray{N,T}, index::Vararg{Int,N}) where {N,T}
+    return ntuple(i -> a.g.players[i].payoff_array[
+        ntuple(k -> index[mod1(k + i - 1, N)], Val(N))...
+    ], Val(N))
+end
+Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = (a.g[index],)
+
+function Base.show(io::IO, g::NormalFormGame)
+    print(io, "NormalFormGame(", LazyProfileArray(g), ")")
+end
 
 function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
     print(io, summary(g))
@@ -782,10 +791,12 @@ function Base.getindex(g::NormalFormGame{N,T},
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
 
-    return SVector{N,T}(ntuple(
-        i -> g.players[i].payoff_array[ntuple(k -> index[mod1(k+i-1, N)], Val(N))...],
-        Val(N),
-    ))
+    payoff_profile = Array{T}(undef, N)
+    for (i, player) in enumerate(g.players)
+        payoff_profile[i] =
+            player.payoff_array[(index[i:end]..., index[1:i-1]...)...]
+    end
+    return payoff_profile
 end
 
 # Trivial game with 1 player
