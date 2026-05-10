@@ -16,6 +16,7 @@ using GameTheory
 g = NormalFormGame([(3, 3) (3, 2)
                     (2, 2) (5, 6)
                     (0, 3) (6, 1)])
+display(g)
 ```
 ```
 3×2 NormalFormGame{2, Int64}:
