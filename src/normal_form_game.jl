@@ -723,7 +723,7 @@ Base.summary(g::NormalFormGame) =
            " ",
            split(string(typeof(g)), ".")[end])
 
-# payoff_profile_array
+
 
 """
     payoff_profile_array(g)
@@ -752,15 +752,35 @@ function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
     return payoff_profile_array
 end
 
-function Base.show(io::IO, g::NormalFormGame)
-    print(io, summary(g))
+"""
+    LazyProfileArray
+
+Construct a lazily-evaluated array of payoff profiles. Each profile is an NTuple
+that is created when getindex is called.
+
+This is meant to aid in printing without allocating large arrays.
+"""
+struct LazyProfileArray{N,T} <: AbstractArray{NTuple{N,T},N}
+    g::NormalFormGame{N,T}
 end
 
-function Base.print(io::IO, g::NormalFormGame)
+Base.size(a::LazyProfileArray) = a.g.nums_actions
+function Base.getindex(a::LazyProfileArray{N,T}, index::Vararg{Int,N}) where {N,T}
+    return ntuple(i -> a.g.players[i].payoff_array[
+        ntuple(k -> index[mod1(k + i - 1, N)], Val(N))...
+    ], Val(N))
+end
+Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = (a.g[index],)
+
+function Base.show(io::IO, g::NormalFormGame)
+    print(io, "NormalFormGame(", LazyProfileArray(g), ")")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
     print(io, summary(g))
     println(io, ":")
-    X = payoff_profile_array(g)
-    if !haskey(io, :compact) && length(axes(X, 2)) > 1
+    X = LazyProfileArray(g)
+    if !haskey(io, :compact) && ndims(X) >= 2 && length(axes(X, 2)) > 1
         io = IOContext(io, :compact => true)
     end
     Base.print_array(io, X)

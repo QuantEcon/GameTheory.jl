@@ -8,6 +8,7 @@
 
 using GameTheory: get_opponents_actions
 
+using Random
 using MathOptInterface
 const MOI = MathOptInterface
 using Clp
@@ -383,11 +384,58 @@ using CDDLib
         end
     end
 
-    @testset "Test repr/print for NormalFormGame" begin
+    @testset "Test repr/show/print for NormalFormGame" begin
         a = reshape([[1, 2], [3, 4], [5, 6], [7, 8]], (2, 2))
+        a_tuples = Tuple.(a)
         g = NormalFormGame(a)
-        @test occursin(string(typeof(g)), repr(g))
-        @test occursin(sprint(Base.print_array, a), sprint(print, g))
+        s = repr(g)
+        @test startswith(s, "NormalFormGame(") && endswith(s, ")")
+        @test occursin(string(typeof(g)), sprint(show, MIME("text/plain"), g))
+        @test occursin(sprint(Base.print_array, a_tuples),
+                       sprint(show, MIME("text/plain"), g))
+        @test sprint(print, g) == sprint(show, g)
+
+        # See pull request #218
+        g1 = NormalFormGame((3,))
+        @test sprint(show, g1) isa String
+    end
+
+    @testset "Test repr/parse round-trip for NormalFormGame" begin
+        @testset "N=1" begin
+            g = NormalFormGame(Player([10, 20, 30]))
+            g_round = eval(Meta.parse(repr(g)))
+            @test typeof(g_round) == typeof(g)
+            @test g_round.players[1].payoff_array == g.players[1].payoff_array
+        end
+
+        @testset "N=2" begin
+            N = 2
+            g_I = NormalFormGame(
+                    Player([1 2; 3 4; 5 6]), Player([11 12 13; 14 15 16])
+            )
+            g_R = NormalFormGame([(1//3, 2//3) (1//2, 1//2);
+                                  (2//3, 1//3) (1//4, 3//4)])
+            for g in [g_I, g_R]
+                g_round = eval(Meta.parse(repr(g)))
+                @test typeof(g_round) == typeof(g)
+                for i in 1:N
+                    @test g_round.players[i].payoff_array ==
+                          g.players[i].payoff_array
+                end
+            end
+        end
+
+        @testset "N=3" begin
+            N = 3
+            rng = MersenneTwister(12345)
+            g = random_game(rng, (2, 3, 4))
+            g_round = eval(Meta.parse(repr(g)))
+            @test typeof(g_round) == typeof(g)
+            for i in 1:N
+                @test g_round.players[i].payoff_array ==
+                      g.players[i].payoff_array
+            end
+        end
     end
 
     @testset "Tests on delete_action for NormalFormGame" begin
