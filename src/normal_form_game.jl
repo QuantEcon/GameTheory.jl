@@ -76,6 +76,7 @@ Base.summary(player::Player) =
            split(string(typeof(player)), ".")[end])
 
 function Base.show(io::IO, ::MIME"text/plain", player::Player)
+    get(io, :compact, false)::Bool && return show(io, player)
     print(io, summary(player))
     println(io, ":")
     X = player.payoff_array
@@ -777,6 +778,7 @@ function Base.show(io::IO, g::NormalFormGame)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
+    get(io, :compact, false)::Bool && return show(io, g)
     print(io, summary(g))
     println(io, ":")
     X = LazyProfileArray(g)
