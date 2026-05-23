@@ -438,6 +438,34 @@ using CDDLib
         end
     end
 
+    @testset "Test compact text/plain display" begin
+        struct CompactTextPlainWrapper{T}
+            x::T
+        end
+
+        function Base.show(io::IO, ::MIME"text/plain", w::CompactTextPlainWrapper)
+            print(io, "CompactTextPlainWrapper(")
+            show(IOContext(io, :compact => true), MIME"text/plain"(), w.x)
+            print(io, ")")
+        end
+
+        p1 = Player([1 2; 3 4; 5 6])
+        p2 = Player([11 12 13; 14 15 16])
+        g = NormalFormGame(p1, p2)
+
+        @testset "show for Player" begin
+            p_out = sprint(show, MIME"text/plain"(), CompactTextPlainWrapper(p1))
+            @test !occursin('\n', p_out)
+            @test p_out == "CompactTextPlainWrapper($(sprint(show, p1)))"
+        end
+
+        @testset "show for NormalFormGame" begin
+            g_out = sprint(show, MIME"text/plain"(), CompactTextPlainWrapper(g))
+            @test !occursin('\n', g_out)
+            @test g_out == "CompactTextPlainWrapper($(sprint(show, g)))"
+        end
+    end
+
     @testset "Tests on delete_action for NormalFormGame" begin
         shapley_game = Array{Int}(undef, 3, 3, 2)
         shapley_game[:, 1, 1] = [0, 0, 1]
