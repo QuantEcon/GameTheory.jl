@@ -71,15 +71,13 @@ julia> player1 = Player([1 4; 2 5; 3 6]);
 
 julia> player2 = Player([7 8 9; 10 11 12]);
 
-julia> g = NormalFormGame(player1, player2);
-
-julia> println(g)
+julia> g = NormalFormGame(player1, player2)
 3×2 NormalFormGame{2, Int64}:
- [1, 7]  [4, 10]
- [2, 8]  [5, 11]
- [3, 9]  [6, 12]
+ (1, 7)  (4, 10)
+ (2, 8)  (5, 11)
+ (3, 9)  (6, 12)
 
-julia> p = GAMPayoffVector(g);
+julia> p = GameTheory.GAMPayoffVector(g);
 
 julia> @show p.payoffs;
 p.payoffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
@@ -120,15 +118,13 @@ julia> payoffs = collect(1:12);
 julia> @show payoffs;
 payoffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
-julia> p = GAMPayoffVector(nums_actions, payoffs);
+julia> p = GameTheory.GAMPayoffVector(nums_actions, payoffs);
 
-julia> g = NormalFormGame(p);
-
-julia> println(g)
+julia> NormalFormGame(p)
 3×2 NormalFormGame{2, Int64}:
- [1, 7]  [4, 10]
- [2, 8]  [5, 11]
- [3, 9]  [6, 12]
+ (1, 7)  (4, 10)
+ (2, 8)  (5, 11)
+ (3, 9)  (6, 12)
 ```
 """
 function NormalFormGame(::Type{T}, p::GAMPayoffVector{N}) where {N,T<:Real}

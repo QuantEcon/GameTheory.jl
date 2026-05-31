@@ -588,12 +588,10 @@ For Prisoners' Dilemma state game:
 ```julia
 julia> pd_payoff = [9.0 1.0; 10.0 3.0];
 
-julia> g = NormalFormGame(pd_payoff);  # symmetric 2-player game
-
-julia> println(g)
+julia> g = NormalFormGame(pd_payoff)  # symmetric 2-player game
 2×2 NormalFormGame{2, Float64}:
- [9.0, 9.0]   [1.0, 10.0]
- [10.0, 1.0]  [3.0, 3.0]
+ (9.0, 9.0)   (1.0, 10.0)
+ (10.0, 1.0)  (3.0, 3.0)
 
 julia> rpd = RepeatedGame(g, 0.75);
 
@@ -610,7 +608,9 @@ the computation will be in exact arithmetic:
 
 ```julia
 julia> g_int = NormalFormGame(Int, g)  # convert to Int-valued game
-2×2 NormalFormGame{2, Int64}
+2×2 NormalFormGame{2, Int64}:
+ (9, 9)   (1, 10)
+ (10, 1)  (3, 3)
 
 julia> rpd_rat = RepeatedGame(g_int, 3//4);  # discount factor as Rational
 

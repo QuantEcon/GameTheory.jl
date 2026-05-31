@@ -62,17 +62,15 @@ Consider the following game from von Stengel (2007):
 ```julia
 julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
 
-julia> player1 = Player([3 3; 2 5; 0 6]);
+julia> bimatrix = [(3, 3) (3, 2)
+                   (2, 2) (5, 6)
+                   (0, 3) (6, 1)];
 
-julia> player2 = Player([3 2 3; 2 6 1]);
-
-julia> g = NormalFormGame(player1, player2);
-
-julia> println(g)
+julia> g = NormalFormGame(bimatrix)
 3×2 NormalFormGame{2, Int64}:
- [3, 3]  [3, 2]
- [2, 2]  [5, 6]
- [0, 3]  [6, 1]
+ (3, 3)  (3, 2)
+ (2, 2)  (5, 6)
+ (0, 3)  (6, 1)
 ```
 
 Obtain a Nash equilibrium of this game by `lemke_howson` with player 1's
