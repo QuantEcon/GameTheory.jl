@@ -31,8 +31,6 @@ Consider the 3-player 2-action game with 9 Nash equilibria in McKelvey and
 McLennan (1996) "Computation of Equilibria in Finite Games":
 
 ```julia
-julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
-
 julia> g = NormalFormGame((2, 2, 2));
 
 julia> g[1, 1, 1] = [9, 8, 12];
@@ -52,6 +50,8 @@ julia> g
 [:, :, 2] =
  (0.0, 0.0, 0.0)  (3.0, 4.0, 6.0)
  (3.0, 4.0, 4.0)  (0.0, 0.0, 0.0)
+
+julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
 
 julia> NEs = hc_solve(g, show_progress=false)
 9-element Vector{Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}:

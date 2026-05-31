@@ -140,8 +140,6 @@ to find a completely labeled pair.
 # Examples
 
 ```julia
-julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
-
 julia> bimatrix = [(3, 3) (3, 2)
                    (2, 2) (5, 6)
                    (0, 3) (6, 1)];
@@ -151,6 +149,8 @@ julia> g = NormalFormGame(bimatrix)
  (3, 3)  (3, 2)
  (2, 2)  (5, 6)
  (0, 3)  (6, 1)
+
+julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
 
 julia> vertex_enumeration(g)
 3-element Vector{Tuple{Vector{Float64}, Vector{Float64}}}:
@@ -191,8 +191,6 @@ Task version of `vertex_enumeration`.
 # Examples
 
 ```julia
-julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
-
 julia> bimatrix = [(3, 3) (3, 2)
                    (2, 2) (5, 6)
                    (0, 3) (6, 1)];
@@ -208,6 +206,8 @@ julia> c = Channel{Tuple{Vector{Float64},Vector{Float64}}}(0);
 julia> t = vertex_enumeration_task(c, g);
 
 julia> bind(c, t); schedule(t);
+
+julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
 
 julia> for NE in c
            display(NE)

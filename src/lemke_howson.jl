@@ -60,8 +60,6 @@ the Lemke–Howson algorithm (Lemke and Howson, 1964), implemented with
 Consider the following game from von Stengel (2007):
 
 ```julia
-julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
-
 julia> bimatrix = [(3, 3) (3, 2)
                    (2, 2) (5, 6)
                    (0, 3) (6, 1)];
@@ -77,6 +75,8 @@ Obtain a Nash equilibrium of this game by `lemke_howson` with player 1's
 action 2 (out of the three actions 1, 2, and 3) as the initial pivot:
 
 ```julia
+julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
+
 julia> NE = lemke_howson(g, init_pivot=2)
 ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 
