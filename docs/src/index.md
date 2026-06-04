@@ -29,7 +29,6 @@ A 2-player `NormalFormGame` can be created either by passing `Player` instances,
 ```@example 1
 player2 = Player([2 0; 1 3])
 g = NormalFormGame((player1, player2))
-print(g)
 ```
 
 or by passing an array of tuples representing payoff profiles:
@@ -37,7 +36,6 @@ or by passing an array of tuples representing payoff profiles:
 ```@example 1
 g = NormalFormGame([(3, 2) (1, 1)
                     (0, 0) (2, 3)])
-print(g)
 ```
 
 or by passing a payoff matrix directly:
@@ -49,7 +47,6 @@ payoff_bimatrix[1, 2, :] = [1, 1]
 payoff_bimatrix[2, 1, :] = [0, 0]
 payoff_bimatrix[2, 2, :] = [2, 3]
 g = NormalFormGame(payoff_bimatrix)
-print(g)
 ```
 
 After constructing a `NormalFormGame`, we can find its Nash Equilibria by using methods of `GameTheory`. For example, `pure_nash` finds all pure action Nash Equilibria by enumeration:

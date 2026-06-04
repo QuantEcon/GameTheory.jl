@@ -124,22 +124,21 @@ julia> using GameTheory.Generators, Random
 
 julia> rng = MersenneTwister(1234);
 
-julia> g = blotto_game(rng, 2, 3, 0.5)
-4×4 NormalFormGame{2, Float64}
+julia> g = blotto_game(rng, 2, 3, 0.5);
 
 julia> g.players[1]
 4×4 Player{2, Float64}:
- 0.186434  -0.494479  -0.494479  -0.494479
- 0.867347   0.186434  -0.494479  -0.494479
- 0.867347   0.867347   0.186434  -0.494479
- 0.867347   0.867347   0.867347   0.186434
+ -0.354329   0.103292   0.103292   0.103292
+ -0.81195   -0.354329   0.103292   0.103292
+ -0.81195   -0.81195   -0.354329   0.103292
+ -0.81195   -0.81195   -0.81195   -0.354329
 
 julia> g.players[2]
 4×4 Player{2, Float64}:
- -0.688223  -1.02919   -1.02919   -1.02919
- -0.347259  -0.688223  -1.02919   -1.02919
- -0.347259  -0.347259  -0.688223  -1.02919
- -0.347259  -0.347259  -0.347259  -0.688223
+ 0.840496  -0.131996  -0.131996  -0.131996
+ 1.81299    0.840496  -0.131996  -0.131996
+ 1.81299    1.81299    0.840496  -0.131996
+ 1.81299    1.81299    1.81299    0.840496
 ```
 """
 function blotto_game(rng::AbstractRNG, h::Integer, t::Integer, rho::Real,
@@ -214,24 +213,23 @@ julia> using GameTheory.Generators, Random
 
 julia> rng = MersenneTwister(1234);
 
-julia> g = ranking_game(rng, 5)
-5×5 NormalFormGame{2, Float64}
+julia> g = ranking_game(rng, 5);
 
 julia> g.players[1]
 5×5 Player{2, Float64}:
- 0.5    0.0    0.0    0.0    0.0
- 0.92  -0.08  -0.08  -0.08  -0.08
- 0.88   0.88   0.88   0.88  -0.12
- 0.74   0.74   0.74   0.74   0.74
- 0.58   0.58   0.58   0.58   0.58
+ 1.0   0.0   0.0   0.0    0.0
+ 0.94  0.94  0.94  0.44  -0.06
+ 0.92  0.92  0.92  0.92  -0.08
+ 0.86  0.86  0.86  0.86   0.86
+ 0.74  0.74  0.74  0.74   0.74
 
 julia> g.players[2]
 5×5 Player{2, Float64}:
- 0.5   0.0    0.0    0.0    0.0
- 0.92  0.92  -0.08  -0.08  -0.08
- 0.76  0.76  -0.24  -0.24  -0.24
- 0.56  0.56  -0.44  -0.44  -0.44
- 0.44  0.44   0.44  -0.56  -0.56
+ 0.0    0.0    0.0    0.0    0.0
+ 0.88  -0.12  -0.12  -0.12  -0.12
+ 0.7   -0.3   -0.3   -0.3   -0.3
+ 0.68   0.18  -0.32  -0.32  -0.32
+ 0.56   0.56   0.56  -0.44  -0.44
 ```
 """
 function ranking_game(rng::AbstractRNG, n::Integer, steps::Integer=10)
@@ -297,8 +295,7 @@ respectively.
 ```julia
 julia> using GameTheory.Generators
 
-julia> g = sgc_game(2)
-7×7 NormalFormGame{2, Float64}
+julia> g = sgc_game(2);
 
 julia> g.players[1]
 7×7 Player{2, Float64}:
@@ -402,16 +399,15 @@ julia> using GameTheory.Generators, Random
 
 julia> rng = MersenneTwister(1234);
 
-julia> g = tournament_game(rng, 5, 2)
-5×10 NormalFormGame{2, Float64}
+julia> g = tournament_game(rng, 5, 2);
 
 julia> g.players[1]
 5×10 Player{2, Float64}:
- 0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0  1.0  1.0
- 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  1.0  0.0  0.0  1.0  0.0  0.0  1.0
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  1.0  0.0  0.0
- 0.0  0.0  1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 1.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0
 
 julia> g.players[2]
 10×5 Player{2, Float64}:
@@ -497,32 +493,31 @@ range. For player 1, each column contains exactly one 1 payoff and the rest is
 # Examples
 
 ```julia
-julia> using GameTheory.Generators, Random
+julia> using GameTheory, GameTheory.Generators, Random
 
 julia> rng = MersenneTwister(123456);
 
-julia> g = unit_vector_game(rng, 5)
-5×5 NormalFormGame{2, Float64}
+julia> g = unit_vector_game(rng, 5);
 
 julia> g.players[1]
 5×5 Player{2, Float64}:
  0.0  0.0  0.0  0.0  0.0
- 1.0  0.0  0.0  0.0  1.0
+ 1.0  1.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  1.0  0.0
  0.0  0.0  0.0  0.0  0.0
- 0.0  0.0  1.0  0.0  0.0
- 0.0  1.0  0.0  1.0  0.0
+ 0.0  0.0  0.0  0.0  1.0
 
 julia> g.players[2]
 5×5 Player{2, Float64}:
- 0.51521   0.574332    0.391494   0.316183  0.913325
- 0.74129   0.47338     0.0110828  0.986807  0.302641
- 0.582142  0.635053    0.7289     0.324831  0.240347
- 0.209969  0.00394602  0.588569   0.627509  0.692993
- 0.180649  0.998717    0.0955464  0.974204  0.994846
+ 0.719317  0.632521   0.839302  0.221293  0.777781
+ 0.899141  0.506592   0.315643  0.78647   0.456127
+ 0.262636  0.0519947  0.983166  0.501482  0.445485
+ 0.481546  0.489245   0.233796  0.25959   0.790391
+ 0.410754  0.761736   0.39765   0.318762  0.991986
 
 julia> pure_nash(g)
 1-element Vector{Tuple{Int64, Int64}}:
- (2, 5)
+ (5, 5)
 ```
 
 With `avoid_pure_nash=true`:
@@ -530,24 +525,23 @@ With `avoid_pure_nash=true`:
 ```julia
 julia> rng = MersenneTwister(123456);
 
-julia> g = unit_vector_game(rng, 5; avoid_pure_nash=true)
-5×5 NormalFormGame{2, Float64}
+julia> g = unit_vector_game(rng, 5; avoid_pure_nash=true);
 
 julia> g.players[1]
 5×5 Player{2, Float64}:
  0.0  0.0  0.0  0.0  0.0
- 1.0  0.0  0.0  0.0  0.0
+ 1.0  1.0  1.0  0.0  0.0
+ 0.0  0.0  0.0  1.0  0.0
  0.0  0.0  0.0  0.0  1.0
- 0.0  0.0  1.0  0.0  0.0
- 0.0  1.0  0.0  1.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
 
 julia> g.players[2]
 5×5 Player{2, Float64}:
- 0.51521   0.574332    0.391494   0.316183  0.913325
- 0.74129   0.47338     0.0110828  0.986807  0.302641
- 0.582142  0.635053    0.7289     0.324831  0.240347
- 0.209969  0.00394602  0.588569   0.627509  0.692993
- 0.180649  0.998717    0.0955464  0.974204  0.994846
+ 0.719317  0.632521   0.839302  0.221293  0.777781
+ 0.899141  0.506592   0.315643  0.78647   0.456127
+ 0.262636  0.0519947  0.983166  0.501482  0.445485
+ 0.481546  0.489245   0.233796  0.25959   0.790391
+ 0.410754  0.761736   0.39765   0.318762  0.991986
 
 julia> pure_nash(g)
 Tuple{Int64, Int64}[]
