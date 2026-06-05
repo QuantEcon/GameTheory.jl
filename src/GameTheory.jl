@@ -6,7 +6,6 @@ using LinearAlgebra, Random
 # Packages
 using QuantEcon
 using Combinatorics
-using Parameters
 using Distributions
 
 # Optimization packages

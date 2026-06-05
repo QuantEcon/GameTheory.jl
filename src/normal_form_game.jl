@@ -417,7 +417,7 @@ Struct to contain options for `best_response`.
 - `tie_breaking::Symbol=:smallest` : `:smallest` or `:random`.
 - `rng::AbstractRNG=GLOBAL_RNG` : Random number generator.
 """
-@with_kw struct BROptions{T<:Real,TR<:AbstractRNG}
+Base.@kwdef struct BROptions{T<:Real,TR<:AbstractRNG}
     tol::T = 1e-8
     tie_breaking::Symbol = :smallest
     rng::TR = Random.GLOBAL_RNG
