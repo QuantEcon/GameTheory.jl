@@ -16,8 +16,8 @@ nonlinear complementarity problem representation of Nash eqiulibrium, by using
 - `ntofind=Inf`: Number of Nash equilibria to find.
 - `options...`: Optional arguments to pass to `HomotopyContinuation.solve`. For
   example, the option `seed::UInt32` can set the random seed used during the
-  computations. See the [documentation]
-  (https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
+  computations. See the
+  [documentation](https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
   for `HomotopyContinuation.solve` for details.
 
 # Returns
