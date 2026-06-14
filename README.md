@@ -127,6 +127,15 @@ See the tutorials for further examples.
 * [`AS`](https://quantecon.github.io/GameTheory.jl/stable/lib/repeated_games.html#GameTheory.AS-Union{Tuple{RepeatedGame{2,%20T,%20TD}},%20Tuple{TD},%20Tuple{T}}%20where%20{T,%20TD}):
   Equilibrium payoff computation algorithm by Abreu-Sannikov
 
+## Solvers from external packages
+
+* [`ipa_solve`](https://quantecon.github.io/GameTracer.jl/stable/#GameTracer.ipa_solve):
+  Find one mixed-action approximate Nash equilibrium of an N-player game using iterated polymatrix approximation (IPA)
+  ([`GameTracer.jl`](https://github.com/QuantEcon/GameTracer.jl))
+* [`gnm_solve`](https://quantecon.github.io/GameTracer.jl/stable/#GameTracer.gnm_solve):
+  Find mixed-action Nash equilibria of an N-player using the global Newton method (GNM)
+  ([`GameTracer.jl`](https://github.com/QuantEcon/GameTracer.jl))
+
 ## Tutorials
 
 * [Tools for Game Theory in GameTheory.jl](https://nbviewer.org/github/QuantEcon/game-theory-notebooks/blob/main/game_theory_jl.ipynb)
