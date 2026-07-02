@@ -626,11 +626,16 @@ julia> size(vertices_rat)
 ```
 
 There is a utility `uniquetolrows` which can be used to remove approximately
-duplicate rows:
+duplicate rows (the retained rows keep the exact values):
 
 ```julia
-julia> uniquetolrows(vertices_rat, 1e-8)
-4×2 Matrix{BigFloat}:
+julia> V = uniquetolrows(vertices_rat, 1e-8);
+
+julia> typeof(V)
+Matrix{Rational{BigInt}} (alias for Array{Rational{BigInt}, 2})
+
+julia> Float64.(V)
+4×2 Matrix{Float64}:
  9.0   9.0
  9.75  3.0
  3.0   9.75
@@ -763,21 +768,28 @@ end
 """
     uniquetolrows(V, tol)
 
-Remove near-duplicate rows from matrix V using tolerance-based deduplication.
+Remove near-duplicate rows from matrix `V`: scanning from the top, a row is
+dropped if it is within `tol`, in the Chebyshev distance, of a row retained
+earlier. The retained rows are returned unmodified, with the element type of
+`V` preserved.
 
 # Arguments
 
 - `V::AbstractMatrix{T}` : Input matrix where T<:Real.
-- `tol::Real` : Tolerance for considering points as duplicates.
+- `tol::Real` : Tolerance for considering rows as duplicates.
 
 # Returns
 
-- `::Matrix` : Matrix of floats with duplicate rows removed within tolerance.
+- `::Matrix{T}` : Matrix consisting of the retained rows of `V`.
 """
 function uniquetolrows(V::AbstractMatrix{T}, tol::Real) where T
-    digits = max(0, floor(Int, -log10(tol)))
-    Vr = round.(V; digits=digits)
-    return unique(Vr; dims=1)
+    keep = Int[]
+    for i in 1:size(V, 1)
+        if !any(j -> maximum(abs, V[i, :] - V[j, :]) < tol, keep)
+            push!(keep, i)
+        end
+    end
+    return V[keep, :]
 end
 
 """
