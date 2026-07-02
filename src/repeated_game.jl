@@ -787,7 +787,7 @@ earlier. The retained rows are returned unmodified, with the element type of
 function uniquetolrows(V::AbstractMatrix{T}, tol::Real) where T
     keep = Int[]
     for i in 1:size(V, 1)
-        if !any(j -> maximum(abs, V[i, :] - V[j, :]) < tol, keep)
+        if !any(j -> maximum(abs, V[i, :] - V[j, :]) <= tol, keep)
             push!(keep, i)
         end
     end
