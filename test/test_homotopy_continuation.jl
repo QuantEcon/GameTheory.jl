@@ -7,7 +7,8 @@
                ([4//5, 1//5, 0//1], [2//3, 1//3]),
                ([0//1, 1//3, 2//3], [1//3, 2//3])]
 
-        NEs_computed = @inferred hc_solve(g, show_progress=false)
+        NEs_computed = @inferred hc_solve(g, show_progress=false,
+                                          compile=false)
         @test isapprox_vecs_act_profs(NEs_computed, NEs)
     end
 
@@ -29,12 +30,14 @@
             ([1//2, 1//2], [1//3, 2//3], [1//4, 3//4])
         ]
 
-        NEs_computed = @inferred hc_solve(g, show_progress=false)
+        NEs_computed = @inferred hc_solve(g, show_progress=false,
+                                          compile=false)
         @test isapprox_vecs_act_profs(NEs_computed, NEs)
 
         ntofind = 1
         NEs_computed =
-            @inferred hc_solve(g, ntofind=ntofind, show_progress=false)
+            @inferred hc_solve(g, ntofind=ntofind, show_progress=false,
+                               compile=false)
         @test length(NEs_computed) == ntofind
         for i in 1:ntofind
             @test is_nash(g, NEs_computed[i])
@@ -56,7 +59,8 @@
         r = (-3q + 2) / (q + 1)
         NEs = [([p, 1-p], [q, 1-q], [r, 1-r])]
 
-        NEs_computed = @inferred hc_solve(g, show_progress=false)
+        NEs_computed = @inferred hc_solve(g, show_progress=false,
+                                          compile=false)
         @test isapprox_vecs_act_profs(NEs_computed, NEs)
     end
 
