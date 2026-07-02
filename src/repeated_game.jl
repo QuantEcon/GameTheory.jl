@@ -678,8 +678,10 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     # comparison) in exact arithmetic; otherwise proportional to the payoff
     # scale, since `isapprox` with the default `atol=0` never holds at an IC
     # boundary located at 0
+    payoff_scale = maximum(abs, v_old)
     atol_IC = S <: AbstractFloat ?
-              sqrt(eps(S)) * max(one(S), maximum(abs, v_old)) : zero(S)
+              sqrt(eps(S)) * (iszero(payoff_scale) ? one(S) : payoff_scale) :
+              zero(S)
 
     for iter = 1:maxiter
 
