@@ -626,11 +626,16 @@ julia> size(vertices_rat)
 ```
 
 There is a utility `uniquetolrows` which can be used to remove approximately
-duplicate rows:
+duplicate rows (the retained rows keep the exact values):
 
 ```julia
-julia> uniquetolrows(vertices_rat, 1e-8)
-4×2 Matrix{BigFloat}:
+julia> V = uniquetolrows(vertices_rat, 1e-8);
+
+julia> typeof(V)
+Matrix{Rational{BigInt}} (alias for Array{Rational{BigInt}, 2})
+
+julia> Float64.(V)
+4×2 Matrix{Float64}:
  9.0   9.0
  9.75  3.0
  3.0   9.75
@@ -669,6 +674,15 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     A_IC = -Matrix{S}(I, 2, 2)
     payoffs = Vector{S}(undef, 2)
 
+    # Tolerance for detecting vertices on the IC boundaries: zero (exact
+    # comparison) in exact arithmetic; otherwise proportional to the payoff
+    # scale, since `isapprox` with the default `atol=0` never holds at an IC
+    # boundary located at 0
+    payoff_scale = maximum(abs, v_old)
+    atol_IC = S <: AbstractFloat ?
+              sqrt(eps(S)) * (iszero(payoff_scale) ? one(S) : payoff_scale) :
+              zero(S)
+
     for iter = 1:maxiter
 
         v_new = S[] # to store new vertices
@@ -697,7 +711,8 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
                 p_inter = intersect(p_IC, p)
                 Vmat = MixedMatVRep(vrep(p_inter)).V
                 for i in 1:size(Vmat, 1)
-                    if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
+                    if isapprox(Vmat[i, 1], IC1, atol=atol_IC) ||
+                       isapprox(Vmat[i, 2], IC2, atol=atol_IC)
                         push!(v_new, (rpd.delta * Vmat[i, :] +
                                       (one(S) - rpd.delta) * S[payoff1, payoff2])...)
                     end
@@ -738,9 +753,7 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
         # update u
         u_ = [minimum(v_new[:, 1]),
               minimum(v_new[:, 2])]
-        if any(u_ .> u)
-            u = u_
-        end
+        u = max.(u, u_)
     end
 
     # Return matrix with coefficient type S
@@ -757,21 +770,28 @@ end
 """
     uniquetolrows(V, tol)
 
-Remove near-duplicate rows from matrix V using tolerance-based deduplication.
+Remove near-duplicate rows from matrix `V`: scanning from the top, a row is
+dropped if it is within `tol`, in the Chebyshev distance, of a row retained
+earlier. The retained rows are returned unmodified, with the element type of
+`V` preserved.
 
 # Arguments
 
 - `V::AbstractMatrix{T}` : Input matrix where T<:Real.
-- `tol::Real` : Tolerance for considering points as duplicates.
+- `tol::Real` : Tolerance for considering rows as duplicates.
 
 # Returns
 
-- `::Matrix` : Matrix of floats with duplicate rows removed within tolerance.
+- `::Matrix{T}` : Matrix consisting of the retained rows of `V`.
 """
 function uniquetolrows(V::AbstractMatrix{T}, tol::Real) where T
-    digits = max(0, floor(Int, -log10(tol)))
-    Vr = round.(V; digits=digits)
-    return unique(Vr; dims=1)
+    keep = Int[]
+    for i in 1:size(V, 1)
+        if !any(j -> maximum(abs, V[i, :] - V[j, :]) <= tol, keep)
+            push!(keep, i)
+        end
+    end
+    return V[keep, :]
 end
 
 """

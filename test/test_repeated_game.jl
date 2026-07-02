@@ -61,26 +61,15 @@
     # Test AS algorithm
     #
     @testset "Testing AS algorithm" begin
-        # Helper function to test if each row of vertices approximately matches some row in expected
+        # Helper function to test if the rows of `vertices` and the rows of
+        # `expected` coincide as sets of points, within tolerance: every row
+        # of each matrix must be within `tol` of some row of the other
         function vertices_match_expected(vertices, expected; tol=1e-4)
-            # Convert to Float64 for comparison if needed
-            vertices_float = eltype(vertices) <: AbstractFloat ? vertices : Float64.(vertices)
-            expected_float = eltype(expected) <: AbstractFloat ? expected : Float64.(expected)
-            
-            # Check that each row in vertices is approximately equal to some row in expected
-            for i in 1:size(vertices_float, 1)
-                found_match = false
-                for j in 1:size(expected_float, 1)
-                    if maximum(abs, vertices_float[i, :] - expected_float[j, :]) < tol
-                        found_match = true
-                        break
-                    end
-                end
-                if !found_match
-                    return false
-                end
-            end
-            return true
+            rows(A) = [Float64.(A[i, :]) for i in 1:size(A, 1)]
+            iscovered(a, B) = any(maximum(abs, a - b) < tol for b in B)
+            vertices_rows, expected_rows = rows(vertices), rows(expected)
+            return all(iscovered(v, expected_rows) for v in vertices_rows) &&
+                   all(iscovered(e, vertices_rows) for e in expected_rows)
         end
         
         vertices = @inferred(AS(rpd; tol=1e-9))
