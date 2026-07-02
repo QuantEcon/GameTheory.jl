@@ -669,6 +669,13 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     A_IC = -Matrix{S}(I, 2, 2)
     payoffs = Vector{S}(undef, 2)
 
+    # Tolerance for detecting vertices on the IC boundaries: zero (exact
+    # comparison) in exact arithmetic; otherwise proportional to the payoff
+    # scale, since `isapprox` with the default `atol=0` never holds at an IC
+    # boundary located at 0
+    atol_IC = S <: AbstractFloat ?
+              sqrt(eps(S)) * max(one(S), maximum(abs, v_old)) : zero(S)
+
     for iter = 1:maxiter
 
         v_new = S[] # to store new vertices
@@ -697,7 +704,8 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
                 p_inter = intersect(p_IC, p)
                 Vmat = MixedMatVRep(vrep(p_inter)).V
                 for i in 1:size(Vmat, 1)
-                    if Vmat[i, 1] ≈ IC1 || Vmat[i, 2] ≈ IC2
+                    if isapprox(Vmat[i, 1], IC1, atol=atol_IC) ||
+                       isapprox(Vmat[i, 2], IC2, atol=atol_IC)
                         push!(v_new, (rpd.delta * Vmat[i, :] +
                                       (one(S) - rpd.delta) * S[payoff1, payoff2])...)
                     end
