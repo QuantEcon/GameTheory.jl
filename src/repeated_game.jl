@@ -758,7 +758,7 @@ in that case, and removed with the convex hull computation).
 """
 function _R(rpd::RepGame2, best_dev_gains1, best_dev_gains2,
             poly::Vector{NTuple{2,S}}, u, atol_in) where S
-    delta = rpd.delta
+    delta = convert(S, rpd.delta)
     v_new = NTuple{2,S}[]
     sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
     for a2 in 1:rpd.sg.nums_actions[2]
