@@ -637,6 +637,14 @@ function _simplify(poly::Vector{NTuple{2,S}}, atol) where S
     return kept
 end
 
+# Intersection point of the segment from `a` to `b` with the line
+# {w : w[i] == c}, with the i-th coordinate set to exactly `c`
+function _intersection_point(a::NTuple{2,S}, b::NTuple{2,S}, i, c) where S
+    t = (c - a[i]) / (b[i] - a[i])
+    return i == 1 ? (S(c), a[2] + t*(b[2]-a[2])) :
+                    (a[1] + t*(b[1]-a[1]), S(c))
+end
+
 """
     _clip(poly, i, c)
 
@@ -649,15 +657,20 @@ function _clip(poly::Vector{NTuple{2,S}}, i::Integer, c) where S
     if n == 1
         return poly[1][i] >= c ? poly : NTuple{2,S}[]
     end
+    if n == 2  # degenerate polygon: a segment
+        a, b = poly
+        ain, bin = a[i] >= c, b[i] >= c
+        ain && bin && return poly
+        !ain && !bin && return NTuple{2,S}[]
+        w = _intersection_point(a, b, i, c)
+        return ain ? [a, w] : [w, b]
+    end
     out = NTuple{2,S}[]
     for k in 1:n
         a, b = poly[k], poly[mod1(k+1, n)]
         a[i] >= c && push!(out, a)
         if (a[i] >= c) != (b[i] >= c)
-            t = (c - a[i]) / (b[i] - a[i])
-            w = i == 1 ? (S(c), a[2] + t*(b[2]-a[2])) :
-                         (a[1] + t*(b[1]-a[1]), S(c))
-            push!(out, w)
+            push!(out, _intersection_point(a, b, i, c))
         end
     end
     return out
