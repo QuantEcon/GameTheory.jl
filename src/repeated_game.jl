@@ -546,28 +546,184 @@ function outerapproximation(
     return vertices
 end
 
+#
+# 2D geometry primitives for the AS algorithm
+#
+# Convex polygons are represented as vectors of 2-tuples of coordinates, with
+# the vertices in counterclockwise order. All primitives use only +, -, *, /
+# and comparisons, so they are exact for Rational element types.
+#
+
+# 2D cross product of the vectors (b - a) and (c - a)
+_cross(a, b, c) = (b[1]-a[1])*(c[2]-a[2]) - (b[2]-a[2])*(c[1]-a[1])
+
+# Distance from the point `q` to the segment from `a` to `b`
+function _segment_dist(q, a, b)
+    d1, d2 = float(b[1]-a[1]), float(b[2]-a[2])
+    L2 = d1^2 + d2^2
+    t = iszero(L2) ? zero(L2) :
+        clamp((float(q[1]-a[1])*d1 + float(q[2]-a[2])*d2) / L2,
+              zero(L2), one(L2))
+    return hypot(float(q[1]-a[1]) - t*d1, float(q[2]-a[2]) - t*d2)
+end
+
 """
-    AS(rpd; maxiter=1000, plib=default_library(2, Float64), tol=1e-5,
-       u=nothing, verbose=false)
+    _convex_hull(pts)
+
+Convex hull of 2D points by Andrew's monotone chain algorithm. Return the
+vertices in counterclockwise order starting from the lexicographically
+smallest one; duplicate and interior (including collinear) points are
+dropped.
+"""
+function _convex_hull(pts::AbstractVector{NTuple{2,S}}) where S
+    pts = sort!(unique(pts))
+    length(pts) <= 2 && return pts
+    lower = NTuple{2,S}[]
+    for pt in pts
+        while length(lower) >= 2 && _cross(lower[end-1], lower[end], pt) <= 0
+            pop!(lower)
+        end
+        push!(lower, pt)
+    end
+    upper = NTuple{2,S}[]
+    for pt in Iterators.reverse(pts)
+        while length(upper) >= 2 && _cross(upper[end-1], upper[end], pt) <= 0
+            pop!(upper)
+        end
+        push!(upper, pt)
+    end
+    return vcat(lower[1:end-1], upper[1:end-1])
+end
+
+"""
+    _simplify(poly, atol)
+
+Simplify a convex polygon by merging consecutive vertices within `atol` in
+Chebyshev distance and dropping vertices within distance `atol` of the
+segment joining their neighbors. The distance to the segment, not to the
+line through it, is used: on degenerate, segment-like polygons the latter
+would erode true extreme points. No-op when `atol` is zero (exact
+arithmetic).
+"""
+function _simplify(poly::Vector{NTuple{2,S}}, atol) where S
+    (iszero(atol) || length(poly) <= 2) && return poly
+    kept = NTuple{2,S}[]
+    for w in poly
+        if isempty(kept) ||
+                max(abs(w[1]-kept[end][1]), abs(w[2]-kept[end][2])) > atol
+            push!(kept, w)
+        end
+    end
+    while length(kept) > 1 &&
+            max(abs(kept[end][1]-kept[1][1]),
+                abs(kept[end][2]-kept[1][2])) <= atol
+        pop!(kept)
+    end
+    changed = true
+    while changed && length(kept) > 2
+        changed = false
+        k = 1
+        while k <= length(kept) && length(kept) > 2
+            n = length(kept)
+            a, b, c = kept[mod1(k-1, n)], kept[k], kept[mod1(k+1, n)]
+            if _segment_dist(b, a, c) <= atol
+                deleteat!(kept, k)
+                changed = true
+            else
+                k += 1
+            end
+        end
+    end
+    return kept
+end
+
+"""
+    _clip(poly, i, c)
+
+Clip the convex polygon `poly` to the half-plane `{w : w[i] >= c}`.
+Intersection points with the boundary line get their `i`-th coordinate set
+to exactly `c`.
+"""
+function _clip(poly::Vector{NTuple{2,S}}, i::Integer, c) where S
+    n = length(poly)
+    if n == 1
+        return poly[1][i] >= c ? poly : NTuple{2,S}[]
+    end
+    out = NTuple{2,S}[]
+    for k in 1:n
+        a, b = poly[k], poly[mod1(k+1, n)]
+        a[i] >= c && push!(out, a)
+        if (a[i] >= c) != (b[i] >= c)
+            t = (c - a[i]) / (b[i] - a[i])
+            w = i == 1 ? (S(c), a[2] + t*(b[2]-a[2])) :
+                         (a[1] + t*(b[1]-a[1]), S(c))
+            push!(out, w)
+        end
+    end
+    return out
+end
+
+"""
+    _in_polygon(q, poly, atol)
+
+Whether the point `q` is in the convex polygon `poly`, allowing a slack of
+`atol` outside each edge.
+"""
+function _in_polygon(q::NTuple{2,S}, poly::Vector{NTuple{2,S}}, atol) where S
+    n = length(poly)
+    n == 0 && return false
+    if n == 1
+        return abs(q[1]-poly[1][1]) <= atol && abs(q[2]-poly[1][2]) <= atol
+    end
+    if n == 2  # degenerate polygon: a segment
+        a, b = poly
+        if iszero(atol)  # exact: on the line and within the bounding box
+            _cross(a, b, q) == 0 || return false
+            for j in 1:2
+                min(a[j], b[j]) <= q[j] <= max(a[j], b[j]) || return false
+            end
+            return true
+        end
+        return _segment_dist(q, a, b) <= atol
+    end
+    for k in 1:n
+        a, b = poly[k], poly[mod1(k+1, n)]
+        cr = _cross(a, b, q)
+        if iszero(atol)
+            cr >= 0 || return false
+        else
+            len = hypot(float(b[1]-a[1]), float(b[2]-a[2]))
+            cr >= -atol*len || return false
+        end
+    end
+    return true
+end
+
+"""
+    AS(rpd; maxiter=1000, tol=1e-5, u=nothing, verbose=false)
 
 Using AS algorithm to compute the set of payoff pairs of all pure-strategy
 subgame-perfect equilibria with public randomization for any repeated
 two-player games with perfect monitoring and discounting, following
 Abreu and Sannikov (2014).
 
-If the payoffs are Integer or Rational and the discount factor is Rational
-(and the library specified by `plib` supports exact arithmetic), this function
-performs exact arithmetic and returns a `Matrix{Rational{BigInt}}`.  Otherwise,
-it defaults to `Float64` computation.
+The geometry computations are performed by direct 2D polygon clipping, with
+no dependence on a polyhedra library.
+
+If the payoffs are Integer or Rational and the discount factor is Rational,
+this function performs exact arithmetic and returns a
+`Matrix{Rational{BigInt}}`. Otherwise, it defaults to `Float64` computation.
+Note that in exact arithmetic the size of the rational coefficients can grow
+very rapidly with the number of iterations, so that full convergence is
+feasible only when the vertices stabilize to simple rational values after a
+moderate number of iterations, as in the example below; otherwise, bound the
+computation with `maxiter`.
 
 # Arguments
 
 - `rpd::RepeatedGame{2, T, TD}` : Two player repeated game with T<:Real, TD<:Real.
 - `maxiter::Integer` : Maximum number of iterations.
-- `plib`: Allows users to choose a particular package for the geometry
-  computations.
-  (See [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl)
-  docs for more info). By default, it chooses to use `default_library`.
+- `plib` : Deprecated and unused; kept for backward compatibility.
 - `tol::Float64` : Tolerance in differences of set.
 - `u` : The punishment payoff pair if any player deviates. In default,
   we use minimax payoff pair. If there is better guess, you can specify it
@@ -598,9 +754,9 @@ julia> rpd = RepeatedGame(g, 0.75);
 julia> vertices = AS(rpd; tol=1e-9)
 4×2 Matrix{Float64}:
  3.0   3.0
- 3.0   9.75
- 9.0   9.0
  9.75  3.0
+ 9.0   9.0
+ 3.0   9.75
 ```
 
 If payoffs are Integer or Rational and the discount factor is Rational,
@@ -614,9 +770,7 @@ julia> g_int = NormalFormGame(Int, g)  # convert to Int-valued game
 
 julia> rpd_rat = RepeatedGame(g_int, 3//4);  # discount factor as Rational
 
-julia> using CDDLib
-
-julia> vertices_rat = AS(rpd_rat; tol=1e-9, plib=CDDLib.Library());
+julia> vertices_rat = AS(rpd_rat; tol=1e-9);
 
 julia> typeof(vertices_rat)
 Matrix{Rational{BigInt}} (alias for Array{Rational{BigInt}, 2})
@@ -636,18 +790,22 @@ Matrix{Rational{BigInt}} (alias for Array{Rational{BigInt}, 2})
 
 julia> Float64.(V)
 4×2 Matrix{Float64}:
- 9.0   9.0
- 9.75  3.0
- 3.0   9.75
  3.0   3.0
+ 9.75  3.0
+ 9.0   9.0
+ 3.0   9.75
 ```
 """
 function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
-            plib=default_library(2, Float64), tol::Float64=1e-5,
+            plib=nothing, tol::Float64=1e-5,
             u::Union{AbstractVector, Nothing}=nothing, verbose::Bool=false) where {T,TD}
 
+    plib === nothing || Base.depwarn(
+        "the `plib` keyword argument is deprecated and unused: " *
+        "`AS` no longer relies on a polyhedra library", :AS)
+
     S = _coefficient_type(rpd)
-    lib = similar_library(plib, 2, S)
+    delta = rpd.delta
 
     # Initialize W0 with each entries of payoff bimatrix
     v_old = _payoff_points(S, rpd.sg)
@@ -661,32 +819,30 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
         u = convert(Vector{S}, max.(u, mins))
     end
 
-    # create VRepresentation and Polyhedron and get rid of redundant vertices
-    p = polyhedron(vrep(v_old), lib)
-    removevredundancy!(p)
-    H = hrep(p)
-
     # calculate the best deviation gains
     # normalize with (1-delta)/delta
-    best_dev_gains1, best_dev_gains2 = (one(S)-rpd.delta)/rpd.delta .* _best_dev_gains(rpd.sg)
+    best_dev_gains1, best_dev_gains2 =
+        (one(S)-delta)/delta .* _best_dev_gains(rpd.sg)
 
-    # Precompute A_IC matrix and preallocate payoffs vector for performance
-    A_IC = -Matrix{S}(I, 2, 2)
-    payoffs = Vector{S}(undef, 2)
-
-    # Tolerance for detecting vertices on the IC boundaries: zero (exact
-    # comparison) in exact arithmetic; otherwise proportional to the payoff
-    # scale, since `isapprox` with the default `atol=0` never holds at an IC
-    # boundary located at 0
+    # Geometric tolerances, both zero (exact comparisons) in exact
+    # arithmetic. `atol_merge` merges near-duplicate and near-collinear hull
+    # vertices; `atol_in` is the slack for the membership and IC-boundary
+    # tests and is coarser: for those predicates false negatives lose genuine
+    # vertices of the equilibrium payoff set, while false positives only add
+    # redundant points of B(W), so err on the loose side.
     payoff_scale = maximum(abs, v_old)
-    atol_IC = S <: AbstractFloat ?
-              sqrt(eps(S)) * (iszero(payoff_scale) ? one(S) : payoff_scale) :
-              zero(S)
+    scale = iszero(payoff_scale) ? one(S) : payoff_scale
+    atol_merge = S <: AbstractFloat ? sqrt(eps(S)) * scale : zero(S)
+    atol_in = S <: AbstractFloat ? cbrt(eps(S)) * scale : zero(S)
+
+    # W as a convex polygon with vertices in counterclockwise order,
+    # without redundant points
+    poly = _simplify(_convex_hull(
+        [(v_old[i, 1], v_old[i, 2]) for i in 1:size(v_old, 1)]), atol_merge)
 
     for iter = 1:maxiter
 
-        v_new = S[] # to store new vertices
-        # Use sizehint! for better performance as suggested in PR #65
+        v_new = NTuple{2,S}[] # to store new vertices
         sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
         # step 1
         for a2 in 1:rpd.sg.nums_actions[2]
@@ -696,39 +852,40 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
                 IC1 = u[1] + best_dev_gains1[a1, a2]
                 IC2 = u[2] + best_dev_gains2[a2, a1]
 
-                # check if the payoff point is interior
-                # first check if it satisifies IC
-                if payoff1 > IC1 && payoff2 > IC2
-                    # then check if it is in the polyhedron
-                    payoffs[1] = payoff1; payoffs[2] = payoff2
-                    if payoffs in H
-                        push!(v_new, payoff1, payoff2)
-                    end
+                # check if the payoff point is interior:
+                # first check if it satisfies IC,
+                # then check if it is in the polygon
+                if payoff1 > IC1 && payoff2 > IC2 &&
+                        _in_polygon((S(payoff1), S(payoff2)), poly, atol_in)
+                    push!(v_new, (payoff1, payoff2))
                 end
 
-                # find out the intersections of polyhedron and IC boundaries
-                p_IC = polyhedron(hrep(A_IC, -S[IC1, IC2]), lib)
-                p_inter = intersect(p_IC, p)
-                Vmat = MixedMatVRep(vrep(p_inter)).V
-                for i in 1:size(Vmat, 1)
-                    if isapprox(Vmat[i, 1], IC1, atol=atol_IC) ||
-                       isapprox(Vmat[i, 2], IC2, atol=atol_IC)
-                        push!(v_new, (rpd.delta * Vmat[i, :] +
-                                      (one(S) - rpd.delta) * S[payoff1, payoff2])...)
+                # find the vertices of the polygon clipped to the IC region
+                # {w : w[1] >= IC1, w[2] >= IC2} that lie on an IC boundary
+                clipped = _clip(_clip(poly, 1, IC1), 2, IC2)
+                for w in clipped
+                    if w[1] <= IC1 + atol_in || w[2] <= IC2 + atol_in
+                        push!(v_new,
+                              ((one(S)-delta)*payoff1 + delta*w[1],
+                               (one(S)-delta)*payoff2 + delta*w[2]))
                     end
                 end
             end
         end
 
-        v_new = reshape(v_new, 2, :)'
+        isempty(v_new) &&
+            error("no incentive-compatible payoff vectors found: the game " *
+                  "may have no pure-action subgame perfect equilibrium " *
+                  "for this value of delta")
 
         # get rid of redundant points
-        p = polyhedron(vrep(v_new), lib)
-        removevredundancy!(p)
+        poly = _simplify(_convex_hull(v_new), atol_merge)
 
-        # check if it's converged
-        # Use deduplicated vertices for convergence check
-        v_dedup = MixedMatVRep(vrep(p)).V
+        # check if it's converged, using the deduplicated vertices
+        v_dedup = Matrix{S}(undef, length(poly), 2)
+        for (i, w) in enumerate(poly)
+            v_dedup[i, 1], v_dedup[i, 2] = w
+        end
         # first check if the numbers of vertices are the same
         if size(v_dedup) == size(v_old)
             # Sort rows before comparison since vertex order is not guaranteed
@@ -747,21 +904,18 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
         end
 
         v_old = v_dedup
-        H = hrep(p)
 
         # step 2
         # update u
-        u_ = [minimum(v_new[:, 1]),
-              minimum(v_new[:, 2])]
+        u_ = [minimum(w[1] for w in v_new),
+              minimum(w[2] for w in v_new)]
         u = max.(u, u_)
     end
 
     # Return matrix with coefficient type S
-    vr = vrep(p)
-    pts = points(vr)
-    vertices = Matrix{S}(undef, (npoints(vr), 2))
-    for (i, pt) in enumerate(pts)
-        vertices[i, :] = S.(pt)
+    vertices = Matrix{S}(undef, length(poly), 2)
+    for (i, w) in enumerate(poly)
+        vertices[i, 1], vertices[i, 2] = w
     end
 
     return vertices
