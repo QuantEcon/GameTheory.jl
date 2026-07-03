@@ -127,6 +127,32 @@
             @test size(vertices) == size(pts_sorted)
         end
 
+        @testset "AS with degenerate payoff sets" begin
+            # Common interest game: all payoff pairs lie on the diagonal, so
+            # the payoff sets are segments; the equilibrium payoff set is
+            # the segment from (1, 1) to (4, 4)
+            c_payoff = [4.0 0.0; 0.0 1.0]
+            g_ci = NormalFormGame((Player(c_payoff), Player(c_payoff)))
+            for rpd_ci in (RepeatedGame(g_ci, 0.5),                     # Float64
+                           RepeatedGame(NormalFormGame(Int, g_ci), 1//2))  # exact
+                vertices = AS(rpd_ci; tol=1e-9)
+                @test vertices_match_expected(vertices, [1.0 1.0; 4.0 4.0])
+            end
+
+            # Constant game: the equilibrium payoff set is a single point
+            g_const = NormalFormGame((Player(fill(5.0, 2, 2)),
+                                      Player(fill(5.0, 2, 2))))
+            vertices = AS(RepeatedGame(g_const, 0.5); tol=1e-9)
+            @test vertices_match_expected(vertices, [5.0 5.0])
+        end
+
+        @testset "AS with empty payoff set" begin
+            # Matching pennies: no pure-action subgame perfect equilibrium
+            g_mp = NormalFormGame((Player([1.0 -1.0; -1.0 1.0]),
+                                   Player([-1.0 1.0; 1.0 -1.0])))
+            @test_throws ErrorException AS(RepeatedGame(g_mp, 0.5))
+        end
+
         @testset "uniquetolrows function" begin
             # Test the uniquetolrows utility function 
             V = [1.0001 2.0002; 1.0 2.0; 3.0 4.0; 1.00009 2.00008]
