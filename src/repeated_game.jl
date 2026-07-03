@@ -699,6 +699,79 @@ function _in_polygon(q::NTuple{2,S}, poly::Vector{NTuple{2,S}}, atol) where S
     return true
 end
 
+#
+# AS algorithm
+#
+# The structure follows the implementation in QuantEcon.py
+# (quantecon/game_theory/repeated_game.py): `AS` is the driver
+# (`_equilibrium_payoffs_abreu_sannikov` there), calling `_R` for each
+# application of the R operator, which in turn calls `_find_C` for the
+# IC-boundary points of each action profile.
+#
+
+"""
+    _find_C(poly, IC1, IC2, atol)
+
+Find the vertices of the convex polygon `poly` clipped to the IC region
+`{w : w[1] >= IC1, w[2] >= IC2}` that lie on an IC boundary, including, when
+it is in the polygon, the corner point `(IC1, IC2)`.
+
+Corresponds to `_find_C` in QuantEcon.py, which walks the hull edges; here
+the same points are obtained by clipping, which also handles degenerate
+(segment- or point-shaped) polygons.
+"""
+function _find_C(poly::Vector{NTuple{2,S}}, IC1, IC2, atol) where S
+    C = NTuple{2,S}[]
+    for w in _clip(_clip(poly, 1, IC1), 2, IC2)
+        if w[1] <= IC1 + atol || w[2] <= IC2 + atol
+            push!(C, w)
+        end
+    end
+    return C
+end
+
+"""
+    _R(rpd, best_dev_gains1, best_dev_gains2, poly, u, atol_in)
+
+Apply the R operator of Abreu and Sannikov (2014) once: collect, over all
+action profiles `a`, the candidate extreme points of the updated payoff set,
+namely the stage payoff `g(a)` itself if it is incentive compatible and in
+`poly`, and `(1-delta)g(a) + delta*w` for the points `w` of `poly` clipped
+to the IC region that lie on an IC boundary.
+
+Corresponds to `_R` in QuantEcon.py, with one difference: the IC-boundary
+points are collected also when `g(a)` itself is feasible (they are redundant
+in that case, and removed with the convex hull computation).
+"""
+function _R(rpd::RepGame2, best_dev_gains1, best_dev_gains2,
+            poly::Vector{NTuple{2,S}}, u, atol_in) where S
+    delta = rpd.delta
+    v_new = NTuple{2,S}[]
+    sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
+    for a2 in 1:rpd.sg.nums_actions[2]
+        for a1 in 1:rpd.sg.nums_actions[1]
+            payoff1 = rpd.sg.players[1].payoff_array[a1, a2]
+            payoff2 = rpd.sg.players[2].payoff_array[a2, a1]
+            IC1 = u[1] + best_dev_gains1[a1, a2]
+            IC2 = u[2] + best_dev_gains2[a2, a1]
+
+            # check if the payoff point is interior:
+            # first check if it satisfies IC,
+            # then check if it is in the polygon
+            if payoff1 > IC1 && payoff2 > IC2 &&
+                    _in_polygon((S(payoff1), S(payoff2)), poly, atol_in)
+                push!(v_new, (payoff1, payoff2))
+            end
+
+            for w in _find_C(poly, IC1, IC2, atol_in)
+                push!(v_new, ((one(S)-delta)*payoff1 + delta*w[1],
+                              (one(S)-delta)*payoff2 + delta*w[2]))
+            end
+        end
+    end
+    return v_new
+end
+
 """
     AS(rpd; maxiter=1000, tol=1e-5, u=nothing, verbose=false)
 
@@ -842,36 +915,8 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
 
     for iter = 1:maxiter
 
-        v_new = NTuple{2,S}[] # to store new vertices
-        sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
         # step 1
-        for a2 in 1:rpd.sg.nums_actions[2]
-            for a1 in 1:rpd.sg.nums_actions[1]
-                payoff1 = rpd.sg.players[1].payoff_array[a1, a2]
-                payoff2 = rpd.sg.players[2].payoff_array[a2, a1]
-                IC1 = u[1] + best_dev_gains1[a1, a2]
-                IC2 = u[2] + best_dev_gains2[a2, a1]
-
-                # check if the payoff point is interior:
-                # first check if it satisfies IC,
-                # then check if it is in the polygon
-                if payoff1 > IC1 && payoff2 > IC2 &&
-                        _in_polygon((S(payoff1), S(payoff2)), poly, atol_in)
-                    push!(v_new, (payoff1, payoff2))
-                end
-
-                # find the vertices of the polygon clipped to the IC region
-                # {w : w[1] >= IC1, w[2] >= IC2} that lie on an IC boundary
-                clipped = _clip(_clip(poly, 1, IC1), 2, IC2)
-                for w in clipped
-                    if w[1] <= IC1 + atol_in || w[2] <= IC2 + atol_in
-                        push!(v_new,
-                              ((one(S)-delta)*payoff1 + delta*w[1],
-                               (one(S)-delta)*payoff2 + delta*w[2]))
-                    end
-                end
-            end
-        end
+        v_new = _R(rpd, best_dev_gains1, best_dev_gains2, poly, u, atol_in)
 
         isempty(v_new) &&
             error("no incentive-compatible payoff vectors found: the game " *
