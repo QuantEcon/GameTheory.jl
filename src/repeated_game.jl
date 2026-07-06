@@ -744,27 +744,29 @@ function _find_C(poly::Vector{NTuple{2,S}}, IC1, IC2, atol) where S
 end
 
 """
-    _R(rpd, best_dev_gains1, best_dev_gains2, poly, u, atol_in)
+    _R(delta, nums_actions, payoff_array1, payoff_array2,
+       best_dev_gains1, best_dev_gains2, poly, u, atol_in)
 
 Apply the R operator of Abreu and Sannikov (2014) once: collect, over all
 action profiles `a`, the candidate extreme points of the updated payoff set,
 namely the stage payoff `g(a)` itself if it is incentive compatible and in
 `poly`, and `(1-delta)g(a) + delta*w` for the points `w` of `poly` clipped
-to the IC region that lie on an IC boundary.
+to the IC region that lie on an IC boundary. The payoff arrays (and `u`,
+`poly`) are in the internal, centered coordinates set up by `AS`.
 
 Corresponds to `_R` in QuantEcon.py, with one difference: the IC-boundary
 points are collected also when `g(a)` itself is feasible (they are redundant
 in that case, and removed with the convex hull computation).
 """
-function _R(rpd::RepGame2, best_dev_gains1, best_dev_gains2,
+function _R(delta::S, nums_actions, payoff_array1, payoff_array2,
+            best_dev_gains1, best_dev_gains2,
             poly::Vector{NTuple{2,S}}, u, atol_in) where S
-    delta = convert(S, rpd.delta)
     v_new = NTuple{2,S}[]
-    sizehint!(v_new, 8 * prod(rpd.sg.nums_actions))
-    for a2 in 1:rpd.sg.nums_actions[2]
-        for a1 in 1:rpd.sg.nums_actions[1]
-            payoff1 = rpd.sg.players[1].payoff_array[a1, a2]
-            payoff2 = rpd.sg.players[2].payoff_array[a2, a1]
+    sizehint!(v_new, 8 * prod(nums_actions))
+    for a2 in 1:nums_actions[2]
+        for a1 in 1:nums_actions[1]
+            payoff1 = payoff_array1[a1, a2]
+            payoff2 = payoff_array2[a2, a1]
             IC1 = u[1] + best_dev_gains1[a1, a2]
             IC2 = u[2] + best_dev_gains2[a2, a1]
 
@@ -772,7 +774,7 @@ function _R(rpd::RepGame2, best_dev_gains1, best_dev_gains2,
             # first check if it satisfies IC,
             # then check if it is in the polygon
             if payoff1 > IC1 && payoff2 > IC2 &&
-                    _in_polygon((S(payoff1), S(payoff2)), poly, atol_in)
+                    _in_polygon((payoff1, payoff2), poly, atol_in)
                 push!(v_new, (payoff1, payoff2))
             end
 
@@ -837,7 +839,9 @@ julia> g = NormalFormGame(pd_payoff)  # symmetric 2-player game
 
 julia> rpd = RepeatedGame(g, 0.75);
 
-julia> vertices = AS(rpd; tol=1e-9)
+julia> vertices = AS(rpd; tol=1e-9);
+
+julia> round.(vertices, digits=6)  # vertices are accurate up to about tol
 4×2 Matrix{Float64}:
  3.0   3.0
  9.75  3.0
@@ -891,31 +895,57 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
         "`AS` no longer relies on a polyhedra library", :AS)
 
     S = _coefficient_type(rpd)
-    delta = rpd.delta
+    delta = convert(S, rpd.delta)
+
+    # Work with the payoff arrays in the coefficient type, with the payoffs
+    # of each player centered at zero when the payoff set is located far
+    # from the origin relative to its size. The floating point resolution
+    # and the geometric tolerances below then scale with the size of the
+    # payoff set rather than with its distance from the origin, making the
+    # computation robust to translations of the payoffs. The centers are
+    # added back to the output at the end. In exact arithmetic the centering
+    # has no effect on the result; near the origin it is skipped, as it is
+    # not needed there and would perturb the rounding of the common case.
+    extr1 = extrema(rpd.sg.players[1].payoff_array)
+    extr2 = extrema(rpd.sg.players[2].payoff_array)
+    magnitude = max(abs(convert(S, extr1[1])), abs(convert(S, extr1[2])),
+                    abs(convert(S, extr2[1])), abs(convert(S, extr2[2])))
+    spread = max(convert(S, extr1[2]) - convert(S, extr1[1]),
+                 convert(S, extr2[2]) - convert(S, extr2[1]))
+    center = magnitude > 4 * spread ?
+             [(convert(S, extr1[1]) + convert(S, extr1[2])) / 2,
+              (convert(S, extr2[1]) + convert(S, extr2[2])) / 2] :
+             [zero(S), zero(S)]
+    payoff_array1 = S.(rpd.sg.players[1].payoff_array) .- center[1]
+    payoff_array2 = S.(rpd.sg.players[2].payoff_array) .- center[2]
 
     # Initialize W0 with each entries of payoff bimatrix
     v_old = _payoff_points(S, rpd.sg)
+    v_old[:, 1] .-= center[1]
+    v_old[:, 2] .-= center[2]
 
-    mins = [minimum(rpd.sg.players[1].payoff_array),
-            minimum(rpd.sg.players[2].payoff_array)]
+    mins = [minimum(payoff_array1), minimum(payoff_array2)]
 
     if isnothing(u)
-        u = convert(Vector{S}, mins)
+        u = mins
     else
-        u = convert(Vector{S}, max.(u, mins))
+        u = max.(convert(Vector{S}, u) .- center, mins)
     end
 
     # calculate the best deviation gains
     # normalize with (1-delta)/delta
-    best_dev_gains1, best_dev_gains2 =
-        (one(S)-delta)/delta .* _best_dev_gains(rpd.sg)
+    best_dev_gains1 = (one(S)-delta)/delta .*
+        (maximum(payoff_array1, dims=1) .- payoff_array1)
+    best_dev_gains2 = (one(S)-delta)/delta .*
+        (maximum(payoff_array2, dims=1) .- payoff_array2)
 
     # Geometric tolerances, both zero (exact comparisons) in exact
     # arithmetic. `atol_merge` merges near-duplicate and near-collinear hull
     # vertices; `atol_in` is the slack for the membership and IC-boundary
     # tests and is coarser: for those predicates false negatives lose genuine
     # vertices of the equilibrium payoff set, while false positives only add
-    # redundant points of B(W), so err on the loose side.
+    # redundant points of B(W), so err on the loose side. With the payoffs
+    # centered, `payoff_scale` is half the size of the payoff set.
     payoff_scale = maximum(abs, v_old)
     scale = iszero(payoff_scale) ? one(S) : payoff_scale
     atol_merge = S <: AbstractFloat ? sqrt(eps(S)) * scale : zero(S)
@@ -929,7 +959,8 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     for iter = 1:maxiter
 
         # step 1
-        v_new = _R(rpd, best_dev_gains1, best_dev_gains2, poly, u, atol_in)
+        v_new = _R(delta, rpd.sg.nums_actions, payoff_array1, payoff_array2,
+                   best_dev_gains1, best_dev_gains2, poly, u, atol_in)
 
         isempty(v_new) &&
             error("no incentive-compatible payoff vectors found: the game " *
@@ -970,10 +1001,11 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
         u = max.(u, u_)
     end
 
-    # Return matrix with coefficient type S
+    # Return matrix with coefficient type S, in the original coordinates
     vertices = Matrix{S}(undef, length(poly), 2)
     for (i, w) in enumerate(poly)
-        vertices[i, 1], vertices[i, 2] = w
+        vertices[i, 1] = w[1] + center[1]
+        vertices[i, 2] = w[2] + center[2]
     end
 
     return vertices

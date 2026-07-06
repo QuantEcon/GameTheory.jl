@@ -127,6 +127,18 @@
             @test size(vertices) == size(pts_sorted)
         end
 
+        @testset "AS invariant to payoff translations" begin
+            # The floating point tolerances must scale with the size of the
+            # payoff set, not with its distance from the origin
+            shift = (1e9, -2e9)
+            g_shifted = NormalFormGame((Player(pd_payoff .+ shift[1]),
+                                        Player(pd_payoff .+ shift[2])))
+            vertices_shifted = @inferred(AS(RepeatedGame(g_shifted, 0.75);
+                                            tol=1e-9))
+            vertices_unshifted = vertices_shifted .- [shift[1] shift[2]]
+            @test vertices_match_expected(vertices_unshifted, pts_sorted)
+        end
+
         @testset "AS with degenerate payoff sets" begin
             # Common interest game: all payoff pairs lie on the diagonal, so
             # the payoff sets are segments; the equilibrium payoff set is
