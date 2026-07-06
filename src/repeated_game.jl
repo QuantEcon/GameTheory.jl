@@ -904,18 +904,18 @@ function AS(rpd::RepeatedGame{2,T,TD}; maxiter::Integer=1000,
     # payoff set rather than with its distance from the origin, making the
     # computation robust to translations of the payoffs. The centers are
     # added back to the output at the end. In exact arithmetic the centering
-    # has no effect on the result; near the origin it is skipped, as it is
-    # not needed there and would perturb the rounding of the common case.
+    # would have no effect on the result and is skipped; near the origin it
+    # is skipped as well, as it is not needed there and would perturb the
+    # rounding of the common case.
     extr1 = extrema(rpd.sg.players[1].payoff_array)
     extr2 = extrema(rpd.sg.players[2].payoff_array)
-    magnitude = max(abs(convert(S, extr1[1])), abs(convert(S, extr1[2])),
-                    abs(convert(S, extr2[1])), abs(convert(S, extr2[2])))
-    spread = max(convert(S, extr1[2]) - convert(S, extr1[1]),
-                 convert(S, extr2[2]) - convert(S, extr2[1]))
-    center = magnitude > 4 * spread ?
-             [(convert(S, extr1[1]) + convert(S, extr1[2])) / 2,
-              (convert(S, extr2[1]) + convert(S, extr2[2])) / 2] :
-             [zero(S), zero(S)]
+    lo1, hi1 = convert(S, extr1[1]), convert(S, extr1[2])
+    lo2, hi2 = convert(S, extr2[1]), convert(S, extr2[2])
+    magnitude = max(abs(lo1), abs(hi1), abs(lo2), abs(hi2))
+    spread = max(hi1 - lo1, hi2 - lo2)
+    do_center = S <: AbstractFloat && magnitude > 4 * spread
+    center = do_center ? [lo1 / 2 + hi1 / 2, lo2 / 2 + hi2 / 2] :
+                         [zero(S), zero(S)]
     payoff_array1 = S.(rpd.sg.players[1].payoff_array) .- center[1]
     payoff_array2 = S.(rpd.sg.players[2].payoff_array) .- center[2]
 

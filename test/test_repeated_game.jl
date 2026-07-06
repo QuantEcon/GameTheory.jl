@@ -127,7 +127,7 @@
             @test size(vertices) == size(pts_sorted)
         end
 
-        @testset "AS invariant to payoff translations" begin
+        @testset "AS is robust to large payoff translations" begin
             # The floating point tolerances must scale with the size of the
             # payoff set, not with its distance from the origin
             shift = (1e9, -2e9)
