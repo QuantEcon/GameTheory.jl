@@ -169,18 +169,37 @@
         make_ret()  # warmup
         @test (@allocated solve!()) <= (@allocated make_ret())
 
+        # invalid init_pivot
+        @test_throws ArgumentError lemke_howson!(NE, tableaux, bases, g,
+                                                 init_pivot=0)
+        @test_throws ArgumentError lemke_howson!(NE, tableaux, bases, g,
+                                                 init_pivot=m+n+1)
+
         # aliasing rejections (square game, so that shapes match)
         gs = NormalFormGame(Player([1. 0.; 0. 1.]), Player([1. 0.; 0. 1.]))
         v = Vector{Float64}(undef, 2)
         tabs = (Matrix{Float64}(undef, 2, 5), Matrix{Float64}(undef, 2, 5))
         bs = (Vector{Int}(undef, 2), Vector{Int}(undef, 2))
-        @test_throws AssertionError lemke_howson!((v, v), tabs, bs, gs)
-        @test_throws AssertionError lemke_howson!((copy(v), v),
-                                                  (tabs[1], tabs[1]), bs, gs)
-        @test_throws AssertionError lemke_howson!((copy(v), v), tabs,
-                                                  (bs[1], bs[1]), gs)
-        @test_throws AssertionError lemke_howson!((copy(v), v), tabs, bs, gs,
-                                                  argmins=bs[1])
+        @test_throws ArgumentError lemke_howson!((v, v), tabs, bs, gs)
+        @test_throws ArgumentError lemke_howson!((copy(v), v),
+                                                 (tabs[1], tabs[1]), bs, gs)
+        @test_throws ArgumentError lemke_howson!((copy(v), v), tabs,
+                                                 (bs[1], bs[1]), gs)
+        @test_throws ArgumentError lemke_howson!((copy(v), v), tabs, bs, gs,
+                                                 argmins=bs[1])
+
+        # size rejections
+        @test_throws DimensionMismatch lemke_howson!(
+            (Vector{Float64}(undef, 3), v), tabs, bs, gs)
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), (tabs[1], Matrix{Float64}(undef, 2, 4)), bs, gs)
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), tabs, (bs[1], Vector{Int}(undef, 3)), gs)
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), tabs, bs, gs,
+            col_bufs=(Vector{Float64}(undef, 3), Vector{Float64}(undef, 2)))
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), tabs, bs, gs, argmins=Vector{Int}(undef, 1))
     end
 
 end

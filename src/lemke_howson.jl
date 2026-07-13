@@ -26,6 +26,20 @@ end
 
 
 """
+    _check_init_pivot(init_pivot, total_num)
+
+Check that `1 <= init_pivot <= total_num`, throwing an `ArgumentError`
+otherwise.
+"""
+function _check_init_pivot(init_pivot::Int, total_num::Int)
+    1 <= init_pivot <= total_num || throw(ArgumentError(
+        "`init_pivot` must satisfy 1 <= init_pivot <= $total_num"
+    ))
+    return nothing
+end
+
+
+"""
     lemke_howson(g; init_pivot=1, max_iter=10^6, capping=nothing,
                  full_output=Val(false))
 
@@ -136,6 +150,7 @@ function lemke_howson(g::NormalFormGame{2,T};
                       full_output::Union{Val{true},Val{false}}=Val(false)) where T
     nums_actions = g.nums_actions
     total_num = sum(nums_actions)
+    _check_init_pivot(init_pivot, total_num)
     S = float(T)
 
     NE = (Vector{S}(undef, nums_actions[1]), Vector{S}(undef, nums_actions[2]))
@@ -169,7 +184,11 @@ non-mutating `lemke_howson`).
 The two members of each of `NE`, `tableaux`, and `bases` must be distinct
 arrays, and `argmins` must not alias either member of `bases`; `col_bufs[1]`
 and `col_bufs[2]` may be the same array when `m == n`, as each pivoting step
-uses the buffer in isolation. With `col_bufs` and `argmins` supplied, the
+uses the buffer in isolation. A `DimensionMismatch` is thrown if any of the
+arrays has a wrong size, and an `ArgumentError` if arrays required to be
+distinct alias each other or `init_pivot` is out of range.
+
+With `col_bufs` and `argmins` supplied, the
 call performs no workspace allocations; for machine-float element types such
 as `Float64` and with `full_output=Val(false)`, repeated solves then generate
 no garbage-collector pressure:
@@ -199,29 +218,38 @@ function lemke_howson!(NE::NTuple{2,Vector{S}},
     nums_actions = g.nums_actions
     total_num = sum(nums_actions)
 
-    if !(1 <= init_pivot <= total_num)
-        throw(ArgumentError("`init_pivot` must satisfy 1 <= k <= $(total_num)"))
-    end
+    _check_init_pivot(init_pivot, total_num)
 
     for pl in 1:2
-        @assert length(NE[pl]) == nums_actions[pl] "NE[$pl] must have length $(nums_actions[pl])"
-        @assert size(tableaux[pl]) == (nums_actions[3-pl], total_num+1) "tableaux[$pl] must have size ($(nums_actions[3-pl]), $(total_num+1))"
-        @assert length(bases[pl]) == nums_actions[3-pl] "bases[$pl] must have length $(nums_actions[3-pl])"
+        length(NE[pl]) == nums_actions[pl] || throw(DimensionMismatch(
+            "NE[$pl] must have length $(nums_actions[pl])"))
+        size(tableaux[pl]) == (nums_actions[3-pl], total_num+1) ||
+            throw(DimensionMismatch(
+                "tableaux[$pl] must have size ($(nums_actions[3-pl]), $(total_num+1))"))
+        length(bases[pl]) == nums_actions[3-pl] || throw(DimensionMismatch(
+            "bases[$pl] must have length $(nums_actions[3-pl])"))
     end
-    @assert !Base.mightalias(NE[1], NE[2]) "NE[1] must not alias NE[2]"
-    @assert !Base.mightalias(tableaux[1], tableaux[2]) "tableaux[1] must not alias tableaux[2]"
-    @assert !Base.mightalias(bases[1], bases[2]) "bases[1] must not alias bases[2]"
+    Base.mightalias(NE[1], NE[2]) && throw(ArgumentError(
+        "NE[1] and NE[2] must be separate arrays"))
+    Base.mightalias(tableaux[1], tableaux[2]) && throw(ArgumentError(
+        "tableaux[1] and tableaux[2] must be separate arrays"))
+    Base.mightalias(bases[1], bases[2]) && throw(ArgumentError(
+        "bases[1] and bases[2] must be separate arrays"))
     if col_bufs !== nothing
         for pl in 1:2
-            @assert length(col_bufs[pl]) == nums_actions[3-pl] "col_bufs[$pl] must have length $(nums_actions[3-pl])"
+            length(col_bufs[pl]) == nums_actions[3-pl] ||
+                throw(DimensionMismatch(
+                    "col_bufs[$pl] must have length $(nums_actions[3-pl])"))
         end
     end
     if argmins !== nothing
-        @assert length(argmins) >= max(nums_actions...) "argmins must have length at least $(max(nums_actions...))"
+        length(argmins) >= max(nums_actions...) || throw(DimensionMismatch(
+            "argmins must have length at least $(max(nums_actions...))"))
         # argmins is overwritten in each pivoting step before bases[pl] is
         # read to determine the leaving variable
         for pl in 1:2
-            @assert !Base.mightalias(argmins, bases[pl]) "argmins must not alias bases[$pl]"
+            Base.mightalias(argmins, bases[pl]) && throw(ArgumentError(
+                "argmins and bases[$pl] must be separate arrays"))
         end
     end
 
