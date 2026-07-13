@@ -19,7 +19,13 @@ const SUITE = BenchmarkGroup()
 SUITE["lemke_howson"] = include("lemke_howson.jl")
 SUITE["support_enumeration"] = include("support_enumeration.jl")
 SUITE["repeated_game"] = include("repeated_game.jl")
-SUITE["bimatrix_generators"] = include("bimatrix_generators.jl")
+
+# The generators suite times game construction, not equilibrium
+# computation, and is opt-in: set GAMETHEORY_BENCHMARK_GENERATORS=true
+# (with PkgBenchmark, through `BenchmarkConfig(env=...)`)
+if get(ENV, "GAMETHEORY_BENCHMARK_GENERATORS", "false") in ("true", "1")
+    SUITE["bimatrix_generators"] = include("bimatrix_generators.jl")
+end
 
 #= Standalone execution =#
 

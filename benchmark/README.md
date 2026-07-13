@@ -17,7 +17,7 @@ subgroup of `SUITE`. Currently covered:
   (`src/repeated_game.jl`), under `SUITE["repeated_game"]`;
 - [`bimatrix_generators.jl`](bimatrix_generators.jl): the game generators
   (`src/generators/bimatrix_generators.jl`), under
-  `SUITE["bimatrix_generators"]`.
+  `SUITE["bimatrix_generators"]` — opt-in only; see below.
 
 ## What is benchmarked
 
@@ -54,6 +54,22 @@ equilibrium payoff set of a repeated game:
 | `outerapproximation_nH64` | Prisoner's dilemma with discount factor 0.75, 64 subgradients; the per-iteration linear programs dominate |
 
 ### `bimatrix_generators` ([`bimatrix_generators.jl`](bimatrix_generators.jl))
+
+**Opt-in**: this subgroup times game construction rather than equilibrium
+computation and is excluded from `SUITE` by default. To include it, set
+the environment variable `GAMETHEORY_BENCHMARK_GENERATORS=true` — for the
+standalone run:
+
+```
+GAMETHEORY_BENCHMARK_GENERATORS=true julia --project=benchmark benchmark/benchmarks.jl
+```
+
+and with PkgBenchmark:
+
+```julia
+config = BenchmarkConfig(env=Dict("GAMETHEORY_BENCHMARK_GENERATORS" => "true"))
+results = benchmarkpkg("GameTheory", config)
+```
 
 Construction of game instances from the test suite of von Stengel et al.;
 the random generators draw a fresh instance per evaluation, advancing the
