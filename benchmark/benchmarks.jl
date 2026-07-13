@@ -21,11 +21,13 @@ SUITE["support_enumeration"] = include("support_enumeration.jl")
 SUITE["repeated_game"] = include("repeated_game.jl")
 
 # The generators suite times game construction, not equilibrium
-# computation, and is opt-in: set GAMETHEORY_BENCHMARK_GENERATORS=true
-# (with PkgBenchmark, through `BenchmarkConfig(env=...)`)
-if get(ENV, "GAMETHEORY_BENCHMARK_GENERATORS", "false") in ("true", "1")
-    SUITE["bimatrix_generators"] = include("bimatrix_generators.jl")
-end
+# computation, so it is kept out of `SUITE`: whole-suite runs
+# (standalone, PkgBenchmark, AirspeedVelocity) skip it. To run it,
+# include this file and run this group directly:
+#
+#     julia> include("benchmark/benchmarks.jl");
+#     julia> run(GENERATORS_SUITE)
+const GENERATORS_SUITE = include("bimatrix_generators.jl")
 
 #= Standalone execution =#
 

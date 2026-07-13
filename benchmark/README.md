@@ -16,8 +16,8 @@ subgroup of `SUITE`. Currently covered:
 - [`repeated_game.jl`](repeated_game.jl): `outerapproximation`
   (`src/repeated_game.jl`), under `SUITE["repeated_game"]`;
 - [`bimatrix_generators.jl`](bimatrix_generators.jl): the game generators
-  (`src/generators/bimatrix_generators.jl`), under
-  `SUITE["bimatrix_generators"]` — opt-in only; see below.
+  (`src/generators/bimatrix_generators.jl`), as the separate group
+  `GENERATORS_SUITE`, excluded from `SUITE` — run separately; see below.
 
 ## What is benchmarked
 
@@ -55,20 +55,16 @@ equilibrium payoff set of a repeated game:
 
 ### `bimatrix_generators` ([`bimatrix_generators.jl`](bimatrix_generators.jl))
 
-**Opt-in**: this subgroup times game construction rather than equilibrium
-computation and is excluded from `SUITE` by default. To include it, set
-the environment variable `GAMETHEORY_BENCHMARK_GENERATORS=true` — for the
-standalone run:
-
-```
-GAMETHEORY_BENCHMARK_GENERATORS=true julia --project=benchmark benchmark/benchmarks.jl
-```
-
-and with PkgBenchmark:
+**Run separately**: this subgroup times game construction rather than
+equilibrium computation, so it is not part of `SUITE` — whole-suite runs
+(standalone or through PkgBenchmark) skip it. `benchmarks.jl` defines it
+as its own group, `GENERATORS_SUITE`; run it the same way as any other
+subset:
 
 ```julia
-config = BenchmarkConfig(env=Dict("GAMETHEORY_BENCHMARK_GENERATORS" => "true"))
-results = benchmarkpkg("GameTheory", config)
+julia> include("benchmark/benchmarks.jl");
+
+julia> run(GENERATORS_SUITE)
 ```
 
 Construction of game instances from the test suite of von Stengel et al.;
