@@ -148,6 +148,8 @@
         NE_, res = lemke_howson!(NE, tableaux, bases, g, init_pivot=2,
                                  full_output=Val(true),
                                  col_bufs=col_bufs, argmins=argmins)
+        @test NE_ === NE
+        @test res.NE === NE  # res.NE is the caller-owned NE, not a copy
         NE0, res0 = lemke_howson(g, init_pivot=2, full_output=Val(true))
         @test NE == NE0
         @test res.converged == res0.converged
