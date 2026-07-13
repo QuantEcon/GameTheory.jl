@@ -1,35 +1,31 @@
-using GameTheory
+#=
+Benchmark suite for GameTheory.jl
+
+Defines `SUITE` in the standard BenchmarkTools format, usable with
+PkgBenchmark.jl or AirspeedVelocity.jl.
+
+To run standalone:
+
+    julia --project=benchmark -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+    julia --project=benchmark benchmark/benchmarks.jl
+
+Each benchmarked module has its own file defining a `BenchmarkGroup`,
+included below as a subgroup of `SUITE`.
+=#
 using BenchmarkTools
-using Random
-using LinearAlgebra
 
 const SUITE = BenchmarkGroup()
 
-SUITE["support_enumeration"] = BenchmarkGroup(["support_enumeration"])
-SUITE["support_enumeration"]["Float"] = BenchmarkGroup()
-seed = 0
-rng = MersenneTwister(seed)
-ns = [10, 11]
-for n in ns
-    sz = (n, n)
-    g = random_game(rng, sz)
-    SUITE["support_enumeration"]["Float"][sz] =
-        @benchmarkable support_enumeration($g)
-end
-SUITE["support_enumeration"]["Rational"] = BenchmarkGroup()
-T = Rational{Int}
-ns = [7, 8]
-for n in ns
-    sz = (n, n)
-    g = NormalFormGame(Matrix{T}(I, n, n))
-    SUITE["support_enumeration"]["Rational"][sz] =
-        @benchmarkable support_enumeration($g)
-end
+SUITE["lemke_howson"] = include("lemke_howson.jl")
+SUITE["support_enumeration"] = include("support_enumeration.jl")
+SUITE["repeated_game"] = include("repeated_game.jl")
+SUITE["bimatrix_generators"] = include("bimatrix_generators.jl")
 
+#= Standalone execution =#
 
-SUITE["repeated_game"] = BenchmarkGroup(["repeated_game"])
-pd_payoffs = [9.0 1.0; 10.0 3.0]
-g = NormalFormGame(pd_payoffs)
-rpd = RepeatedGame(g, 0.75)
-SUITE["repeated_game"]["outerapproximation"] =
-    @benchmarkable outerapproximation($rpd, nH=64, tol=1e-9)
+if abspath(PROGRAM_FILE) == @__FILE__
+    tune!(SUITE)
+    results = run(SUITE; verbose=true)
+    show(IOContext(stdout, :compact => false), MIME"text/plain"(), results)
+    println()
+end

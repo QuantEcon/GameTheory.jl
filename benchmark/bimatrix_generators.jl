@@ -1,41 +1,52 @@
+#=
+Benchmarks for generators/bimatrix_generators.jl
+
+Each case times the construction of a game instance from the test suite
+of von Stengel et al.; the random generators draw a fresh instance per
+evaluation, advancing the case's own fixed-seed RNG.
+=#
 using GameTheory.Generators
 using BenchmarkTools
 using Random
 
-const SUITE = BenchmarkGroup()
+#= Suite =#
 
-SUITE["bimatrix_generators"] = BenchmarkGroup(["bimatrix_generators"])
-seed = 0
-rng = MersenneTwister(seed)
+suite = BenchmarkGroup()
+
+# A fresh generator per case, so that adding or reordering cases does not
+# alter the game data of the other cases
+new_gen_rng() = MersenneTwister(0)
 
 # blotto_game
-hts = [(3, 62), (4, 21)]  # (h, t)
+suite["blotto_game"] = BenchmarkGroup()
 rho = 0.5
-SUITE["bimatrix_generators"]["blotto_game"] = BenchmarkGroup()
-for ht in hts
-    SUITE["bimatrix_generators"]["blotto_game"][ht] =
-        @benchmarkable blotto_game($rng, ($ht)..., $rho)
+for (h, t) in ((3, 62), (4, 21))
+    rng = new_gen_rng()
+    suite["blotto_game"]["h$(h)_t$(t)"] =
+        @benchmarkable blotto_game($rng, $h, $t, $rho)
 end
 
 # ranking_game
-n = 2000
-SUITE["bimatrix_generators"]["ranking_game"] =
-    @benchmarkable ranking_game($rng, $n)
+let rng = new_gen_rng(), n = 2000
+    suite["ranking_game"] = @benchmarkable ranking_game($rng, $n)
+end
 
 # sgc_game
-k = 500
-SUITE["bimatrix_generators"]["sgc_game"] = @benchmarkable sgc_game($k)
+let k = 500
+    suite["sgc_game"] = @benchmarkable sgc_game($k)
+end
 
 # tournament_game
-n, k = 200, 2
-SUITE["bimatrix_generators"]["tournament_game"] =
-    @benchmarkable tournament_game($rng, $n, $k)
+let rng = new_gen_rng(), n = 200, k = 2
+    suite["tournament_game"] = @benchmarkable tournament_game($rng, $n, $k)
+end
 
 # unit_vector_game
-n = 2000
-bools = [true, false]
-SUITE["bimatrix_generators"]["unit_vector_game"] = BenchmarkGroup()
-for b in bools
-    SUITE["bimatrix_generators"]["unit_vector_game"][b] =
-        @benchmarkable unit_vector_game($rng, $n; avoid_pure_nash=$b)
+suite["unit_vector_game"] = BenchmarkGroup()
+for b in (true, false)
+    rng = new_gen_rng()
+    suite["unit_vector_game"]["avoid_pure_nash_$b"] =
+        @benchmarkable unit_vector_game($rng, 2000; avoid_pure_nash=$b)
 end
+
+suite
