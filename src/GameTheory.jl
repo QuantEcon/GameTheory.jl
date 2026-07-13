@@ -118,7 +118,7 @@ export
     random_pure_actions, random_mixed_actions,
 
     # Lemke-Howson
-    lemke_howson,
+    lemke_howson, lemke_howson!,
 
     # Support Enumeration
     support_enumeration, support_enumeration_task,
