@@ -27,6 +27,8 @@ SUITE["repeated_game"] = include("repeated_game.jl")
 #
 #     julia> include("benchmark/benchmarks.jl");
 #     julia> run(GENERATORS_SUITE)
+#
+# (with PkgBenchmark, use the dedicated entry point generators.jl)
 const GENERATORS_SUITE = include("bimatrix_generators.jl")
 
 #= Standalone execution =#

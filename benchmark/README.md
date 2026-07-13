@@ -67,6 +67,15 @@ julia> include("benchmark/benchmarks.jl");
 julia> run(GENERATORS_SUITE)
 ```
 
+To run or compare this group with PkgBenchmark, the dedicated entry
+point [`generators.jl`](generators.jl) exposes it as its `SUITE`; pass
+it through the `script` keyword:
+
+```julia
+jud = judge("GameTheory", "<target>", "<baseline>";
+            script="benchmark/generators.jl")
+```
+
 Construction of game instances from the test suite of von Stengel et al.;
 the random generators draw a fresh instance per evaluation, advancing the
 case's own fixed-seed RNG:
