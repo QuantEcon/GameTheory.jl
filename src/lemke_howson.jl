@@ -188,20 +188,26 @@ uses the buffer in isolation. A `DimensionMismatch` is thrown if any of the
 arrays has a wrong size, and an `ArgumentError` if arrays required to be
 distinct alias each other or `init_pivot` is out of range.
 
-With `col_bufs` and `argmins` supplied, the
-call performs no workspace allocations; for machine-float element types such
-as `Float64` and with `full_output=Val(false)`, repeated solves then generate
-no garbage-collector pressure:
+With `col_bufs` and `argmins` supplied, the call performs no workspace
+allocations; for machine-float element types such as `Float64` and with
+`full_output=Val(false)`, repeated solves then generate no garbage-collector
+pressure:
 
-    m, n = g.nums_actions
-    S = Float64
-    NE = (Vector{S}(undef, m), Vector{S}(undef, n))
-    tableaux = (Matrix{S}(undef, n, m+n+1), Matrix{S}(undef, m, m+n+1))
-    bases = (Vector{Int}(undef, n), Vector{Int}(undef, m))
-    col_bufs = (Vector{S}(undef, n), Vector{S}(undef, m))
-    argmins = Vector{Int}(undef, max(m, n))
-    NE = lemke_howson!(NE, tableaux, bases, g;
-                       col_bufs=col_bufs, argmins=argmins)
+```julia
+m, n = g.nums_actions
+S = Float64
+NE = (Vector{S}(undef, m), Vector{S}(undef, n))
+tableaux = (Matrix{S}(undef, n, m+n+1), Matrix{S}(undef, m, m+n+1))
+bases = (Vector{Int}(undef, n), Vector{Int}(undef, m))
+col_bufs = (Vector{S}(undef, n), Vector{S}(undef, m))
+argmins = Vector{Int}(undef, max(m, n))
+NE = lemke_howson!(NE, tableaux, bases, g;
+                   col_bufs=col_bufs, argmins=argmins)
+```
+
+With `full_output=Val(true)`, the returned `res.NE` is the caller-supplied
+`NE` itself, not a copy; a subsequent call reusing `NE` overwrites the
+equilibrium accessible through the earlier `res`.
 """
 function lemke_howson!(NE::NTuple{2,Vector{S}},
                        tableaux::NTuple{2,Matrix{S}},

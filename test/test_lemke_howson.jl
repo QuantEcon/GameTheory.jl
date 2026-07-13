@@ -200,6 +200,14 @@
             col_bufs=(Vector{Float64}(undef, 3), Vector{Float64}(undef, 2)))
         @test_throws DimensionMismatch lemke_howson!(
             (copy(v), v), tabs, bs, gs, argmins=Vector{Int}(undef, 1))
+
+        # col_bufs may share one buffer on a square game
+        NE_s = (Vector{Float64}(undef, 2), Vector{Float64}(undef, 2))
+        buf = Vector{Float64}(undef, 2)
+        NE_s_ = lemke_howson!(NE_s, tabs, bs, gs, col_bufs=(buf, buf),
+                              argmins=Vector{Int}(undef, 2))
+        @test NE_s_ === NE_s
+        @test NE_s == lemke_howson(gs)
     end
 
 end
