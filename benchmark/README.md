@@ -57,23 +57,29 @@ equilibrium payoff set of a repeated game:
 
 **Run separately**: this subgroup times game construction rather than
 equilibrium computation, so it is not part of `SUITE` — whole-suite runs
-(standalone or through PkgBenchmark) skip it. `benchmarks.jl` defines it
-as its own group, `GENERATORS_SUITE`; run it the same way as any other
-subset:
+(standalone or through PkgBenchmark) skip it. The dedicated entry point
+[`generators.jl`](generators.jl) exposes it as its `SUITE`; run it
+standalone:
+
+```
+julia --project=benchmark benchmark/generators.jl
+```
+
+or, to run or compare this group with PkgBenchmark, pass the entry point
+through the `script` keyword:
+
+```julia
+jud = judge("GameTheory", "<target>", "<baseline>";
+            script="benchmark/generators.jl")
+```
+
+Interactively, `benchmarks.jl` also defines the group as
+`GENERATORS_SUITE`; run it the same way as any other subset:
 
 ```julia
 julia> include("benchmark/benchmarks.jl");
 
 julia> run(GENERATORS_SUITE)
-```
-
-To run or compare this group with PkgBenchmark, the dedicated entry
-point [`generators.jl`](generators.jl) exposes it as its `SUITE`; pass
-it through the `script` keyword:
-
-```julia
-jud = judge("GameTheory", "<target>", "<baseline>";
-            script="benchmark/generators.jl")
 ```
 
 Construction of game instances from the test suite of von Stengel et al.;
