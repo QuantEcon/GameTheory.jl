@@ -6,8 +6,8 @@ This directory contains a benchmark suite in the standard
 which can be run standalone or through
 [PkgBenchmark.jl](https://github.com/JuliaCI/PkgBenchmark.jl).
 
-Each benchmarked module has its own file, included by `benchmarks.jl` as a
-subgroup of `SUITE`. Currently covered:
+Each benchmarked module has its own file, included by `benchmarks.jl`.
+Currently covered:
 
 - [`lemke_howson.jl`](lemke_howson.jl): `lemke_howson` and `lemke_howson!`
   (`src/lemke_howson.jl`), under `SUITE["lemke_howson"]`;
@@ -82,15 +82,15 @@ julia> include("benchmark/benchmarks.jl");
 julia> run(GENERATORS_SUITE)
 ```
 
-Construction of game instances from the test suite of von Stengel et al.;
-the random generators draw a fresh instance per evaluation, advancing the
-case's own fixed-seed RNG:
+Construction of game instances from the test suite of Fearnley, Igwe,
+and Savani; the random generators draw a fresh instance per evaluation,
+advancing the case's own fixed-seed RNG:
 
 | Key | Description |
 |:----|:------------|
 | `blotto_game/h{3}_t{62}`, `blotto_game/h{4}_t{21}` | Colonel Blotto games with `(h, t)` hills and troops |
 | `ranking_game` | Ranking game with 2000 actions |
-| `sgc_game` | Savani-von Stengel game with parameter k = 500 |
+| `sgc_game` | SGC game of Sandholm, Gilpin, and Conitzer with k = 500 (4k-1 = 1999 actions per player) |
 | `tournament_game` | Tournament game with n = 200, k = 2 |
 | `unit_vector_game/avoid_pure_nash_{true,false}` | Unit-vector games with 2000 actions |
 

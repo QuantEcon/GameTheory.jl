@@ -2,8 +2,8 @@
 Benchmarks for generators/bimatrix_generators.jl
 
 Each case times the construction of a game instance from the test suite
-of von Stengel et al.; the random generators draw a fresh instance per
-evaluation, advancing the case's own fixed-seed RNG.
+of Fearnley, Igwe, and Savani; the random generators draw a fresh
+instance per evaluation, advancing the case's own fixed-seed RNG.
 =#
 using GameTheory.Generators
 using BenchmarkTools
