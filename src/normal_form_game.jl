@@ -21,7 +21,11 @@ Type representing a player in an N-player normal form game.
 # Fields
 
 - `payoff_array::Array{T,N}` : Array representing the player's payoff function,
-  where `T<:Real`.
+  where `T<:Real`. The first axis corresponds to the player's own actions,
+  and the `j`-th axis, `j = 2, ..., N`, to the actions of the `(j-1)`-th
+  next opponent: `payoff_array[a_1, a_2, ..., a_N]` is the payoff to this
+  player when the player takes action `a_1` and the opponents take actions
+  `a_2, ..., a_N`, respectively.
 """
 struct Player{N,T<:Real}
     payoff_array::Array{T,N}
@@ -472,6 +476,13 @@ end
     NormalFormGame{N,T}
 
 Type representing an N-player normal form game.
+
+Each player's `payoff_array` is indexed with the player's own action first:
+in a game `g`, the payoff to player `i` when player `k` takes action `a_k`,
+`k = 1, ..., N`, is given by
+`g.players[i].payoff_array[a_i, a_{i+1}, ..., a_{i+N-1}]`, where the player
+indices are understood modulo `N`. That is, the `j`-th axis of player `i`'s
+`payoff_array` corresponds to the action of player `i+j-1` (mod `N`).
 
 # Fields
 
