@@ -1,41 +1,29 @@
-using GameTheory.Generators
+#=
+Entry point for the generators benchmarks
+
+The bimatrix_generators subgroup is excluded from the default suite in
+benchmarks.jl (see README.md). This script exposes it as its own `SUITE`
+so that it can be run on its own, standalone:
+
+    julia --project=benchmark benchmark/generators.jl
+
+or through PkgBenchmark, e.g. for cross-commit comparisons:
+
+    using PkgBenchmark
+    jud = judge("GameTheory", "<target>", "<baseline>";
+                script="benchmark/generators.jl")
+=#
 using BenchmarkTools
-using Random
 
 const SUITE = BenchmarkGroup()
 
-SUITE["bimatrix_generators"] = BenchmarkGroup(["bimatrix_generators"])
-seed = 0
-rng = MersenneTwister(seed)
+SUITE["bimatrix_generators"] = include("bimatrix_generators.jl")
 
-# blotto_game
-hts = [(3, 62), (4, 21)]  # (h, t)
-rho = 0.5
-SUITE["bimatrix_generators"]["blotto_game"] = BenchmarkGroup()
-for ht in hts
-    SUITE["bimatrix_generators"]["blotto_game"][ht] =
-        @benchmarkable blotto_game($rng, ($ht)..., $rho)
-end
+#= Standalone execution =#
 
-# ranking_game
-n = 2000
-SUITE["bimatrix_generators"]["ranking_game"] =
-    @benchmarkable ranking_game($rng, $n)
-
-# sgc_game
-k = 500
-SUITE["bimatrix_generators"]["sgc_game"] = @benchmarkable sgc_game($k)
-
-# tournament_game
-n, k = 200, 2
-SUITE["bimatrix_generators"]["tournament_game"] =
-    @benchmarkable tournament_game($rng, $n, $k)
-
-# unit_vector_game
-n = 2000
-bools = [true, false]
-SUITE["bimatrix_generators"]["unit_vector_game"] = BenchmarkGroup()
-for b in bools
-    SUITE["bimatrix_generators"]["unit_vector_game"][b] =
-        @benchmarkable unit_vector_game($rng, $n; avoid_pure_nash=$b)
+if abspath(PROGRAM_FILE) == @__FILE__
+    tune!(SUITE)
+    results = run(SUITE; verbose=true)
+    show(IOContext(stdout, :compact => false), MIME"text/plain"(), results)
+    println()
 end

@@ -26,6 +26,20 @@ end
 
 
 """
+    _check_init_pivot(init_pivot, total_num)
+
+Check that `1 <= init_pivot <= total_num`, throwing an `ArgumentError`
+otherwise.
+"""
+function _check_init_pivot(init_pivot::Int, total_num::Int)
+    1 <= init_pivot <= total_num || throw(ArgumentError(
+        "`init_pivot` must satisfy 1 <= init_pivot <= $total_num"
+    ))
+    return nothing
+end
+
+
+"""
     lemke_howson(g; init_pivot=1, max_iter=10^6, capping=nothing,
                  full_output=Val(false))
 
@@ -134,25 +148,130 @@ function lemke_howson(g::NormalFormGame{2,T};
                       max_iter::Int=10^6,
                       capping::Union{Int,Nothing} = nothing,
                       full_output::Union{Val{true},Val{false}}=Val(false)) where T
+    nums_actions = g.nums_actions
+    total_num = sum(nums_actions)
+    _check_init_pivot(init_pivot, total_num)
+    S = float(T)
+
+    NE = (Vector{S}(undef, nums_actions[1]), Vector{S}(undef, nums_actions[2]))
+    tableaux = ntuple(i -> Matrix{S}(undef, nums_actions[3-i], total_num+1), 2)
+    bases = ntuple(i -> Vector{Int}(undef, nums_actions[3-i]), 2)
+
+    return lemke_howson!(NE, tableaux, bases, g;
+                         init_pivot=init_pivot, max_iter=max_iter,
+                         capping=capping, full_output=full_output)
+end
+
+
+"""
+    lemke_howson!(NE, tableaux, bases, g; init_pivot=1, max_iter=10^6,
+                  capping=nothing, full_output=Val(false),
+                  col_bufs=nothing, argmins=nothing)
+
+Same as `lemke_howson`, but allow for passing preallocated arrays `NE` (to
+store the equilibrium mixed actions), `tableaux` and `bases` (for workspace),
+and, as keyword arguments, the workspace arrays `col_bufs` and `argmins`.
+Each keyword left as `nothing` is allocated internally, lazily.
+
+If the players have `m` and `n` actions, `NE` must be a tuple of `Vector{S}`s
+of lengths `(m, n)`, `tableaux` a tuple of `Matrix{S}`s of sizes
+`(n, m+n+1)` and `(m, m+n+1)`, `bases` a tuple of `Vector{Int}`s of lengths
+`(n, m)`, `col_bufs` a tuple of `Vector{S}`s of lengths `(n, m)`, and
+`argmins` a `Vector{Int}` of length at least `max(m, n)`, where
+`S<:AbstractFloat` (`float(T)` for the game's payoff eltype `T` under the
+non-mutating `lemke_howson`).
+
+The two members of each of `NE`, `tableaux`, and `bases` must be distinct
+arrays, and `argmins` must not alias either member of `bases`; `col_bufs[1]`
+and `col_bufs[2]` may be the same array when `m == n`, as each pivoting step
+uses the buffer in isolation. A `DimensionMismatch` is thrown if any of the
+arrays has a wrong size, and an `ArgumentError` if arrays required to be
+distinct alias each other or `init_pivot` is out of range.
+
+With `col_bufs` and `argmins` supplied, the call performs no workspace
+allocations; for machine-float element types such as `Float64` and with
+`full_output=Val(false)`, repeated solves then generate no garbage-collector
+pressure:
+
+```julia
+m, n = g.nums_actions
+S = Float64
+NE = (Vector{S}(undef, m), Vector{S}(undef, n))
+tableaux = (Matrix{S}(undef, n, m+n+1), Matrix{S}(undef, m, m+n+1))
+bases = (Vector{Int}(undef, n), Vector{Int}(undef, m))
+col_bufs = (Vector{S}(undef, n), Vector{S}(undef, m))
+argmins = Vector{Int}(undef, max(m, n))
+NE = lemke_howson!(NE, tableaux, bases, g;
+                   col_bufs=col_bufs, argmins=argmins)
+```
+
+With `full_output=Val(true)`, the returned `res.NE` is the caller-supplied
+`NE` itself, not a copy; a subsequent call reusing `NE` overwrites the
+equilibrium accessible through the earlier `res`.
+"""
+function lemke_howson!(NE::NTuple{2,Vector{S}},
+                       tableaux::NTuple{2,Matrix{S}},
+                       bases::NTuple{2,Vector{Int}},
+                       g::NormalFormGame{2,T};
+                       init_pivot::Int=1,
+                       max_iter::Int=10^6,
+                       capping::Union{Int,Nothing}=nothing,
+                       full_output::Union{Val{true},Val{false}}=Val(false),
+                       col_bufs::Union{NTuple{2,Vector{S}},Nothing}=nothing,
+                       argmins::Union{Vector{Int},Nothing}=nothing
+                       ) where {T,S<:AbstractFloat}
     payoff_matrices = ntuple(i -> g.players[i].payoff_array, 2)
     nums_actions = g.nums_actions
     total_num = sum(nums_actions)
 
-    if !(1 <= init_pivot <= total_num)
-        throw(ArgumentError("`init_pivot` must satisfy 1 <= k <= $(total_num)"))
+    _check_init_pivot(init_pivot, total_num)
+
+    for pl in 1:2
+        length(NE[pl]) == nums_actions[pl] || throw(DimensionMismatch(
+            "NE[$pl] must have length $(nums_actions[pl])"))
+        size(tableaux[pl]) == (nums_actions[3-pl], total_num+1) ||
+            throw(DimensionMismatch(
+                "tableaux[$pl] must have size ($(nums_actions[3-pl]), $(total_num+1))"))
+        length(bases[pl]) == nums_actions[3-pl] || throw(DimensionMismatch(
+            "bases[$pl] must have length $(nums_actions[3-pl])"))
+    end
+    Base.mightalias(NE[1], NE[2]) && throw(ArgumentError(
+        "NE[1] and NE[2] must be separate arrays"))
+    Base.mightalias(tableaux[1], tableaux[2]) && throw(ArgumentError(
+        "tableaux[1] and tableaux[2] must be separate arrays"))
+    Base.mightalias(bases[1], bases[2]) && throw(ArgumentError(
+        "bases[1] and bases[2] must be separate arrays"))
+    if col_bufs !== nothing
+        for pl in 1:2
+            length(col_bufs[pl]) == nums_actions[3-pl] ||
+                throw(DimensionMismatch(
+                    "col_bufs[$pl] must have length $(nums_actions[3-pl])"))
+        end
+    end
+    if argmins !== nothing
+        length(argmins) >= max(nums_actions...) || throw(DimensionMismatch(
+            "argmins must have length at least $(max(nums_actions...))"))
+        # argmins is overwritten in each pivoting step before bases[pl] is
+        # read to determine the leaving variable
+        for pl in 1:2
+            Base.mightalias(argmins, bases[pl]) && throw(ArgumentError(
+                "argmins and bases[$pl] must be separate arrays"))
+        end
     end
 
     capping === nothing && (capping = max_iter)
 
-    S = float(T)
-
-    tableaux = ntuple(i -> Matrix{S}(undef, nums_actions[3-i], total_num+1), 2)
-    bases = ntuple(i -> Vector{Int}(undef, nums_actions[3-i]), 2)
+    # Materialize unsupplied keyword defaults lazily
+    col_bufs = col_bufs === nothing ?
+        (Vector{S}(undef, nums_actions[2]), Vector{S}(undef, nums_actions[1])) :
+        col_bufs
+    argmins = argmins === nothing ?
+        Vector{Int}(undef, max(nums_actions...)) : argmins
 
     converged, num_iter, init_pivot_used =
         _lemke_howson_capping!(payoff_matrices, tableaux, bases, init_pivot,
-                               max_iter, capping)
-    NE = _get_mixed_actions(tableaux, bases)
+                               max_iter, capping, col_bufs, argmins)
+    _get_mixed_actions!(NE, tableaux, bases)
 
     if full_output isa Val{false}
         return NE
@@ -167,7 +286,7 @@ end
 
 """
     _lemke_howson_capping!(payoff_matrices, tableaux, bases, init_pivot,
-                           max_iter::Int, capping)
+                           max_iter, capping, col_bufs, argmins)
 
 Execute the Lemke–Howson algorithm with the heuristic proposed by
 Codenotti et al.
@@ -186,6 +305,9 @@ Codenotti et al.
 - `max_iter::Int`: Maximum number of pivoting steps.
 - `capping::Int`: Value for capping. If set equal to `max_iter`, the routine
   is equivalent to the standard Lemke–Howson algorithm.
+- `col_bufs::NTuple{2,Vector}`: Tuple of two workspace vectors of length `n`
+  and `m`, respectively.
+- `argmins::Vector{Int}`: Workspace vector of length at least `max(m, n)`.
 
 # Returns
 
@@ -199,7 +321,9 @@ function _lemke_howson_capping!(payoff_matrices::NTuple{2,Matrix},
                                 bases::NTuple{2,Vector{Int}},
                                 init_pivot::Int,
                                 max_iter::Int,
-                                capping::Int) where {T<:AbstractFloat}
+                                capping::Int,
+                                col_bufs::NTuple{2,Vector{T}},
+                                argmins::Vector{Int}) where {T<:AbstractFloat}
     total = size(tableaux[2], 1) + size(tableaux[1], 1)  # m + n
     init_pivot_curr = init_pivot
     max_iter_curr = max_iter
@@ -210,7 +334,8 @@ function _lemke_howson_capping!(payoff_matrices::NTuple{2,Matrix},
 
         _initialize_tableaux!(payoff_matrices, tableaux, bases)
         converged, num_iter =
-            _lemke_howson_tbl!(tableaux, bases, init_pivot_curr, capping_curr)
+            _lemke_howson_tbl!(tableaux, bases, init_pivot_curr, capping_curr,
+                               col_bufs, argmins)
 
         total_num_iter += num_iter
 
@@ -227,7 +352,8 @@ function _lemke_howson_capping!(payoff_matrices::NTuple{2,Matrix},
 
     _initialize_tableaux!(payoff_matrices, tableaux, bases)
     converged, num_iter =
-        _lemke_howson_tbl!(tableaux, bases, init_pivot_curr, max_iter_curr)
+        _lemke_howson_tbl!(tableaux, bases, init_pivot_curr, max_iter_curr,
+                           col_bufs, argmins)
     total_num_iter += num_iter
 
     return converged, total_num_iter, init_pivot_curr
@@ -312,12 +438,10 @@ function _initialize_tableaux!(payoff_matrices::NTuple{2,Matrix},
                                bases::NTuple{2,Vector{Int}}) where T
     nums_actions = size(payoff_matrices[1])
 
-    consts = zeros(T, 2)  # To be added to payoffs if min <= 0
-    for pl in 1:2
+    # To be added to payoffs if min <= 0
+    consts = ntuple(2) do pl
         min_ = minimum(payoff_matrices[pl])
-        if min_ <= 0
-            consts[pl] = -min_ + 1
-        end
+        min_ <= 0 ? convert(T, -min_ + 1) : zero(T)
     end
 
     @inbounds for (pl, (py_start, sl_start)) in enumerate(
@@ -349,7 +473,8 @@ end
 
 
 """
-    _lemke_howson_tbl!(tableaux, bases, init_pivot, max_iter)
+    _lemke_howson_tbl!(tableaux, bases, init_pivot, max_iter,
+                       col_bufs, argmins)
 
 Main body of the Lemke-Howson algorithm implementation.
 
@@ -363,6 +488,9 @@ Perform the complementary pivoting. Modify `tableaux` and `bases` in place.
   of length `n` and `m`, respectively. Modified in place.
 - `init_pivot::Int`: Integer `k` such that `1 <= k <= m + n`.
 - `max_iter::Int`: Maximum number of pivoting steps.
+- `col_bufs::NTuple{2,Vector}`: Tuple of two workspace vectors of length `n`
+  and `m`, respectively.
+- `argmins::Vector{Int}`: Workspace vector of length at least `max(m, n)`.
 
 # Returns
 
@@ -386,7 +514,11 @@ julia> bases = (Vector{Int}(undef, n), Vector{Int}(undef, m));
 
 julia> tableaux, bases = _initialize_tableaux!((A, B), tableaux, bases);
 
-julia> _lemke_howson_tbl!(tableaux, bases, 2, 10);
+julia> col_bufs = (Vector{Float64}(undef, n), Vector{Float64}(undef, m));
+
+julia> argmins = Vector{Int}(undef, max(m, n));
+
+julia> _lemke_howson_tbl!(tableaux, bases, 2, 10, col_bufs, argmins);
 
 julia> tableaux[1]
 2×6 Matrix{Float64}:
@@ -411,7 +543,9 @@ mixed action plays actions `3` and `2` with positive weights `0.25` and
 function _lemke_howson_tbl!(tableaux::NTuple{2,Matrix{T}},
                             bases::NTuple{2,Vector{Int}},
                             init_pivot::Int,
-                            max_iter::Int) where {T<:AbstractFloat}
+                            max_iter::Int,
+                            col_bufs::NTuple{2,Vector{T}},
+                            argmins::Vector{Int}) where {T<:AbstractFloat}
     init_player = 1
     for k in bases[1]
         if k == init_pivot
@@ -425,10 +559,6 @@ function _lemke_howson_tbl!(tableaux::NTuple{2,Matrix{T}},
 
     m, n = (size(tableaux[2], 1), size(tableaux[1], 1))
     slack_starts = (m+1, 1)
-
-    # Workspaces
-    col_bufs = ntuple(pl -> Vector{T}(undef, size(tableaux[pl], 1)), 2)
-    argmins = Vector{Int}(undef, max(m, n))
 
     converged = false
     num_iter  = 0
@@ -486,25 +616,39 @@ return a tuple of the corresponding, normalized mixed actions.
 function _get_mixed_actions(tableaux::NTuple{2,Matrix{T}},
                             bases::NTuple{2,Vector{Int}}) where T
     nums_actions = (size(tableaux[2], 1), size(tableaux[1], 1))
-    num = nums_actions[1] + nums_actions[2]
-    out = zeros(T, num)
+    NE = (Vector{T}(undef, nums_actions[1]), Vector{T}(undef, nums_actions[2]))
+    return _get_mixed_actions!(NE, tableaux, bases)
+end
 
-    @inbounds for (pl, (start, stop)) in enumerate(
-            ((1, nums_actions[1]), (nums_actions[1]+1, num))
-        )
+"""
+    _get_mixed_actions!(NE, tableaux, bases)
+
+In-place version of `_get_mixed_actions`: store the mixed actions in `NE`,
+a tuple of vectors of lengths `m` and `n`, and return `NE`.
+"""
+function _get_mixed_actions!(NE::NTuple{2,Vector{T}},
+                             tableaux::NTuple{2,Matrix{T}},
+                             bases::NTuple{2,Vector{Int}}) where T
+    nums_actions = (size(tableaux[2], 1), size(tableaux[1], 1))
+
+    @inbounds for pl in 1:2
+        out = NE[pl]
+        fill!(out, zero(T))
+        offset = pl == 1 ? 0 : nums_actions[1]
+        start, stop = offset + 1, offset + nums_actions[pl]
         sum_ = zero(T)
         for i in 1:nums_actions[3-pl]
             k = bases[pl][i]
             if start <= k <= stop
                 v = tableaux[pl][i, end]
-                out[k] = v
+                out[k-offset] = v
                 sum_ += v
             end
         end
         if !iszero(sum_)
-            @views out[start:stop] ./= sum_
+            out ./= sum_
         end
     end
 
-    return out[1:nums_actions[1]], out[nums_actions[1]+1:end]
+    return NE
 end

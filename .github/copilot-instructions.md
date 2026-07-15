@@ -66,6 +66,12 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 - Consider using `@inbounds` for performance-critical loops (with proper bounds checking)
 - Use views (`@view`) instead of creating temporary arrays when possible
 
+### Workspace and Allocation Conventions
+- Mutating solver variants (e.g. `lemke_howson!`) follow the QuantEcon.jl `lcp_lemke!` argument layout: caller-owned output and primary workspace arrays are positional, auxiliary workspace arrays are keyword arguments defaulting to `nothing` and materialized lazily (keyword defaults are evaluated at call time even if the function returns early)
+- When validating caller-supplied arguments in exported functions, prefer throwing exceptions to `@assert`: `DimensionMismatch` for array-size mismatches, `ArgumentError` for invalid values or aliasing
+- Check non-aliasing with `Base.mightalias` among caller-supplied arrays that the algorithm overwrites before reading others (e.g. `argmins` vs `bases` in `lemke_howson!`), and between the members of same-shaped array pairs
+- In allocation tests, do not assert `@allocated ... == 0` or hard-code byte counts: older Julia versions heap-allocate returned non-isbits immutable objects that newer versions elide; bound the measurement by a baseline measured in the same escape pattern (see `test/test_lemke_howson.jl`), and scope "allocation-free" claims to machine-float element types
+
 ### Testing Patterns
 - Each source file has a corresponding test file (e.g., `src/normal_form_game.jl` → `test/test_normal_form_game.jl`)
 - Use `@testset` to group related tests

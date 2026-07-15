@@ -125,4 +125,91 @@
         @test_throws ArgumentError lemke_howson(g; init_pivot=m+n+1)
     end
 
+    @testset "lemke_howson! with full workspace" begin
+        A = [3 3; 2 5; 0 6]
+        B = [3 2 3; 2 6 1]
+        g = NormalFormGame(Player(A), Player(B))
+        m, n = g.nums_actions
+        S = Float64
+        NE = (Vector{S}(undef, m), Vector{S}(undef, n))
+        tableaux = (Matrix{S}(undef, n, m+n+1), Matrix{S}(undef, m, m+n+1))
+        bases = (Vector{Int}(undef, n), Vector{Int}(undef, m))
+        col_bufs = (Vector{S}(undef, n), Vector{S}(undef, m))
+        argmins = Vector{Int}(undef, max(m, n))
+
+        for k in 1:(m+n)
+            NE_ = @inferred lemke_howson!(NE, tableaux, bases, g,
+                                          init_pivot=k,
+                                          col_bufs=col_bufs, argmins=argmins)
+            @test NE_ === NE
+            @test NE == lemke_howson(g, init_pivot=k)
+        end
+
+        NE_, res = lemke_howson!(NE, tableaux, bases, g, init_pivot=2,
+                                 full_output=Val(true),
+                                 col_bufs=col_bufs, argmins=argmins)
+        @test NE_ === NE
+        @test res.NE === NE  # res.NE is the caller-owned NE, not a copy
+        NE0, res0 = lemke_howson(g, init_pivot=2, full_output=Val(true))
+        @test NE == NE0
+        @test res.converged == res0.converged
+        @test res.num_iter == res0.num_iter
+        @test res.init == res0.init
+
+        # capping path with full workspace
+        NE_ = lemke_howson!(NE, tableaux, bases, g, init_pivot=1, capping=1,
+                            col_bufs=col_bufs, argmins=argmins)
+        @test is_nash(g, NE_)
+
+        # With full workspace the call is allocation-free up to the
+        # returned objects; bound by a baseline measured in the same
+        # escape pattern (older Julia versions may heap-allocate it)
+        solve!() = lemke_howson!(NE, tableaux, bases, g,
+                                 col_bufs=col_bufs, argmins=argmins)
+        solve!()  # warmup
+        make_ret() = (NE[1], NE[2])
+        make_ret()  # warmup
+        @test (@allocated solve!()) <= (@allocated make_ret())
+
+        # invalid init_pivot
+        @test_throws ArgumentError lemke_howson!(NE, tableaux, bases, g,
+                                                 init_pivot=0)
+        @test_throws ArgumentError lemke_howson!(NE, tableaux, bases, g,
+                                                 init_pivot=m+n+1)
+
+        # aliasing rejections (square game, so that shapes match)
+        gs = NormalFormGame(Player([1. 0.; 0. 1.]), Player([1. 0.; 0. 1.]))
+        v = Vector{Float64}(undef, 2)
+        tabs = (Matrix{Float64}(undef, 2, 5), Matrix{Float64}(undef, 2, 5))
+        bs = (Vector{Int}(undef, 2), Vector{Int}(undef, 2))
+        @test_throws ArgumentError lemke_howson!((v, v), tabs, bs, gs)
+        @test_throws ArgumentError lemke_howson!((copy(v), v),
+                                                 (tabs[1], tabs[1]), bs, gs)
+        @test_throws ArgumentError lemke_howson!((copy(v), v), tabs,
+                                                 (bs[1], bs[1]), gs)
+        @test_throws ArgumentError lemke_howson!((copy(v), v), tabs, bs, gs,
+                                                 argmins=bs[1])
+
+        # size rejections
+        @test_throws DimensionMismatch lemke_howson!(
+            (Vector{Float64}(undef, 3), v), tabs, bs, gs)
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), (tabs[1], Matrix{Float64}(undef, 2, 4)), bs, gs)
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), tabs, (bs[1], Vector{Int}(undef, 3)), gs)
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), tabs, bs, gs,
+            col_bufs=(Vector{Float64}(undef, 3), Vector{Float64}(undef, 2)))
+        @test_throws DimensionMismatch lemke_howson!(
+            (copy(v), v), tabs, bs, gs, argmins=Vector{Int}(undef, 1))
+
+        # col_bufs may share one buffer on a square game
+        NE_s = (Vector{Float64}(undef, 2), Vector{Float64}(undef, 2))
+        buf = Vector{Float64}(undef, 2)
+        NE_s_ = lemke_howson!(NE_s, tabs, bs, gs, col_bufs=(buf, buf),
+                              argmins=Vector{Int}(undef, 2))
+        @test NE_s_ === NE_s
+        @test NE_s == lemke_howson(gs)
+    end
+
 end
