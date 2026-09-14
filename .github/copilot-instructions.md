@@ -115,8 +115,12 @@ player1 = Player([3 0; 5 1])  # 2x2 payoff matrix
 player2 = Player([3 5; 0 1])
 game = NormalFormGame(player1, player2)
 
-# Or create directly
-game = NormalFormGame([3 0; 5 1], [3 5; 0 1])
+# Or create directly from an array of payoff tuples, one tuple per action
+# profile: payoffs[a1, a2] = (player 1's payoff, player 2's payoff)
+game = NormalFormGame([(3, 3) (0, 0); (5, 5) (1, 1)])
+
+# Note: there is no NormalFormGame(matrix1, matrix2) constructor; a single
+# square matrix NormalFormGame(A) constructs a *symmetric* 2-player game
 ```
 
 ### Action Handling
