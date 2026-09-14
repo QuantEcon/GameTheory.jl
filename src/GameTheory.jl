@@ -98,6 +98,9 @@ export
     is_pareto_dominant, is_dominated, dominated_actions, delete_action,
     payoff_profile_array,
 
+    # Game converters
+    read_gam, parse_gam, write_gam, gam_string,
+
     # General functions
     num_players, num_actions, num_opponents,
 

@@ -90,4 +90,103 @@ using Random
         end
     end
 
+    @testset "read_gam/write_gam" begin
+        same_game(g1, g2) =
+            g1.nums_actions == g2.nums_actions &&
+            all(g1.players[i].payoff_array == g2.players[i].payoff_array
+                for i in 1:num_players(g1))
+
+        @testset "Golden: N=2" begin
+            g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]))
+            s = "2\n3 2\n\n3 0 2 1 4 5 2 6 1 3 0 4\n"
+
+            @test gam_string(g) == s
+            @test sprint(write_gam, g) == s
+            @test same_game(parse_gam(s), g)
+            @test same_game(read_gam(IOBuffer(s)), g)
+
+            p = GAMPayoffVector((3, 2), [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4])
+            @test gam_string(p) == s
+        end
+
+        @testset "Golden: N=3" begin
+            nums_actions = (2, 2, 2)
+            g = NormalFormGame(Int, nums_actions)
+            for (a, payoffs) in [((1, 1, 1), (0, 8, 16)), ((2, 1, 1), (1, 9, 17)),
+                                 ((1, 2, 1), (2, 10, 18)), ((2, 2, 1), (3, 11, 19)),
+                                 ((1, 1, 2), (4, 12, 20)), ((2, 1, 2), (5, 13, 21)),
+                                 ((1, 2, 2), (6, 14, 22)), ((2, 2, 2), (7, 15, 23))]
+                g[a...] = payoffs
+            end
+            s = "3\n2 2 2\n\n" * join(0:23, ' ') * '\n'
+
+            @test gam_string(g) == s
+            @test same_game(parse_gam(s), g)
+        end
+
+        @testset "Round trip: N=$(length(ns)), $S" for ns in [(4, 3), (2, 2, 3, 2)],
+                                                        S in [0:99, Float64]
+            rng = MersenneTwister(12345)
+            g = random_game(rng, S, ns)
+
+            @test same_game(parse_gam(gam_string(g)), g)
+
+            mktempdir() do dir
+                path = joinpath(dir, "game.gam")
+                @test write_gam(path, g) === nothing
+                @test read(path, String) == gam_string(g)
+                @test same_game(read_gam(path), g)
+                @test same_game(read_gam(eltype(g.players[1].payoff_array), path), g)
+            end
+        end
+
+        @testset "Element type" begin
+            s_int = "2\n2 2\n\n1 2 3 4 5 6 7 8"
+            s_float = "2\n2 2\n\n1 2 3 4.5 5 6 7 8"
+            s_exp = "2\n2 2\n\n1 2 3 4 5 6 7 1e3"
+
+            @test parse_gam(s_int) isa NormalFormGame{2,Int}
+            @test parse_gam(s_float) isa NormalFormGame{2,Float64}
+            @test parse_gam(s_exp) isa NormalFormGame{2,Float64}
+            @test parse_gam(s_exp)[2, 2][2] == 1000.0
+
+            @test parse_gam(Float64, s_int) isa NormalFormGame{2,Float64}
+            @test parse_gam(BigInt, s_int) isa NormalFormGame{2,BigInt}
+            @test parse_gam(Rational{Int}, s_float) isa NormalFormGame{2,Rational{Int}}
+            @test parse_gam(Rational{Int}, s_float)[2, 2][1] == 9//2
+            @test_throws ArgumentError parse_gam(Int, s_float)
+
+            g = NormalFormGame(Player([1 2; 3 4]), Player([5 6; 7 8]))
+            @test gam_string(NormalFormGame(Float64, g)) ==
+                  "2\n2 2\n\n1.0 3.0 2.0 4.0 5.0 6.0 7.0 8.0\n"
+            @test_throws MethodError write_gam(IOBuffer(), NormalFormGame(Rational{Int}, g))
+            @test_throws MethodError gam_string(NormalFormGame(Rational{Int}, g))
+        end
+
+        @testset "Whitespace" begin
+            g = parse_gam("2\n3 2\n\n3 2 0 3 5 6 3 2 3 2 6 1")
+            @test same_game(parse_gam("  2 3 2 3 2 0 3 5 6\n3 2 3 2 6 1\n\n"), g)
+            @test same_game(parse_gam("2\r\n3 2\r\n\r\n3 2 0 3 5 6 3 2 3 2 6 1\r\n"), g)
+        end
+
+        @testset "Invalid inputs" begin
+            for s in ["", "  \n", "x", "0", "-1", "2\n3", "2\n3 x\n\n1 2",
+                      "2\n3 0\n\n", "2\n3 2\n\n1 2 3",
+                      "2\n3 2\n\n1 2 3 4 5 6 7 8 9 10 11 12 13",
+                      "2\n3 2\n\n1 2 3 4 5 6 7 8 9 10 11 z"]
+                @test_throws ArgumentError parse_gam(s)
+                @test_throws ArgumentError parse_gam(Float64, s)
+            end
+        end
+
+        @testset "Type inference" begin
+            g = random_game(MersenneTwister(0), (3, 2))
+            @inferred write_gam(IOBuffer(), g)
+            @inferred gam_string(g)
+            tokens = split("1 2 3 4.5")
+            @inferred GameTheory._parse_payoffs(Float64, tokens)
+            @inferred GameTheory._parse_payoffs(BigInt, split("1 2 3 4"))
+        end
+    end
+
 end
