@@ -97,7 +97,8 @@ See the tutorials for further examples.
 * [`lemke_howson`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lemke_howson-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T)
   Find one mixed-action Nash equilibrium of a two-player normal-form game
 * [`support_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.support_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
-  Find all mixed-action Nash equilibria of a two-player nondegenerate game
+  Find all mixed-action Nash equilibria of a two-player nondegenerate game, or
+  of an N-player regular game
 * [`lrsnash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lrsnash-Tuple{NormalFormGame{2,%20%3C:Union{Int64,%20Rational}}}):
   Find all mixed-action Nash equilibria (or equilibrium components) of a two-player game
 * [`hc_solve`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.hc_solve-Union{Tuple{NormalFormGame{N}},%20Tuple{N}}%20where%20N):

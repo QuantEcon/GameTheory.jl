@@ -8,7 +8,9 @@ game.
 
 This function solves a system of polynomial equations arising from the
 nonlinear complementarity problem representation of Nash eqiulibrium, by using
-`HomotopyContinuation.jl`.
+`HomotopyContinuation.jl`. For games with three or more players,
+`support_enumeration`, which solves one small system per support profile, is
+typically much faster.
 
 # Arguments
 
@@ -147,4 +149,80 @@ function _get_action_profile(r::PathResult, nums_actions::NTuple{N}) where N
         end
     end
     return out
+end
+
+
+# HCSolver for support_enumeration
+
+"""
+    HCSolver(; options...)
+
+Solver for the systems of polynomial equations in `support_enumeration` for
+N-player games, using `HomotopyContinuation.solve` with the polyhedral
+homotopy.
+
+# Arguments
+
+- `options...`: Optional arguments to pass to `HomotopyContinuation.solve`.
+  For example, the option `seed::UInt32` can set the random seed used during
+  the computations. The defaults `compile=false`, `show_progress=false`, and
+  `threading=false` are used unless overridden; note that compilation is much
+  slower than interpreted evaluation for the small systems solved here. See
+  the
+  [documentation](https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
+  for `HomotopyContinuation.solve` for details.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame((2, 2, 2));
+
+julia> g[1, 1, 1] = [9, 8, 12];
+
+julia> g[2, 2, 1] = [9, 8, 2];
+
+julia> g[1, 2, 2] = [3, 4, 6];
+
+julia> g[2, 1, 2] = [3, 4, 4];
+
+julia> NEs = support_enumeration(g, HCSolver(seed=UInt32(1234)));
+
+julia> length(NEs)
+9
+```
+"""
+struct HCSolver{O<:NamedTuple} <: AbstractSupportSolver
+    options::O
+end
+
+function HCSolver(; options...)
+    defaults = (compile=false, show_progress=false, threading=false)
+    return HCSolver(merge(defaults, NamedTuple(options)))
+end
+
+"""
+    _support_solutions(solver::HCSolver, g, supps, mixing)
+
+Return the real nonsingular solutions of the indifference system on the
+support profile `supps` (see `_support_equations`), computed by
+`HomotopyContinuation.solve`. If the system has zero mixed volume, in which
+case it has no isolated solution with all the free probabilities nonzero, an
+empty vector is returned.
+"""
+function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
+                            supps, mixing) where N
+    vars = Vector{Vector{Variable}}(undef, N)
+    for i in mixing
+        vars[i] = [Variable(:x, i, a) for a in supps[i][1:end-1]]
+    end
+    eqs = _support_equations(g, supps, mixing, vars)
+    F = System(eqs, variables=reduce(vcat, (vars[i] for i in mixing)))
+    res = try
+        HomotopyContinuation.solve(F; solver.options...)
+    catch e
+        # "Cannot compute a start system": zero mixed volume
+        e isa OverflowError || rethrow()
+        return Vector{Float64}[]
+    end
+    return real_solutions(res)
 end

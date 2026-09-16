@@ -285,3 +285,278 @@ function _indiff_mixed_action!(A::Matrix{T}, b::Vector{T},
 
     return true
 end
+
+
+# N-player support enumeration
+
+"""
+    AbstractSupportSolver
+
+Abstract type for solvers of the systems of polynomial equations that arise in
+`support_enumeration` for N-player games.
+
+A concrete subtype `S` must implement
+`_support_solutions(solver::S, g, supps, mixing)`, which returns the real
+nonsingular solutions of the indifference system on the support profile
+`supps` as vectors of the free probabilities (see `_support_equations`).
+"""
+abstract type AbstractSupportSolver end
+
+"""
+    support_enumeration(g[, solver]; ntofind=Inf, tol=1e-8)
+
+Compute all Nash equilibria of an N-player normal form game with `N >= 3` by
+support enumeration, or of a 2-player game if `solver` is given explicitly.
+
+For each support profile, the mixed actions that make each player indifferent
+among the actions in their support are the solutions of a system of
+polynomial equations. The system is solved by `solver`, and the solutions are
+retained as Nash equilibria if all the probabilities on the supports are
+positive and no action outside the supports is a profitable deviation, as
+checked by `is_nash` with tolerance `tol`.
+
+For a regular game in the sense of Harsanyi (1973), this function returns all
+the Nash equilibria; almost all games are regular. For a non-regular game, it
+returns all the pure-action Nash equilibria and those mixed-action Nash
+equilibria that are nonsingular solutions of their support systems, while
+equilibria that are not isolated are not (fully) returned.
+
+The number of support profiles is `prod(2^n_i - 1)`, where `n_i` is the
+number of actions of player `i`, and the running time is roughly proportional
+to this number (on the order of milliseconds per support profile) plus the
+total number of solutions of the support systems. Support profiles in which
+only one player mixes, or in which some player has more free probabilities
+than the other mixing players have in total, are skipped without solving; for
+2-player games this reduces to the equal-size rule. This function is
+typically much faster than `hc_solve`, which solves a single large system of
+polynomial equations for which the computation of the start system is
+expensive, while the total number of solution paths tracked is the same.
+
+# Arguments
+
+- `g::NormalFormGame{N}`: N-player NormalFormGame instance.
+- `solver::AbstractSupportSolver=HCSolver()`: Solver for the polynomial
+  systems.
+- `ntofind=Inf`: Number of Nash equilibria to find.
+- `tol::Real=1e-8`: Tolerance used to check that the probabilities on the
+  supports are positive and, in `is_nash`, that the mixed actions are best
+  responses.
+
+# Returns
+
+- `::Vector{NTuple{N,Vector{Float64}}}`: Vector of mixed-action Nash
+  equilibria, ordered by increasing total support size.
+
+# Examples
+
+Consider the 3-player 2-action game with 9 Nash equilibria in McKelvey and
+McLennan (1996) "Computation of Equilibria in Finite Games":
+
+```julia
+julia> g = NormalFormGame((2, 2, 2));
+
+julia> g[1, 1, 1] = [9, 8, 12];
+
+julia> g[2, 2, 1] = [9, 8, 2];
+
+julia> g[1, 2, 2] = [3, 4, 6];
+
+julia> g[2, 1, 2] = [3, 4, 4];
+
+julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
+
+julia> NEs = support_enumeration(g)
+9-element Vector{Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}:
+ ([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
+ ([1.0, 0.0], [0.0, 1.0], [0.0, 1.0])
+ ([0.0, 1.0], [1.0, 0.0], [0.0, 1.0])
+ ([0.0, 1.0], [0.0, 1.0], [1.0, 0.0])
+ ([0.0, 1.0], [0.333333, 0.666667], [0.333333, 0.666667])
+ ([0.25, 0.75], [1.0, 0.0], [0.25, 0.75])
+ ([0.5, 0.5], [0.5, 0.5], [1.0, 0.0])
+ ([0.25, 0.75], [0.5, 0.5], [0.333333, 0.666667])
+ ([0.5, 0.5], [0.333333, 0.666667], [0.25, 0.75])
+
+julia> all([is_nash(g, NE) for NE in NEs])
+true
+```
+
+# References
+
+- J. C. Harsanyi, "Oddness of the Number of Equilibrium Points: A New Proof,"
+  International Journal of Game Theory 2 (1973), 235-250.
+- R. D. McKelvey and A. McLennan, "Computation of Equilibria in Finite Games,"
+  Handbook of Computational Economics 1 (1996), 87-142.
+"""
+function support_enumeration(g::NormalFormGame{N}; options...) where N
+    return support_enumeration(g, HCSolver(); options...)
+end
+
+function support_enumeration(g::NormalFormGame{N},
+                             solver::AbstractSupportSolver;
+                             ntofind=Inf, tol::Real=1e-8) where N
+    N >= 2 || throw(ArgumentError("not implemented for 1-player games"))
+
+    nums_actions = g.nums_actions
+    NEs = NTuple{N,Vector{Float64}}[]
+
+    # Support size profiles, ordered by total support size
+    size_profiles =
+        vec(collect(Iterators.product(ntuple(i -> 1:nums_actions[i], N)...)))
+    sort!(size_profiles, by=ks -> (sum(ks), ks))
+
+    for ks in size_profiles
+        mixing = [i for i in 1:N if ks[i] > 1]
+        if length(mixing) == 1
+            continue  # No isolated equilibrium
+        elseif length(mixing) >= 2
+            # Player i's k_i - 1 indifference equations involve the other
+            # mixing players' free probabilities
+            num_free = sum(ks[i] - 1 for i in mixing)
+            all(2 * (ks[i] - 1) <= num_free for i in mixing) || continue
+        end
+
+        supps = ntuple(i -> collect(1:ks[i]), N)
+        while true
+            if isempty(mixing)
+                action_profile = _support_action_profile(nums_actions, supps)
+                is_nash(g, action_profile, tol=tol) &&
+                    push!(NEs, action_profile)
+                length(NEs) >= ntofind && return NEs
+            else
+                for sol in _support_solutions(solver, g, supps, mixing)
+                    action_profile =
+                        _support_action_profile(nums_actions, supps, sol, tol)
+                    action_profile === nothing && continue
+                    is_nash(g, action_profile, tol=tol) || continue
+                    push!(NEs, action_profile)
+                    length(NEs) >= ntofind && return NEs
+                end
+            end
+            _next_supports!(supps, nums_actions) || break
+        end
+    end
+
+    return NEs
+end
+
+"""
+    _next_supports!(supps, nums_actions)
+
+Update `supps` in place to the next support profile with the same support
+sizes, in the order in which the support of the last player changes fastest.
+Return `false` if `supps` was the last support profile, `true` otherwise.
+"""
+function _next_supports!(supps::NTuple{N,Vector{Int}},
+                         nums_actions::NTuple{N,Int}) where N
+    for i in N:-1:1
+        next_k_array!(supps[i])
+        supps[i][end] <= nums_actions[i] && return true
+        supps[i] .= 1:length(supps[i])
+    end
+    return false
+end
+
+"""
+    _support_action_profile(nums_actions, supps[, sol, tol])
+
+Return the mixed action profile with support profile `supps` whose free
+probabilities are given by `sol` (see `_support_equations`), or `nothing` if
+some probability on the supports is not greater than `tol`. If `sol` is
+omitted, `supps` must be a pure action profile.
+"""
+function _support_action_profile(nums_actions::NTuple{N,Int}, supps,
+                                 sol::Vector{Float64}, tol::Real) where N
+    action_profile = ntuple(i -> zeros(nums_actions[i]), N)
+    idx = 0
+    for i in 1:N
+        k = length(supps[i])
+        if k == 1
+            action_profile[i][supps[i][1]] = 1.
+        else
+            s = 0.
+            for l in 1:k-1
+                idx += 1
+                p = sol[idx]
+                p > tol || return nothing
+                action_profile[i][supps[i][l]] = p
+                s += p
+            end
+            p = 1 - s
+            p > tol || return nothing
+            action_profile[i][supps[i][k]] = p
+        end
+    end
+    return action_profile
+end
+
+function _support_action_profile(nums_actions::NTuple{N,Int}, supps) where N
+    action_profile = ntuple(i -> zeros(nums_actions[i]), N)
+    for i in 1:N
+        action_profile[i][supps[i][1]] = 1.
+    end
+    return action_profile
+end
+
+"""
+    _support_equations(g, supps, mixing, vars)
+
+Return the equations of the indifference system on the support profile
+`supps`, as a vector of expressions in the variables `vars`.
+
+For each player `i` in `mixing`, the players with more than one action in
+their supports, `vars[i]` is a vector of `length(supps[i]) - 1` variables
+representing the probabilities on the actions `supps[i][1:end-1]`, and the
+probability on `supps[i][end]` is `1 - sum(vars[i])`. Players not in `mixing`
+play the pure actions `supps[i][1]`. The equations are, for each `i` in
+`mixing` and each `a` in `supps[i][2:end]`, the differences between the
+expected payoffs of `a` and of `supps[i][1]`. The order of the variables is
+that of `vars[i]` for `i` in `mixing`; the order of the equations follows
+that of the variables.
+"""
+function _support_equations(g::NormalFormGame{N}, supps, mixing,
+                            vars::Vector{<:AbstractVector}) where N
+    probs_mixing = [[vars[i]; 1 - sum(vars[i])] for i in mixing]
+    V = eltype(probs_mixing[1])
+    probs = Vector{Vector{V}}(undef, N)  # Left undefined for pure players
+    for (l, i) in enumerate(mixing)
+        probs[i] = probs_mixing[l]
+    end
+    eqs = V[]
+    for i in mixing
+        opponents = ntuple(l -> mod1(i + l, N), N - 1)
+        payoffs = [_support_expected_payoff(g.players[i].payoff_array, a,
+                                            opponents, supps, probs, zero(V))
+                   for a in supps[i]]
+        for l in 2:length(supps[i])
+            push!(eqs, payoffs[l] - payoffs[1])
+        end
+    end
+    return eqs
+end
+
+"""
+    _support_expected_payoff(payoff_array, a, opponents, supps, probs, z)
+
+Return the expected payoff of action `a`, as an expression in the opponents'
+probabilities `probs` restricted to their supports `supps`, where `z` is the
+zero expression used to initialize the sum.
+"""
+function _support_expected_payoff(payoff_array::Array{T,N}, a::Int, opponents,
+                                  supps, probs, z) where {T,N}
+    ex = z
+    for idx in CartesianIndices(ntuple(l -> length(supps[opponents[l]]), N-1))
+        acts = ntuple(l -> supps[opponents[l]][idx[l]], N-1)
+        coef = payoff_array[a, acts...]
+        iszero(coef) && continue
+        term = nothing
+        for l in 1:N-1
+            j = opponents[l]
+            length(supps[j]) > 1 || continue  # Pure action, probability 1
+            term = term === nothing ? coef * probs[j][idx[l]] :
+                                      term * probs[j][idx[l]]
+        end
+        ex = term === nothing ? ex + coef : ex + term
+    end
+    return ex
+end

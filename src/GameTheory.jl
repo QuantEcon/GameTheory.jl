@@ -67,13 +67,13 @@ const RatOrInt = Union{Rational,Int}
 
 # package code goes here
 include("normal_form_game.jl")
+include("support_enumeration.jl")
 include("homotopy_continuation.jl")
 include("lrsnash.jl")
 include("pure_nash.jl")
 include("repeated_game.jl")
 include("random.jl")
 include("lemke_howson.jl")
-include("support_enumeration.jl")
 include("vertex_enumeration.jl")
 include("game_converters.jl")
 include("util.jl")
@@ -122,6 +122,7 @@ export
 
     # Support Enumeration
     support_enumeration, support_enumeration_task,
+    AbstractSupportSolver, HCSolver,
 
     # Vertex Enumeration
     vertex_enumeration, vertex_enumeration_task,
