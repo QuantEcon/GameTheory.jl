@@ -201,7 +201,7 @@ function HCSolver(; options...)
 end
 
 """
-    _support_solutions(solver::HCSolver, g, supps, mixing)
+    _support_solutions(solver::HCSolver, g, supps, mixing_players)
 
 Return the real nonsingular solutions of the indifference system on the
 support profile `supps` (see `_support_equations`), computed by
@@ -210,13 +210,14 @@ case it has no isolated solution with all the free probabilities nonzero, an
 empty vector is returned.
 """
 function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
-                            supps, mixing) where N
+                            supps, mixing_players) where N
     vars = Vector{Vector{Variable}}(undef, N)
-    for i in mixing
+    for i in mixing_players
         vars[i] = [Variable(:x, i, a) for a in supps[i][1:end-1]]
     end
-    eqs = _support_equations(g, supps, mixing, vars)
-    F = System(eqs, variables=reduce(vcat, (vars[i] for i in mixing)))
+    eqs = _support_equations(Expression, g, supps, mixing_players, vars)
+    F = System(eqs,
+               variables=reduce(vcat, (vars[i] for i in mixing_players)))
     res = try
         HomotopyContinuation.solve(F; solver.options...)::HomotopyContinuation.Result
     catch e
