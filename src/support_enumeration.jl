@@ -296,8 +296,8 @@ Abstract type for solvers of the systems of polynomial equations that arise in
 `support_enumeration` for N-player games.
 
 A concrete subtype `S` must implement
-`_support_solutions(solver::S, g, supps, mixing_players)`, which returns the real
-nonsingular solutions of the indifference system on the support profile
+`_support_solutions(solver::S, g, supps, mixing_players)`, which returns the
+real nonsingular solutions of the indifference system on the support profile
 `supps` as vectors of the free probabilities (see `_support_equations`).
 """
 abstract type AbstractSupportSolver end
@@ -308,35 +308,24 @@ abstract type AbstractSupportSolver end
 Compute all Nash equilibria of an N-player normal form game with `N >= 3` by
 support enumeration, or of a 2-player game if `solver` is given explicitly.
 
-For each support profile, the mixed actions that make each player indifferent
-among the actions in their support are the solutions of a system of
-polynomial equations. The system is solved by `solver`, and the solutions are
-retained as Nash equilibria if all the probabilities on the supports are
-positive and no action outside the supports is a profitable deviation, as
-checked by `is_nash` with tolerance `tol`.
+For each support profile, the system of polynomial equations that makes each
+player indifferent among the actions in their support is solved by `solver`,
+where the default uses HomotopyContinuation.jl. A solution is a Nash
+equilibrium if the probabilities on the supports are positive and no action
+outside the supports is a profitable deviation, as checked by `is_nash`.
 
 For a regular game in the sense of Harsanyi (1973), this function returns all
-the Nash equilibria; almost all games are regular. For a non-regular game, it
-returns all the pure-action Nash equilibria and those mixed-action Nash
-equilibria that are nonsingular solutions of their support systems, while
-equilibria that are not isolated are not (fully) returned.
-
-The number of support profiles is `prod(2^n_i - 1)`, where `n_i` is the
-number of actions of player `i`, and the running time is roughly proportional
-to this number (on the order of milliseconds per support profile) plus the
-total number of solutions of the support systems. Support profiles in which
-only one player mixes, or in which some player has more free probabilities
-than the other mixing players have in total, are skipped without solving; for
-2-player games this reduces to the equal-size rule. This function is
-typically much faster than `hc_solve`, which solves a single large system of
-polynomial equations for which the computation of the start system is
-expensive, while the total number of solution paths tracked is the same.
+the Nash equilibria. For a non-regular game, all pure-action Nash equilibria
+are returned, while mixed-action ones are returned only if they are
+nonsingular solutions of their support systems. This function is typically
+much faster than `hc_solve`, which solves a single large system of polynomial
+equations at once.
 
 # Arguments
 
 - `g::NormalFormGame{N}`: N-player NormalFormGame instance.
 - `solver::AbstractSupportSolver=HCSolver()`: Solver for the polynomial
-  systems.
+  systems; see `HCSolver`.
 - `ntofind=Inf`: Number of Nash equilibria to find.
 - `tol::Real=1e-8`: Tolerance used to check that the probabilities on the
   supports are positive and, in `is_nash`, that the mixed actions are best
@@ -411,7 +400,8 @@ function support_enumeration(g::NormalFormGame{N},
             continue  # No isolated equilibrium
         elseif length(mixing_players) >= 2
             # Player i's k_i - 1 indifference equations involve the other
-            # mixing players' free probabilities
+            # mixing players' free probabilities; for 2 players this reduces
+            # to the equal-size rule
             num_free = sum(ks[i] - 1 for i in mixing_players)
             all(2 * (ks[i] - 1) <= num_free for i in mixing_players) ||
                 continue
