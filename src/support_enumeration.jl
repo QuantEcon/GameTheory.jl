@@ -296,7 +296,7 @@ Abstract type for solvers of the systems of polynomial equations that arise in
 `support_enumeration` for N-player games.
 
 A concrete subtype `S` must implement
-`_support_solutions(solver::S, g, supps, mixing)`, which returns the real
+`_support_solutions(solver::S, g, supps, mixing_players)`, which returns the real
 nonsingular solutions of the indifference system on the support profile
 `supps` as vectors of the free probabilities (see `_support_equations`).
 """
@@ -406,25 +406,27 @@ function support_enumeration(g::NormalFormGame{N},
     sort!(size_profiles, by=ks -> (sum(ks), ks))
 
     for ks in size_profiles
-        mixing = [i for i in 1:N if ks[i] > 1]
-        if length(mixing) == 1
+        mixing_players = [i for i in 1:N if ks[i] > 1]
+        if length(mixing_players) == 1
             continue  # No isolated equilibrium
-        elseif length(mixing) >= 2
+        elseif length(mixing_players) >= 2
             # Player i's k_i - 1 indifference equations involve the other
             # mixing players' free probabilities
-            num_free = sum(ks[i] - 1 for i in mixing)
-            all(2 * (ks[i] - 1) <= num_free for i in mixing) || continue
+            num_free = sum(ks[i] - 1 for i in mixing_players)
+            all(2 * (ks[i] - 1) <= num_free for i in mixing_players) ||
+                continue
         end
 
         supps = ntuple(i -> collect(1:ks[i]), N)
         while true
-            if isempty(mixing)
+            if isempty(mixing_players)
                 action_profile = _support_action_profile(nums_actions, supps)
                 is_nash(g, action_profile, tol=tol) &&
                     push!(NEs, action_profile)
                 length(NEs) >= ntofind && return NEs
             else
-                for sol in _support_solutions(solver, g, supps, mixing)
+                for sol in _support_solutions(solver, g, supps,
+                                              mixing_players)
                     action_profile =
                         _support_action_profile(nums_actions, supps, sol, tol)
                     action_profile === nothing && continue
@@ -499,31 +501,32 @@ function _support_action_profile(nums_actions::NTuple{N,Int}, supps) where N
 end
 
 """
-    _support_equations(g, supps, mixing, vars)
+    _support_equations(V, g, supps, mixing_players, vars)
 
 Return the equations of the indifference system on the support profile
-`supps`, as a vector of expressions in the variables `vars`.
+`supps`, as a vector of expressions of type `V` in the variables `vars`.
 
-For each player `i` in `mixing`, the players with more than one action in
-their supports, `vars[i]` is a vector of `length(supps[i]) - 1` variables
-representing the probabilities on the actions `supps[i][1:end-1]`, and the
-probability on `supps[i][end]` is `1 - sum(vars[i])`. Players not in `mixing`
-play the pure actions `supps[i][1]`. The equations are, for each `i` in
-`mixing` and each `a` in `supps[i][2:end]`, the differences between the
-expected payoffs of `a` and of `supps[i][1]`. The order of the variables is
-that of `vars[i]` for `i` in `mixing`; the order of the equations follows
-that of the variables.
+For each player `i` in `mixing_players`, the players with more than one
+action in their supports, `vars[i]` is a vector of `length(supps[i]) - 1`
+variables representing the probabilities on the actions `supps[i][1:end-1]`,
+and the probability on `supps[i][end]` is `1 - sum(vars[i])`. The element
+type of `vars[i]` may differ from `V`, as long as it is convertible to `V`
+(such as `Variable` and `Expression` of `HomotopyContinuation`). Players not
+in `mixing_players` play the pure actions `supps[i][1]`. The equations are,
+for each `i` in `mixing_players` and each `a` in `supps[i][2:end]`, the
+differences between the expected payoffs of `a` and of `supps[i][1]`. The
+order of the variables is that of `vars[i]` for `i` in `mixing_players`; the
+order of the equations follows that of the variables.
 """
-function _support_equations(g::NormalFormGame{N}, supps, mixing,
-                            vars::Vector{<:AbstractVector}) where N
-    probs_mixing = [[vars[i]; 1 - sum(vars[i])] for i in mixing]
-    V = eltype(probs_mixing[1])
+function _support_equations(::Type{V}, g::NormalFormGame{N}, supps,
+                            mixing_players,
+                            vars::Vector{<:AbstractVector}) where {V,N}
     probs = Vector{Vector{V}}(undef, N)  # Left undefined for pure players
-    for (l, i) in enumerate(mixing)
-        probs[i] = probs_mixing[l]
+    for i in mixing_players
+        probs[i] = V[vars[i]; 1 - sum(vars[i])]
     end
     eqs = V[]
-    for i in mixing
+    for i in mixing_players
         opponents = ntuple(l -> mod1(i + l, N), N - 1)
         payoffs = [_support_expected_payoff(g.players[i].payoff_array, a,
                                             opponents, supps, probs, zero(V))
