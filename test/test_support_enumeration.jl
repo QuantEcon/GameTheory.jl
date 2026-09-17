@@ -125,6 +125,14 @@ using Random
             for i in 1:ntofind
                 @test is_nash(g, NEs_computed[i])
             end
+
+            # The per-support solver must be inferrable for the driver loop
+            # to be; `@inferred support_enumeration` alone does not check
+            # this, as the return type is fixed by the declaration of `NEs`
+            supps = ntuple(i -> [1, 2], 3)
+            sols = @inferred GameTheory._support_solutions(HCSolver(), g,
+                                                          supps, [1, 2, 3])
+            @test sols isa Vector{Vector{Float64}}
         end
 
         @testset "2x2x2 game from Nau, Canovas, and Hansen" begin

@@ -218,7 +218,7 @@ function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
     eqs = _support_equations(g, supps, mixing, vars)
     F = System(eqs, variables=reduce(vcat, (vars[i] for i in mixing)))
     res = try
-        HomotopyContinuation.solve(F; solver.options...)
+        HomotopyContinuation.solve(F; solver.options...)::HomotopyContinuation.Result
     catch e
         # "Cannot compute a start system": zero mixed volume
         e isa OverflowError || rethrow()
