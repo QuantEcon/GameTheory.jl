@@ -18,7 +18,8 @@ typically much faster.
 - `ntofind=Inf`: Maximal number of Nash equilibria to find.
 - `options...`: Optional arguments to pass to `HomotopyContinuation.solve`. For
   example, the option `seed::UInt32` can set the random seed used during the
-  computations. See the
+  computations; by default, the global random number generator is used
+  without being reseeded. See the
   [documentation](https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
   for `HomotopyContinuation.solve` for details.
 
@@ -73,6 +74,9 @@ true
 """
 function hc_solve(g::NormalFormGame{N}; ntofind=Inf, options...) where N
     ntofind <= 0 && return NTuple{N,Vector{Float64}}[]
+
+    # Do not let HomotopyContinuation.solve reseed the global RNG by default
+    options = merge((seed=nothing,), NamedTuple(options))
 
     f = construct_hc_system(g)
 
