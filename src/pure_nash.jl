@@ -70,6 +70,7 @@ function pure_nash(nfg::NormalFormGame; ntofind=prod(nfg.nums_actions),
 
     # Create counter for how many to find
     nfound = 0
+    ntofind <= 0 && return ne
 
     for _a in CartesianIndices(na)
         if is_nash(nfg, _a.I, tol=tol)

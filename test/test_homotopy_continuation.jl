@@ -42,6 +42,10 @@
         for i in 1:ntofind
             @test is_nash(g, NEs_computed[i])
         end
+
+        NEs_computed = @inferred hc_solve(g, ntofind=0, show_progress=false,
+                                          compile=false)
+        @test isempty(NEs_computed)
     end
 
     @testset "2x2x2 game from Nau, Canovas, and Hansen" begin
