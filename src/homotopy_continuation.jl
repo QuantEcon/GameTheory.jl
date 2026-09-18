@@ -193,7 +193,7 @@ julia> g[1, 2, 2] = [3, 4, 6];
 
 julia> g[2, 1, 2] = [3, 4, 4];
 
-julia> NEs = support_enumeration(g, HCSolver(seed=UInt32(1234)));
+julia> NEs = support_enumeration(g, GameTheory.HCSolver(seed=UInt32(1234)));
 
 julia> length(NEs)
 9
