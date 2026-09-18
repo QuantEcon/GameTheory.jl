@@ -165,12 +165,16 @@ homotopy.
 
 - `options...`: Optional arguments to pass to `HomotopyContinuation.solve`.
   For example, the option `seed::UInt32` can set the random seed used during
-  the computations. The defaults `compile=false`, `show_progress=false`, and
-  `threading=false` are used unless overridden; note that compilation is much
-  slower than interpreted evaluation for the small systems solved here. See
-  the
+  the computations; by default, the global random number generator is used
+  without being reseeded. The defaults `compile=false`,
+  `show_progress=false`, and `threading=false` are used unless overridden;
+  note that compilation is much slower than interpreted evaluation for the
+  small systems solved here. See the
   [documentation](https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
   for `HomotopyContinuation.solve` for details.
+
+The systems are solved in double precision: the payoffs are converted to
+`Float64` before the systems are constructed.
 
 # Examples
 
@@ -196,7 +200,8 @@ struct HCSolver{O<:NamedTuple} <: AbstractSupportSolver
 end
 
 function HCSolver(; options...)
-    defaults = (compile=false, show_progress=false, threading=false)
+    defaults = (compile=false, show_progress=false, threading=false,
+                seed=nothing)
     return HCSolver(merge(defaults, NamedTuple(options)))
 end
 
@@ -209,8 +214,14 @@ support profile `supps` (see `_support_equations`), computed by
 case it has no isolated solution with all the free probabilities nonzero, an
 empty vector is returned.
 """
-function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
-                            supps, mixing_players) where N
+function _support_solutions(solver::HCSolver, g::NormalFormGame{N,T},
+                            supps, mixing_players) where {N,T}
+    # HomotopyContinuation computes in double precision (and fails for
+    # BigFloat coefficients in some cases)
+    T == Float64 ||
+        return _support_solutions(solver, NormalFormGame(Float64, g),
+                                  supps, mixing_players)
+
     vars = Vector{Vector{Variable}}(undef, N)
     for i in mixing_players
         vars[i] = [Variable(:x, i, a) for a in supps[i][1:end-1]]
