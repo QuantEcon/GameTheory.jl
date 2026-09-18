@@ -702,6 +702,61 @@ using CDDLib
 
         end
 
+        @testset "Test is_dominated_by_pure" begin
+            is_dom_pure = GameTheory.is_dominated_by_pure
+
+            coordination_game_matrix = [4 0; 3 2]
+            player = Player(coordination_game_matrix)
+            for action = 1:num_actions(player)
+                @test !(@inferred(is_dom_pure(player, action)))
+            end
+
+            # Action 2 dominated by action 1
+            player = Player([4 3; 3 2])
+            @test !is_dom_pure(player, 1)
+            @test is_dom_pure(player, 2)
+
+            # Action 3 dominated by a mixed action but not by a pure action
+            player = Player([3 0; 0 3; 1 1])
+            @test !is_dom_pure(player, 3)
+            @test is_dominated(player, 3)
+
+            # Conditional on the opponent's actions
+            player = Player([3 0; 2 1])  # Action 2 dominated only on [1]
+            @test !(@inferred(is_dom_pure(player, 2, ([1, 2],))))
+            @test is_dom_pure(player, 2, ([1],))
+            @test !is_dom_pure(player, 2, ([2],))
+
+            # Two opponents
+            payoffs_2opponents = Array{Int}(undef, 3, 2, 2)
+            payoffs_2opponents[1, :, :] = [3 6; 4 2]
+            payoffs_2opponents[2, :, :] = [1 0; 5 7]
+            payoffs_2opponents[3, :, :] = [0 5; 3 1]
+            player = Player(payoffs_2opponents)
+            @test !is_dom_pure(player, 1)
+            @test !is_dom_pure(player, 2)
+            @test is_dom_pure(player, 3)  # By action 1
+            @test is_dom_pure(player, 2, ([1], [1]))  # By action 1
+            @test !is_dom_pure(player, 2, ([2], 1:2))
+
+            # No opponents
+            player = Player([0, 1])
+            @test is_dom_pure(player, 1)
+            @test !is_dom_pure(player, 2)
+
+            # Tolerance
+            e = 1e-8
+            player = Player([0 0; e e])
+            @test !is_dom_pure(player, 1, tol=e)
+            @test is_dom_pure(player, 1, tol=e/2)
+
+            # Exact for Rational payoffs
+            e = 1//(2^25)
+            player = Player([0//1 0//1; e e])
+            @test !is_dom_pure(player, 1, tol=e)
+            @test is_dom_pure(player, 1, tol=0)
+        end
+
         @testset "Test player corner cases" begin
             n, m = 3, 4
             player = Player(zeros((n, m)))

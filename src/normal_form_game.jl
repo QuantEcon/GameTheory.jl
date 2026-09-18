@@ -1175,3 +1175,56 @@ end
 dominated_actions(
     player::Player; tol::Real=1e-8, lp_solver=clp_optimizer_silent
 ) = dominated_actions(Float64, player, tol=tol, lp_solver=lp_solver)
+
+
+# is_dominated_by_pure
+
+"""
+    is_dominated_by_pure(player, action[, opponents_supports]; tol=1e-8)
+
+Determine whether `action` is strictly dominated, by more than `tol`, by some
+pure action against all the opponents' action profiles in
+`opponents_supports`, a tuple of the opponents' action sets in the order of
+the dimensions of `player.payoff_array`, or against all the action profiles
+of the opponents if `opponents_supports` is omitted.
+
+# Arguments
+
+- `player::Player` : Player instance.
+- `action::PureAction` : Integer representing a pure action.
+- `opponents_supports::Tuple` : Tuple of vectors (or ranges) of the
+  opponents' actions.
+- `tol::Real` : Tolerance level used in determining domination.
+
+# Returns
+
+- `::Bool` : True if `action` is strictly dominated by some pure action; false
+  otherwise.
+
+"""
+function is_dominated_by_pure(player::Player{N}, action::PureAction,
+                              opponents_supports; tol::Real=1e-8) where N
+    payoff_array = player.payoff_array
+    idxs = CartesianIndices(ntuple(l -> length(opponents_supports[l]), N-1))
+    for b in 1:num_actions(player)
+        b == action && continue
+        dominates = true
+        for idx in idxs
+            a_opps = ntuple(l -> opponents_supports[l][idx[l]], N-1)
+            u_b = payoff_array[b, a_opps...]
+            u_a = payoff_array[action, a_opps...]
+            if u_b <= u_a + tol
+                dominates = false
+                break
+            end
+        end
+        dominates && return true
+    end
+    return false
+end
+
+function is_dominated_by_pure(player::Player{N}, action::PureAction;
+                              tol::Real=1e-8) where N
+    opponents_supports = ntuple(l -> 1:size(player.payoff_array, l+1), N-1)
+    return is_dominated_by_pure(player, action, opponents_supports, tol=tol)
+end
