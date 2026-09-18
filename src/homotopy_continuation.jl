@@ -199,7 +199,7 @@ julia> length(NEs)
 9
 ```
 """
-struct HCSolver{O<:NamedTuple} <: AbstractSupportSolver
+struct HCSolver{O<:NamedTuple} <: AbstractSupportEnumerationSolver
     options::O
 end
 

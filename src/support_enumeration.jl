@@ -290,7 +290,7 @@ end
 # N-player support enumeration
 
 """
-    AbstractSupportSolver
+    AbstractSupportEnumerationSolver
 
 Abstract type for solvers of the systems of polynomial equations that arise in
 `support_enumeration` for N-player games.
@@ -300,7 +300,7 @@ A concrete subtype `S` must implement
 real nonsingular solutions of the indifference system on the support profile
 `supps` as vectors of the free probabilities (see `_support_equations`).
 """
-abstract type AbstractSupportSolver end
+abstract type AbstractSupportEnumerationSolver end
 
 """
     support_enumeration(g[, solver]; ntofind=Inf, tol=1e-8)
@@ -324,8 +324,8 @@ equations at once.
 # Arguments
 
 - `g::NormalFormGame{N}`: N-player NormalFormGame instance.
-- `solver::AbstractSupportSolver=HCSolver()`: Solver for the polynomial
-  systems; see `HCSolver`.
+- `solver::AbstractSupportEnumerationSolver=HCSolver()`: Solver for the
+  polynomial systems; see `HCSolver`.
 - `ntofind=Inf`: Maximal number of Nash equilibria to find.
 - `tol::Real=1e-8`: Tolerance used to check that the probabilities on the
   supports are positive and, in `is_nash`, that the mixed actions are best
@@ -382,7 +382,7 @@ function support_enumeration(g::NormalFormGame{N}; options...) where N
 end
 
 function support_enumeration(g::NormalFormGame{N},
-                             solver::AbstractSupportSolver;
+                             solver::AbstractSupportEnumerationSolver;
                              ntofind=Inf, tol::Real=1e-8) where N
     N >= 2 || throw(ArgumentError("not implemented for 1-player games"))
 
