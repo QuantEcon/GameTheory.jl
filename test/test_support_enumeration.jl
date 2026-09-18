@@ -126,6 +126,17 @@ using Random
                 @test is_nash(g, NEs_computed[i])
             end
 
+            NEs_computed = @inferred support_enumeration(g, ntofind=0)
+            @test isempty(NEs_computed)
+
+            # Reproducible under the global random number generator, which
+            # is used without being reseeded by default
+            Random.seed!(1234)
+            NEs_computed1 = support_enumeration(g)
+            Random.seed!(1234)
+            NEs_computed2 = support_enumeration(g)
+            @test NEs_computed1 == NEs_computed2
+
             # The per-support solver must be inferrable for the driver loop
             # to be; `@inferred support_enumeration` alone does not check
             # this, as the return type is fixed by the declaration of `NEs`
@@ -161,6 +172,14 @@ using Random
             NEs = support_enumeration(g)
             NEs_computed = @inferred support_enumeration(g, HCSolver())
             @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
+            # Payoffs are converted to Float64
+            for T in (Rational{Int}, BigFloat)
+                g_T = NormalFormGame(T, g)
+                NEs_computed = @inferred support_enumeration(g_T, HCSolver())
+                @test NEs_computed isa Vector{NTuple{2,Vector{Float64}}}
+                @test isapprox_vecs_act_profs(NEs_computed, NEs)
+            end
 
             # Degenerate game: player 2 is indifferent against action 1 of
             # player 1, so that ([1, 0, 0], [q, 1-q]) with 2/3 <= q <= 1 are
@@ -208,6 +227,22 @@ using Random
             g = NormalFormGame([[1], [2], [3]])
             @test_throws ArgumentError support_enumeration(g)
             @test_throws ArgumentError support_enumeration(g, HCSolver())
+        end
+
+        @testset "_next_supports!" begin
+            for nums_actions in [(3, 2), (2, 3, 2)]
+                N = length(nums_actions)
+                visited = Set{NTuple{N,Vector{Int}}}()
+                for ks in Iterators.product((1:n for n in nums_actions)...)
+                    supps = ntuple(i -> collect(1:ks[i]), N)
+                    while true
+                        push!(visited, deepcopy(supps))
+                        GameTheory._next_supports!(supps, nums_actions) ||
+                            break
+                    end
+                end
+                @test length(visited) == prod(2 .^ nums_actions .- 1)
+            end
         end
 
     end

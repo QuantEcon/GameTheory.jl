@@ -326,7 +326,7 @@ equations at once.
 - `g::NormalFormGame{N}`: N-player NormalFormGame instance.
 - `solver::AbstractSupportSolver=HCSolver()`: Solver for the polynomial
   systems; see `HCSolver`.
-- `ntofind=Inf`: Number of Nash equilibria to find.
+- `ntofind=Inf`: Maximal number of Nash equilibria to find.
 - `tol::Real=1e-8`: Tolerance used to check that the probabilities on the
   supports are positive and, in `is_nash`, that the mixed actions are best
   responses.
@@ -388,6 +388,7 @@ function support_enumeration(g::NormalFormGame{N},
 
     nums_actions = g.nums_actions
     NEs = NTuple{N,Vector{Float64}}[]
+    ntofind <= 0 && return NEs
 
     # Support size profiles, ordered by total support size
     size_profiles =
