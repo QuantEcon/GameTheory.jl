@@ -13,7 +13,7 @@ nonlinear complementarity problem representation of Nash eqiulibrium, by using
 # Arguments
 
 - `g::NormalFormGame`: N-player NormalFormGame instance.
-- `ntofind=Inf`: Number of Nash equilibria to find.
+- `ntofind=Inf`: Maximal number of Nash equilibria to find.
 - `options...`: Optional arguments to pass to `HomotopyContinuation.solve`. For
   example, the option `seed::UInt32` can set the random seed used during the
   computations. See the
@@ -70,6 +70,8 @@ true
 ```
 """
 function hc_solve(g::NormalFormGame{N}; ntofind=Inf, options...) where N
+    ntofind <= 0 && return NTuple{N,Vector{Float64}}[]
+
     f = construct_hc_system(g)
 
     stop_fn = isfinite(ntofind) ? r -> _is_nash(r, N) : _ -> false

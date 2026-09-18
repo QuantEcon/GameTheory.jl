@@ -36,6 +36,16 @@ using Combinatorics
         @test sort(ne) == sort([(1,1); (2,2)])
     end
 
+    @testset "Coordination game with ntofind=0" begin
+        Coo = [4.0 0.0
+               3.0 2.0]
+
+        g_Coo = NormalFormGame(Coo)  # (1, 1) is a Nash equilibrium
+        ne = pure_nash(g_Coo; ntofind=0)
+
+        @test ne == []
+    end
+
     @testset "Coordination game with 2 Pure Action Nash equilibria but only find 1" begin
         Coo = [4.0 0.0
                3.0 2.0]
