@@ -214,13 +214,11 @@ support profile `supps` (see `_support_equations`), computed by
 case it has no isolated solution with all the free probabilities nonzero, an
 empty vector is returned.
 """
-function _support_solutions(solver::HCSolver, g::NormalFormGame{N,T},
-                            supps, mixing_players) where {N,T}
+function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
+                            supps, mixing_players) where N
     # HomotopyContinuation computes in double precision (and fails for
-    # BigFloat coefficients in some cases)
-    T == Float64 ||
-        return _support_solutions(solver, NormalFormGame(Float64, g),
-                                  supps, mixing_players)
+    # BigFloat coefficients in some cases); no copy if already Float64
+    g = convert(NormalFormGame{N,Float64}, g)
 
     vars = Vector{Vector{Variable}}(undef, N)
     for i in mixing_players
