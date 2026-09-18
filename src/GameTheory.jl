@@ -122,7 +122,6 @@ export
 
     # Support Enumeration
     support_enumeration, support_enumeration_task,
-    AbstractSupportEnumerationSolver, HCSolver,
 
     # Vertex Enumeration
     vertex_enumeration, vertex_enumeration_task,

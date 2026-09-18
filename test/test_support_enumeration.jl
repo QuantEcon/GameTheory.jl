@@ -1,4 +1,5 @@
 using Random
+using GameTheory: HCSolver
 
 @testset "Testing Support Enumeration" begin
 
