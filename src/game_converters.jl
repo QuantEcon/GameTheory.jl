@@ -307,6 +307,9 @@ function _parse_exact(tok::AbstractString)
     end
     mantissa, ex = occursin(r"[eE]", tok) ? split(tok, r"[eE]"; limit=2) : (tok, "0")
     int, frac = occursin('.', mantissa) ? split(mantissa, '.'; limit=2) : (mantissa, "")
+    # A sign in `frac` would be moved to a valid position by the concatenation
+    all(isdigit, frac) ||
+        throw(ArgumentError("cannot parse $(repr(tok)) as a number"))
     num = parse(BigInt, int * frac; base=10)
     e = parse(Int, ex) - length(frac)
     return e >= 0 ? num * big(10)^e // 1 : num // big(10)^(-e)

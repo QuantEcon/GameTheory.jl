@@ -215,7 +215,8 @@ struct UnsupportedReal <: Real end
             _parse_payoffs = GameTheory._parse_payoffs
 
             for (tok, x) in [("3", 3), ("-3", -3), ("+3", 3), ("0.1", 1//10),
-                             (".5", 1//2), ("5.", 5), ("-12.5e-3", -1//80),
+                             (".5", 1//2), ("-.5", -1//2), ("5.", 5),
+                             ("-12.5e-3", -1//80),
                              ("+2e2", 200), ("1E-7", 1//10^7), ("1e30", big(10)^30),
                              ("1/3", 1//3), ("-1/3", -1//3), ("+1/3", 1//3),
                              ("6/4", 3//2)]
@@ -223,7 +224,7 @@ struct UnsupportedReal <: Real end
                 @test _parse_exact(tok) isa Rational{BigInt}
             end
             for tok in ["", ".", "-", "1e", "1.2.3", "1/0", "1/2/3", "0.5/2",
-                        "0x10", "abc"]
+                        "0x10", "abc", ".-5", ".+5", "1.-5"]
                 @test_throws ArgumentError _parse_exact(tok)
             end
 
