@@ -169,6 +169,20 @@ using Random
             @test same_game(parse_gam("2\r\n3 2\r\n\r\n3 2 0 3 5 6 3 2 3 2 6 1\r\n"), g)
         end
 
+        @testset "File from QuantEcon.py" begin
+            # Copied from quantecon/game_theory/tests/game_files in QuantEcon.py
+            path = joinpath(@__DIR__, "game_files", "minimum_effort_game.gam")
+            g = read_gam(path)
+
+            @test g isa NormalFormGame{3,Float64}
+            @test g.nums_actions == (3, 3, 3)
+            @test g[1, 1, 1] == [1, 1, 1]
+            @test g[1, 1, 3] == [1, 1, -19]
+            @test g[2, 2, 2] == [2, 2, 2]
+            @test g[3, 3, 3] == [3, 3, 3]
+            @test same_game(parse_gam(gam_string(g)), g)
+        end
+
         @testset "Invalid inputs" begin
             for s in ["", "  \n", "x", "0", "-1", "2\n3", "2\n3 x\n\n1 2",
                       "2\n3 0\n\n", "2\n3 2\n\n1 2 3",
