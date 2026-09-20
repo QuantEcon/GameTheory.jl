@@ -2,6 +2,9 @@ using GameTheory: GAMPayoffVector
 
 using Random
 
+# Element type that the writers do not accept
+struct UnsupportedReal <: Real end
+
 @testset "game_converters.jl" begin
 
     @testset "GAMPayoffVector" begin
@@ -159,8 +162,16 @@ using Random
             g = NormalFormGame(Player([1 2; 3 4]), Player([5 6; 7 8]))
             @test gam_string(NormalFormGame(Float64, g)) ==
                   "2\n2 2\n\n1.0 3.0 2.0 4.0 5.0 6.0 7.0 8.0\n"
-            @test_throws MethodError write_gam(IOBuffer(), NormalFormGame(Rational{Int}, g))
-            @test_throws MethodError gam_string(NormalFormGame(Rational{Int}, g))
+
+            # An unsupported game is rejected before the file is opened
+            p = GAMPayoffVector{2,UnsupportedReal}((1, 1), fill(UnsupportedReal(), 2))
+            @test_throws MethodError write_gam(IOBuffer(), p)
+            mktempdir() do dir
+                path = joinpath(dir, "game.gam")
+                write(path, "old content\n")
+                @test_throws MethodError write_gam(path, p)
+                @test read(path, String) == "old content\n"
+            end
         end
 
         @testset "Whitespace" begin
@@ -193,7 +204,7 @@ using Random
             end
         end
 
-        @testset "Number parsing" begin
+        @testset "Number parsing and printing" begin
             _parse_exact = GameTheory._parse_exact
             _parse_payoffs = GameTheory._parse_payoffs
 
@@ -223,6 +234,12 @@ using Random
             @test _parse_payoffs(Float32, split("1/4 2")) == Float32[0.25, 2]
             @test_throws InexactError _parse_payoffs(Rational{Int}, ["1e30"])
             @test_throws ArgumentError _parse_payoffs(Int, ["1/3"])
+
+            for (x, str) in [(1//3, "1/3"), (-5//2, "-5/2"), (3//1, "3"),
+                             (big(10)^30//7, "1" * "0"^30 * "/7"), (-4, "-4"),
+                             (0.25, "0.25")]
+                @test sprint(GameTheory._print_payoff, x) == str
+            end
         end
 
         @testset "Type inference" begin

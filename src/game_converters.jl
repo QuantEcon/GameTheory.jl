@@ -313,6 +313,20 @@ function _parse_exact(tok::AbstractString)
 end
 
 
+# Number printing, shared by the writers #
+
+# Element types that the writers accept
+const _PayoffNumber = Union{Integer,AbstractFloat,Rational}
+
+_print_payoff(io::IO, x::Real) = print(io, x)
+# A rational is written as `n/d`, or as `n` if the denominator is 1
+function _print_payoff(io::IO, x::Rational)
+    print(io, numerator(x))
+    isone(denominator(x)) || print(io, '/', denominator(x))
+    return nothing
+end
+
+
 """
     write_gam(io, g)
     write_gam(path, g)
@@ -344,23 +358,26 @@ julia> write_gam(stdout, g)
 julia> write_gam("game.gam", g)
 ```
 """
-function write_gam(
-    io::IO, p::GAMPayoffVector{N,T}
-) where {N,T<:Union{Integer,AbstractFloat}}
+function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
     print(io, N, '\n')
     join(io, p.nums_actions, ' ')
     print(io, "\n\n")  # blank line between the header and the payoffs
-    join(io, p.payoffs, ' ')
+    for (k, x) in enumerate(p.payoffs)
+        k > 1 && print(io, ' ')
+        _print_payoff(io, x)
+    end
     print(io, '\n')
     return nothing
 end
 
-write_gam(
-    io::IO, g::NormalFormGame{N,T}
-) where {N,T<:Union{Integer,AbstractFloat}} = write_gam(io, GAMPayoffVector(g))
+write_gam(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
+    write_gam(io, GAMPayoffVector(g))
 
-write_gam(path::AbstractString, g::Union{NormalFormGame,GAMPayoffVector}) =
-    open(io -> write_gam(io, g), path, "w")
+# Same bound on the element type as the methods for `io`, so that an
+# unsupported game is rejected before the file is opened
+write_gam(
+    path::AbstractString, g::Union{NormalFormGame{N,T},GAMPayoffVector{N,T}}
+) where {N,T<:_PayoffNumber} = open(io -> write_gam(io, g), path, "w")
 
 """
     gam_string(g)
