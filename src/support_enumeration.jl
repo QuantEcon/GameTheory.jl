@@ -415,7 +415,7 @@ function support_enumeration(g::NormalFormGame{N},
                 is_nash(g, action_profile, tol=tol) &&
                     push!(NEs, action_profile)
                 length(NEs) >= ntofind && return NEs
-            else
+            elseif !_has_dominated_action(g, supps, tol)
                 for sol in _support_solutions(solver, g, supps,
                                               mixing_players)
                     action_profile =
@@ -446,6 +446,26 @@ function _next_supports!(supps::NTuple{N,Vector{Int}},
         next_k_array!(supps[i])
         supps[i][end] <= nums_actions[i] && return true
         supps[i] .= 1:length(supps[i])
+    end
+    return false
+end
+
+"""
+    _has_dominated_action(g, supps, tol)
+
+Return `true` if for some player, some action in the support is strictly
+dominated, by more than `tol`, by some pure action given the opponents'
+supports in the support profile `supps`. No solution of the indifference
+system on such a support profile is a Nash equilibrium (with tolerance
+`tol`).
+"""
+function _has_dominated_action(g::NormalFormGame{N}, supps, tol::Real) where N
+    for i in 1:N
+        opponents_supports = ntuple(l -> supps[mod1(i + l, N)], N - 1)
+        for a in supps[i]
+            is_dominated_by_pure(g.players[i], a, opponents_supports,
+                                 tol=tol) && return true
+        end
     end
     return false
 end

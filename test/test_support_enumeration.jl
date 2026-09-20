@@ -224,6 +224,47 @@ using GameTheory: HCSolver
             end
         end
 
+        @testset "all-pay auction" begin
+            # All-pay auction with full dissipation: prize r, bids 0, ..., c.
+            # Most support profiles contain a conditionally dominated action
+            function all_pay_auction(r, c, N)
+                nums_actions = ntuple(_ -> c+1, N)
+                payoff_array = Array{Float64}(undef, nums_actions)
+                for bids in CartesianIndices(nums_actions)
+                    payoff_array[bids] = -(bids[1] - 1)
+                    if all(bids[j] < bids[1] for j in 2:N)
+                        payoff_array[bids] += r
+                    end
+                end
+                return NormalFormGame(ntuple(_ -> Player(payoff_array), N))
+            end
+
+            g = all_pay_auction(8, 2, 3)
+            e = [1, 0, 0]
+            x = [1/8, 1/8, 3/4]
+            y, z = [1/2, 0, 1/2], [1/4, 1/4, 1/2]
+            w = [sqrt(2)/4, 1/2 - sqrt(2)/4, 1/2]
+            NEs = [(e, x, x), (x, e, x), (x, x, e),
+                   (y, z, z), (z, y, z), (z, z, y),
+                   (w, w, w)]
+            NEs_computed = support_enumeration(g)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+        end
+
+        @testset "_has_dominated_action" begin
+            # For player 1, neither action is dominated against both actions
+            # of player 2, while action 2 (1) is dominated against action 1
+            # (2) of player 2
+            g = NormalFormGame(Player([3 0; 2 1]), Player([1 0; 0 1]))
+            tol = 1e-8
+            @test !GameTheory._has_dominated_action(g, ([1, 2], [1, 2]), tol)
+            @test GameTheory._has_dominated_action(g, ([1, 2], [1]), tol)
+            @test GameTheory._has_dominated_action(g, ([1, 2], [2]), tol)
+            @test !GameTheory._has_dominated_action(g, ([1], [1]), tol)
+            # For player 2, action 2 is dominated against action 1 of player 1
+            @test GameTheory._has_dominated_action(g, ([1], [1, 2]), tol)
+        end
+
         @testset "1-player game" begin
             g = NormalFormGame([[1], [2], [3]])
             @test_throws ArgumentError support_enumeration(g)
