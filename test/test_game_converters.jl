@@ -193,6 +193,38 @@ using Random
             end
         end
 
+        @testset "Number parsing" begin
+            _parse_exact = GameTheory._parse_exact
+            _parse_payoffs = GameTheory._parse_payoffs
+
+            for (tok, x) in [("3", 3), ("-3", -3), ("+3", 3), ("0.1", 1//10),
+                             (".5", 1//2), ("5.", 5), ("-12.5e-3", -1//80),
+                             ("+2e2", 200), ("1E-7", 1//10^7), ("1e30", big(10)^30),
+                             ("1/3", 1//3), ("-1/3", -1//3), ("+1/3", 1//3),
+                             ("6/4", 3//2)]
+                @test _parse_exact(tok) == x
+                @test _parse_exact(tok) isa Rational{BigInt}
+            end
+            for tok in ["", ".", "-", "1e", "1.2.3", "1/0", "1/2/3", "0.5/2",
+                        "0x10", "abc"]
+                @test_throws ArgumentError _parse_exact(tok)
+            end
+
+            @test _parse_payoffs(split("1 -2 +3")) isa Vector{Int}
+            @test _parse_payoffs(split("1 1/3 -2")) isa Vector{Rational{BigInt}}
+            @test _parse_payoffs(split("1 1/3 -2")) == [1, 1//3, -2]
+            @test _parse_payoffs(split("1 0.5 -2")) isa Vector{Float64}
+            @test _parse_payoffs(split("1 1e3 -2")) isa Vector{Float64}
+            @test _parse_payoffs(split("1/3 0.5")) isa Vector{Float64}
+            @test _parse_payoffs(split("1/3 0.5")) == [1/3, 0.5]
+
+            @test _parse_payoffs(Rational{Int}, split("0.1 1e-2 1/3")) ==
+                  [1//10, 1//100, 1//3]
+            @test _parse_payoffs(Float32, split("1/4 2")) == Float32[0.25, 2]
+            @test_throws InexactError _parse_payoffs(Rational{Int}, ["1e30"])
+            @test_throws ArgumentError _parse_payoffs(Int, ["1/3"])
+        end
+
         @testset "Type inference" begin
             g = random_game(MersenneTwister(0), (3, 2))
             @inferred write_gam(IOBuffer(), g)

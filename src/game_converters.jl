@@ -268,12 +268,21 @@ function _read_gam(parse_payoffs, io::IO)
     return NormalFormGame(GAMPayoffVector(nums_actions, payoffs))
 end
 
-# Int if every token parses as an integer, Float64 otherwise
+# Number parsing, shared by the readers #
+
+# A number token is an integer, a decimal with an optional exponent, or a
+# rational `n/d`, each with an optional sign. When no element type is given,
+# it is Int if every token is an integer, Rational{BigInt} if the other tokens
+# are all rationals, and Float64 otherwise.
 function _parse_payoffs(tokens)
     payoffs = Vector{Int}(undef, length(tokens))
     for (i, tok) in enumerate(tokens)
         x = tryparse(Int, tok)
-        x === nothing && return _parse_payoffs(Float64, tokens)
+        if x === nothing
+            isexact(t) = occursin('/', t) || tryparse(Int, t) !== nothing
+            T = all(isexact, @view tokens[i:end]) ? Rational{BigInt} : Float64
+            return _parse_payoffs(T, tokens)
+        end
         payoffs[i] = x
     end
     return payoffs
@@ -282,11 +291,26 @@ end
 _parse_payoffs(::Type{T}, tokens) where {T<:Real} =
     T[_parse_payoff(T, tok) for tok in tokens]
 
-_parse_payoff(::Type{T}, tok) where {T<:Union{Integer,AbstractFloat}} =
-    parse(T, tok)
-# Types without a `parse` method, such as `Rational`
-_parse_payoff(::Type{T}, tok) where {T<:Real} =
-    convert(T, something(tryparse(Int, tok), parse(Float64, tok)))
+_parse_payoff(::Type{T}, tok) where {T<:Integer} = parse(T, tok)
+_parse_payoff(::Type{T}, tok) where {T<:AbstractFloat} =
+    occursin('/', tok) ? T(_parse_exact(tok)) : parse(T, tok)
+# Other types, such as `Rational`, get the exact value of the token
+_parse_payoff(::Type{T}, tok) where {T<:Real} = T(_parse_exact(tok))
+
+# Exact value of a number token: "3", "-1/3", "0.1", "-12.5e-3"
+function _parse_exact(tok::AbstractString)
+    if occursin('/', tok)
+        n, d = split(tok, '/'; limit=2)
+        d = parse(BigInt, d; base=10)
+        iszero(d) && throw(ArgumentError("zero denominator in $(repr(tok))"))
+        return parse(BigInt, n; base=10) // d
+    end
+    mantissa, ex = occursin(r"[eE]", tok) ? split(tok, r"[eE]"; limit=2) : (tok, "0")
+    int, frac = occursin('.', mantissa) ? split(mantissa, '.'; limit=2) : (mantissa, "")
+    num = parse(BigInt, int * frac; base=10)
+    e = parse(Int, ex) - length(frac)
+    return e >= 0 ? num * big(10)^e // 1 : num // big(10)^(-e)
+end
 
 
 """
