@@ -166,7 +166,8 @@ the file at `path`, and return it as a `NormalFormGame`. See
 # Arguments
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
-  when every payoff in the input is an integer and `Float64` otherwise.
+  when every payoff in the input is an integer (`BigInt` if one does not fit
+  in `Int`) and `Float64` otherwise.
 - `io::IO` : Input stream.
 - `path::AbstractString` : Path to the file to read.
 
@@ -216,7 +217,8 @@ reading from a stream or a file.
 # Arguments
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
-  when every payoff in `text` is an integer and `Float64` otherwise.
+  when every payoff in `text` is an integer (`BigInt` if one does not fit in
+  `Int`) and `Float64` otherwise.
 - `text::AbstractString` : String in the .gam format.
 
 # Returns
@@ -272,15 +274,19 @@ end
 
 # A number token is an integer, a decimal with an optional exponent, or a
 # rational `n/d`, each with an optional sign. When no element type is given,
-# it is Int if every token is an integer, Rational{BigInt} if the other tokens
-# are all rationals, and Float64 otherwise.
+# it is Int if every token is an integer, or BigInt if one of them does not
+# fit in Int; Rational{BigInt} if the other tokens are all rationals; and
+# Float64 otherwise.
 function _parse_payoffs(tokens)
     payoffs = Vector{Int}(undef, length(tokens))
     for (i, tok) in enumerate(tokens)
         x = tryparse(Int, tok)
         if x === nothing
-            isexact(t) = occursin('/', t) || tryparse(Int, t) !== nothing
-            T = all(isexact, @view tokens[i:end]) ? Rational{BigInt} : Float64
+            isint(t) = tryparse(BigInt, t) !== nothing
+            isexact(t) = occursin('/', t) || isint(t)
+            rest = @view tokens[i:end]
+            T = all(isint, rest) ? BigInt :
+                all(isexact, rest) ? Rational{BigInt} : Float64
             return _parse_payoffs(T, tokens)
         end
         payoffs[i] = x

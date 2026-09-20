@@ -163,6 +163,12 @@ struct UnsupportedReal <: Real end
             @test gam_string(NormalFormGame(Float64, g)) ==
                   "2\n2 2\n\n1.0 3.0 2.0 4.0 5.0 6.0 7.0 8.0\n"
 
+            # Integers that do not fit in Int
+            s_big = "2\n2 2\n\n$(big(2)^70) 2 3 4 5 6 7 -$(big(2)^70)"
+            @test parse_gam(s_big) isa NormalFormGame{2,BigInt}
+            @test parse_gam(s_big)[1, 1][1] == big(2)^70
+            @test gam_string(parse_gam(s_big)) == s_big * "\n"
+
             # Bool payoffs are written as 0 and 1
             g_bool = NormalFormGame(Player([true false; false true]),
                                     Player([true false; false true]))
@@ -235,6 +241,22 @@ struct UnsupportedReal <: Real end
             @test _parse_payoffs(split("1 1e3 -2")) isa Vector{Float64}
             @test _parse_payoffs(split("1/3 0.5")) isa Vector{Float64}
             @test _parse_payoffs(split("1/3 0.5")) == [1/3, 0.5]
+
+            # Integers that do not fit in Int
+            x = big(10)^30 + 1
+            @test _parse_payoffs(split("1 $x -3")) isa Vector{BigInt}
+            @test _parse_payoffs(split("1 $x -3")) == [1, x, -3]
+            for str in ["1 $x 1/3", "1/3 $x 1", "$x 1 1/3"]
+                @test _parse_payoffs(split(str)) isa Vector{Rational{BigInt}}
+                @test sort(_parse_payoffs(split(str))) == [1//3, 1, x]
+            end
+            @test _parse_payoffs(split("1 $x 0.5")) isa Vector{Float64}
+
+            # What the writers print is read back without loss
+            xs = [big(2)^70//1, 1//3, -5//2, big(3)^50//7]
+            tokens = [sprint(GameTheory._print_payoff, x) for x in xs]
+            @test _parse_payoffs(tokens) == xs
+            @test _parse_payoffs(tokens) isa Vector{Rational{BigInt}}
 
             @test _parse_payoffs(Rational{Int}, split("0.1 1e-2 1/3")) ==
                   [1//10, 1//100, 1//3]
