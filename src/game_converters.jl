@@ -319,6 +319,8 @@ end
 const _PayoffNumber = Union{Integer,AbstractFloat,Rational}
 
 _print_payoff(io::IO, x::Real) = print(io, x)
+# `print` would write `true` or `false`
+_print_payoff(io::IO, x::Bool) = print(io, Int(x))
 # A rational is written as `n/d`, or as `n` if the denominator is 1
 function _print_payoff(io::IO, x::Rational)
     print(io, numerator(x))

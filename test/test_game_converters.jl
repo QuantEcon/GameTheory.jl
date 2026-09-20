@@ -163,6 +163,12 @@ struct UnsupportedReal <: Real end
             @test gam_string(NormalFormGame(Float64, g)) ==
                   "2\n2 2\n\n1.0 3.0 2.0 4.0 5.0 6.0 7.0 8.0\n"
 
+            # Bool payoffs are written as 0 and 1
+            g_bool = NormalFormGame(Player([true false; false true]),
+                                    Player([true false; false true]))
+            @test gam_string(g_bool) == "2\n2 2\n\n1 0 0 1 1 0 0 1\n"
+            @test same_game(parse_gam(gam_string(g_bool)), g_bool)
+
             # An unsupported game is rejected before the file is opened
             p = GAMPayoffVector{2,UnsupportedReal}((1, 1), fill(UnsupportedReal(), 2))
             @test_throws MethodError write_gam(IOBuffer(), p)
@@ -237,7 +243,7 @@ struct UnsupportedReal <: Real end
 
             for (x, str) in [(1//3, "1/3"), (-5//2, "-5/2"), (3//1, "3"),
                              (big(10)^30//7, "1" * "0"^30 * "/7"), (-4, "-4"),
-                             (0.25, "0.25")]
+                             (0.25, "0.25"), (true, "1"), (false, "0")]
                 @test sprint(GameTheory._print_payoff, x) == str
             end
         end
