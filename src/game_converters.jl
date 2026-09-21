@@ -166,8 +166,8 @@ the file at `path`, and return it as a `NormalFormGame`. See
 # Arguments
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
-  when every payoff in the input is an integer (`BigInt` if one does not fit
-  in `Int`) and `Float64` otherwise.
+  when every payoff in the input is written as an integer (`BigInt` if one
+  does not fit in `Int`) and `Float64` otherwise.
 - `io::IO` : Input stream.
 - `path::AbstractString` : Path to the file to read.
 
@@ -217,8 +217,8 @@ reading from a stream or a file.
 # Arguments
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
-  when every payoff in `text` is an integer (`BigInt` if one does not fit in
-  `Int`) and `Float64` otherwise.
+  when every payoff in `text` is written as an integer (`BigInt` if one does
+  not fit in `Int`) and `Float64` otherwise.
 - `text::AbstractString` : String in the .gam format.
 
 # Returns
