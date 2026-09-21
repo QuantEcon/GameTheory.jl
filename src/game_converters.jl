@@ -259,7 +259,7 @@ function _read_gam(parse_payoffs, io::IO)
     # Header: N, then the N numbers of actions
     N = parse(Int, tokens[1])
     N > 0 || throw(ArgumentError("number of players must be positive"))
-    length(tokens) >= N + 1 || throw(ArgumentError(
+    N < length(tokens) || throw(ArgumentError(
         "incomplete header: expected $N numbers of actions, got $(length(tokens)-1)"
     ))
     nums_actions = ntuple(i -> parse(Int, tokens[i+1]), N)

@@ -212,7 +212,8 @@ struct UnsupportedReal <: Real end
         end
 
         @testset "Invalid inputs" begin
-            for s in ["", "  \n", "x", "0", "-1", "2\n3", "2\n3 x\n\n1 2",
+            for s in ["", "  \n", "x", "0", "-1", "2\n3", string(typemax(Int)),
+                      "2\n3 x\n\n1 2",
                       "2\n3 0\n\n", "2\n3 2\n\n1 2 3",
                       "2\n3 2\n\n1 2 3 4 5 6 7 8 9 10 11 12 13",
                       "2\n3 2\n\n1 2 3 4 5 6 7 8 9 10 11 z"]
