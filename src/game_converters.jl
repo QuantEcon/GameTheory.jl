@@ -370,6 +370,8 @@ julia> write_gam("game.gam", g)
 ```
 """
 function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
+    # `print` would round floats if the caller's context has `:compact => true`
+    io = IOContext(io, :compact => false)
     print(io, N, '\n')
     join(io, p.nums_actions, ' ')
     print(io, "\n\n")  # blank line between the header and the payoffs

@@ -175,6 +175,11 @@ struct UnsupportedReal <: Real end
             @test gam_string(g_bool) == "2\n2 2\n\n1 0 0 1 1 0 0 1\n"
             @test same_game(parse_gam(gam_string(g_bool)), g_bool)
 
+            # Payoffs are not rounded when the caller's context is compact
+            p_float = GAMPayoffVector((1, 1), [1.12341234, 2.0])
+            @test sprint(write_gam, p_float; context=:compact => true) ==
+                  "2\n1 1\n\n1.12341234 2.0\n"
+
             # An unsupported game is rejected before the file is opened
             p = GAMPayoffVector{2,UnsupportedReal}((1, 1), fill(UnsupportedReal(), 2))
             @test_throws MethodError write_gam(IOBuffer(), p)
