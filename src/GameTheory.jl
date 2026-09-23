@@ -63,7 +63,7 @@ Alias for `Union{PureActionProfile{N,T},MixedActionProfile{N,T}}`.
 """
 const ActionProfile{N,T} = Union{PureActionProfile{N,T},MixedActionProfile{N,T}}
 
-const RatOrInt = Union{Rational,Int}
+const RatOrInt = Union{Rational,Integer}
 
 # package code goes here
 include("normal_form_game.jl")
