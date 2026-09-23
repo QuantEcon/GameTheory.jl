@@ -3,8 +3,7 @@
 """
     GAMPayoffVector{N,T}
 
-Internal intermediate representation that stores payoffs in a single flat
-vector.
+Intermediate representation that stores payoffs in a single flat vector.
 
 Payoff values are ordered as in the GameTracer .gam format:
 1. Player-major blocks: player 1, ..., player N.
@@ -145,3 +144,281 @@ function NormalFormGame(::Type{T}, p::GAMPayoffVector{N}) where {N,T<:Real}
 end
 
 NormalFormGame(p::GAMPayoffVector{N,T}) where {N,T<:Real} = NormalFormGame(T, p)
+
+
+# .gam reader and writer #
+
+# The GameTracer .gam format is a whitespace-separated text format: the number
+# of players N, the N numbers of actions, and then the prod(nums_actions) * N
+# payoffs in the order described in the docstring of `GAMPayoffVector`.
+# Reference: B. Blum, D. Koller, and C. Shelton, "Game Theory: GameTracer",
+# http://dags.stanford.edu/Games/gametracer.html
+
+"""
+    read_gam([T], io)
+    read_gam([T], path)
+
+Read a normal form game in the GameTracer .gam format from the stream `io` or
+the file at `path`, and return it as a `NormalFormGame`. See
+[`GAMPayoffVector`](@ref) for the ordering of the payoffs in the format, and
+[`parse_gam`](@ref) for reading from a string.
+
+# Arguments
+
+- `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
+  when every payoff in the input is written as an integer (`BigInt` if one
+  does not fit in `Int`) and `Float64` otherwise.
+- `io::IO` : Input stream.
+- `path::AbstractString` : Path to the file to read.
+
+# Returns
+
+- `::NormalFormGame{N,T}` : The game described by the input.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> path = tempname();
+
+julia> write_gam(path, g)
+
+julia> read_gam(path)
+3×2 NormalFormGame{2, Int64}:
+ (3, 2)  (1, 3)
+ (0, 6)  (4, 0)
+ (2, 1)  (5, 4)
+
+julia> read_gam(Float64, path)
+3×2 NormalFormGame{2, Float64}:
+ (3.0, 2.0)  (1.0, 3.0)
+ (0.0, 6.0)  (4.0, 0.0)
+ (2.0, 1.0)  (5.0, 4.0)
+```
+
+A file at a URL can be read with `read_gam(Downloads.download(url))`.
+"""
+read_gam(io::IO) = _read_gam(_parse_payoffs, io)
+read_gam(::Type{T}, io::IO) where {T<:Real} =
+    _read_gam(tokens -> _parse_payoffs(T, tokens), io)
+
+read_gam(path::AbstractString) = open(read_gam, path)
+read_gam(::Type{T}, path::AbstractString) where {T<:Real} =
+    open(io -> read_gam(T, io), path)
+
+"""
+    parse_gam([T], text)
+
+Parse the string `text` in the GameTracer .gam format and return the game as a
+`NormalFormGame`. See [`read_gam`](@ref) for the meaning of `T` and for
+reading from a stream or a file.
+
+# Arguments
+
+- `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
+  when every payoff in `text` is written as an integer (`BigInt` if one does
+  not fit in `Int`) and `Float64` otherwise.
+- `text::AbstractString` : String in the .gam format.
+
+# Returns
+
+- `::NormalFormGame{N,T}` : The game described by `text`.
+
+# Examples
+
+```julia
+julia> s = \"\"\"
+       2
+       3 2
+
+       3 2 0 3 5 6 3 2 3 2 6 1
+       \"\"\";
+
+julia> parse_gam(s)
+3×2 NormalFormGame{2, Int64}:
+ (3, 3)  (3, 2)
+ (2, 2)  (5, 6)
+ (0, 3)  (6, 1)
+
+julia> parse_gam(Float64, s)
+3×2 NormalFormGame{2, Float64}:
+ (3.0, 3.0)  (3.0, 2.0)
+ (2.0, 2.0)  (5.0, 6.0)
+ (0.0, 3.0)  (6.0, 1.0)
+```
+"""
+parse_gam(text::AbstractString) = read_gam(IOBuffer(text))
+parse_gam(::Type{T}, text::AbstractString) where {T<:Real} =
+    read_gam(T, IOBuffer(text))
+
+function _read_gam(parse_payoffs, io::IO)
+    tokens = split(read(io, String))
+    isempty(tokens) && throw(ArgumentError("empty .gam input"))
+
+    # Header: N, then the N numbers of actions
+    N = parse(Int, tokens[1])
+    N > 0 || throw(ArgumentError("number of players must be positive"))
+    N < length(tokens) || throw(ArgumentError(
+        "incomplete header: expected $N numbers of actions, got $(length(tokens)-1)"
+    ))
+    nums_actions = ntuple(i -> parse(Int, tokens[i+1]), N)
+
+    # Payoffs, in .gam order; the length is checked by GAMPayoffVector
+    payoffs = parse_payoffs(@view tokens[N+2:end])
+
+    return NormalFormGame(GAMPayoffVector(nums_actions, payoffs))
+end
+
+# Number parsing, shared by the readers #
+
+# A number token is an integer, a decimal with an optional exponent, or a
+# rational `n/d`, each with an optional sign. When no element type is given,
+# it is Int if every token is an integer, or BigInt if one of them does not
+# fit in Int; Rational{BigInt} if the other tokens are all rationals; and
+# Float64 otherwise.
+function _parse_payoffs(tokens)
+    payoffs = Vector{Int}(undef, length(tokens))
+    for (i, tok) in enumerate(tokens)
+        x = tryparse(Int, tok)
+        if x === nothing
+            isint(t) = tryparse(BigInt, t) !== nothing
+            isexact(t) = occursin('/', t) || isint(t)
+            rest = @view tokens[i:end]
+            T = all(isint, rest) ? BigInt :
+                all(isexact, rest) ? Rational{BigInt} : Float64
+            return _parse_payoffs(T, tokens)
+        end
+        payoffs[i] = x
+    end
+    return payoffs
+end
+
+_parse_payoffs(::Type{T}, tokens) where {T<:Real} =
+    T[_parse_payoff(T, tok) for tok in tokens]
+
+_parse_payoff(::Type{T}, tok) where {T<:Integer} = parse(T, tok)
+_parse_payoff(::Type{T}, tok) where {T<:AbstractFloat} =
+    occursin('/', tok) ? T(_parse_exact(tok)) : parse(T, tok)
+# Other types, such as `Rational`, get the exact value of the token
+_parse_payoff(::Type{T}, tok) where {T<:Real} = T(_parse_exact(tok))
+
+# Exact value of a number token: "3", "-1/3", "0.1", "-12.5e-3"
+function _parse_exact(tok::AbstractString)
+    if occursin('/', tok)
+        n, d = split(tok, '/'; limit=2)
+        d = parse(BigInt, d; base=10)
+        iszero(d) && throw(ArgumentError("zero denominator in $(repr(tok))"))
+        return parse(BigInt, n; base=10) // d
+    end
+    mantissa, ex = occursin(r"[eE]", tok) ? split(tok, r"[eE]"; limit=2) : (tok, "0")
+    int, frac = occursin('.', mantissa) ? split(mantissa, '.'; limit=2) : (mantissa, "")
+    # A sign in `frac` would be moved to a valid position by the concatenation
+    all(isdigit, frac) ||
+        throw(ArgumentError("cannot parse $(repr(tok)) as a number"))
+    num = parse(BigInt, int * frac; base=10)
+    e = parse(Int, ex) - length(frac)
+    return e >= 0 ? num * big(10)^e // 1 : num // big(10)^(-e)
+end
+
+
+# Number printing, shared by the writers #
+
+# Element types that the writers accept
+const _PayoffNumber = Union{Integer,AbstractFloat,Rational}
+
+_print_payoff(io::IO, x::Real) = print(io, x)
+# `print` would write `true` or `false`
+_print_payoff(io::IO, x::Bool) = print(io, Int(x))
+# A rational is written as `n/d`, or as `n` if the denominator is 1
+function _print_payoff(io::IO, x::Rational)
+    print(io, numerator(x))
+    isone(denominator(x)) || print(io, '/', denominator(x))
+    return nothing
+end
+
+
+"""
+    write_gam(io, g)
+    write_gam(path, g)
+
+Write the game `g` to the stream `io` or the file at `path` in the GameTracer
+.gam format. Each payoff is written with `print`, so the element type of `g`
+must be an `Integer` or an `AbstractFloat` type; convert first otherwise, e.g.
+with `NormalFormGame(Float64, g)`. See [`gam_string`](@ref) for writing to a
+string.
+
+# Arguments
+
+- `io::IO` : Output stream.
+- `path::AbstractString` : Path to the file to write; an existing file is
+  overwritten.
+- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> write_gam(stdout, g)
+2
+3 2
+
+3 0 2 1 4 5 2 6 1 3 0 4
+
+julia> write_gam("game.gam", g)
+```
+"""
+function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
+    # `print` would round floats if the caller's context has `:compact => true`
+    io = IOContext(io, :compact => false)
+    print(io, N, '\n')
+    join(io, p.nums_actions, ' ')
+    print(io, "\n\n")  # blank line between the header and the payoffs
+    for (k, x) in enumerate(p.payoffs)
+        k > 1 && print(io, ' ')
+        _print_payoff(io, x)
+    end
+    print(io, '\n')
+    return nothing
+end
+
+write_gam(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
+    write_gam(io, GAMPayoffVector(g))
+
+# Same bound on the element type as the methods for `io`, so that an
+# unsupported game is rejected before the file is opened
+write_gam(
+    path::AbstractString, g::Union{NormalFormGame{N,T},GAMPayoffVector{N,T}}
+) where {N,T<:_PayoffNumber} = open(io -> write_gam(io, g), path, "w")
+
+"""
+    gam_string(g)
+
+Return the GameTracer .gam representation of the game `g` as a string. See
+[`write_gam`](@ref) for the requirement on the element type of `g`.
+
+# Arguments
+
+- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+
+# Returns
+
+- `::String` : The .gam representation of `g`.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> gam_string(g)
+"2\\n3 2\\n\\n3 0 2 1 4 5 2 6 1 3 0 4\\n"
+
+julia> print(gam_string(g))
+2
+3 2
+
+3 0 2 1 4 5 2 6 1 3 0 4
+```
+"""
+gam_string(g::Union{NormalFormGame,GAMPayoffVector}) = sprint(write_gam, g)
