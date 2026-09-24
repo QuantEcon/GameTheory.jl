@@ -1,4 +1,5 @@
-using GameTheory: GAMPayoffVector
+using GameTheory: PayoffProfileMatrix, PlayerMajor, ProfileMajor, as_vector
+using LinearAlgebra: Transpose
 
 using Random
 
@@ -7,7 +8,11 @@ struct UnsupportedReal <: Real end
 
 @testset "game_converters.jl" begin
 
-    @testset "GAMPayoffVector" begin
+    @testset "PayoffProfileMatrix" begin
+        same_players(g1, g2) =
+            all(g1.players[i].payoff_array == g2.players[i].payoff_array
+                for i in 1:num_players(g1))
+
         @testset "Golden: N=3" begin
             nums_actions = (2, 3, 4)
             N = length(nums_actions)
@@ -17,58 +22,92 @@ struct UnsupportedReal <: Real end
             A2 = reshape(collect(101:100+na), nums_actions)
             A3 = reshape(collect(201:200+na), nums_actions)
 
-            payoffs1d = vcat(vec(A1), vec(A2), vec(A3))
-
-            p = @inferred GAMPayoffVector(nums_actions, payoffs1d)
-
-            @test p.nums_actions == nums_actions
-            @test p.payoffs == payoffs1d
-            @test num_players(p) == N
+            payoffs2d = hcat(vec(A1), vec(A2), vec(A3))
+            payoffs_F = vec(payoffs2d)               # player-major
+            payoffs_C = vec(permutedims(payoffs2d))  # profile-major
 
             payoffs4d = Array{Int,N+1}(undef, nums_actions..., N)
             payoffs4d[:, :, :, 1] .= A1
             payoffs4d[:, :, :, 2] .= A2
             payoffs4d[:, :, :, 3] .= A3
-
             g = NormalFormGame(payoffs4d)
-            p = @inferred GAMPayoffVector(g)
 
-            @test p.nums_actions == nums_actions
-            @test p.payoffs == payoffs1d
+            for (layout, payoffs1d) in [(PlayerMajor(), payoffs_F),
+                                        (ProfileMajor(), payoffs_C)]
+                p = @inferred PayoffProfileMatrix(nums_actions, payoffs1d, layout)
 
-            g_from_p = @inferred NormalFormGame(p)
+                @test p.nums_actions == nums_actions
+                @test p.payoffs == payoffs2d
+                @test num_players(p) == N
+                @test as_vector(p, PlayerMajor()) == payoffs_F
+                @test as_vector(p, ProfileMajor()) == payoffs_C
 
-            @test g_from_p.nums_actions == g.nums_actions
-            for i in 1:N
-                @test g_from_p.players[i].payoff_array ==
-                      g.players[i].payoff_array
+                g_from_p = @inferred NormalFormGame(p)
+                @test g_from_p.nums_actions == g.nums_actions
+                @test same_players(g_from_p, g)
+
+                # Make an AbstractVector (SubArray) that equals payoffs1d
+                payoffs1d_view = @view vcat([-999], payoffs1d, [999])[2:end-1]
+                p = @inferred PayoffProfileMatrix(nums_actions, payoffs1d_view, layout)
+                @test p.payoffs == payoffs2d
             end
 
-            # Make an AbstractVector (SubArray) that equals payoffs1d
-            payoffs1d_view = @view vcat([-999], payoffs1d, [999])[2:end-1]
-
-            p = @inferred GAMPayoffVector(nums_actions, payoffs1d_view)
-
+            p = @inferred PayoffProfileMatrix(g)
             @test p.nums_actions == nums_actions
-            @test p.payoffs == payoffs1d
+            @test p.payoffs == payoffs2d
+            @test p.payoffs isa Matrix{Int}
+
+            p = @inferred PayoffProfileMatrix(nums_actions, payoffs2d)
+            @test p.payoffs === payoffs2d
+            @test same_players(NormalFormGame(p), g)
+        end
+
+        @testset "Golden: N=2" begin
+            # 3x2 game with payoff profiles, in column-major order over
+            # (a_1, a_2):
+            #   (1,1): (3,2)  (2,1): (0,6)  (3,1): (2,1)
+            #   (1,2): (1,3)  (2,2): (4,0)  (3,2): (5,4)
+            nums_actions = (3, 2)
+            g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]))
+
+            # Profile-major: (payoffs at profile 1)..., (payoffs at profile 2)...
+            payoffs_C = [3, 2, 0, 6, 2, 1, 1, 3, 4, 0, 5, 4]
+            # Player-major: (payoffs to player 1)..., (payoffs to player 2)...
+            payoffs_F = [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4]
+
+            p = PayoffProfileMatrix(g)
+            @test as_vector(p, ProfileMajor()) == payoffs_C
+            @test as_vector(p, PlayerMajor()) == payoffs_F
+
+            for (layout, payoffs) in [(ProfileMajor(), payoffs_C),
+                                      (PlayerMajor(), payoffs_F)]
+                p = PayoffProfileMatrix(nums_actions, payoffs, layout)
+                @test same_players(NormalFormGame(p), g)
+            end
         end
 
         @testset "Round trip: N=$(length(ns))" for ns in [(4, 3), (2, 2, 3, 2)]
             N = length(ns)
             rng = MersenneTwister(12345)
             g = random_game(rng, 0:99, ns)
-            p = @inferred GAMPayoffVector(g)
+            p = @inferred PayoffProfileMatrix(g)
             g2 = @inferred NormalFormGame(p)
 
-            p_BI = @inferred GAMPayoffVector(BigInt, g)
+            p_BI = @inferred PayoffProfileMatrix(BigInt, g)
             g3 = @inferred NormalFormGame(Int, p_BI)
 
             for g_new in [g2, g3]
                 @test g_new.nums_actions == g.nums_actions
-                for i in 1:N
-                    @test g_new.players[i].payoff_array ==
-                          g.players[i].payoff_array
-                end
+                @test same_players(g_new, g)
+            end
+
+            # Through the flat vectors
+            for layout in [PlayerMajor(), ProfileMajor()]
+                v = @inferred as_vector(p, layout)
+                @test v isa Vector{Int}
+                p_new = PayoffProfileMatrix(ns, v, layout)
+                @test p_new.payoffs == p.payoffs
+                @test same_players(NormalFormGame(p_new), g)
             end
         end
 
@@ -76,20 +115,69 @@ struct UnsupportedReal <: Real end
             payoffs = [1., 2., 3.]
             nums_actions = (3,)
 
-            p1 = GAMPayoffVector(nums_actions, payoffs)
-
             g = NormalFormGame(Player(payoffs))
-            p2 = GAMPayoffVector(g)
+            ps = [PayoffProfileMatrix(nums_actions, payoffs, PlayerMajor()),
+                  PayoffProfileMatrix(nums_actions, payoffs, ProfileMajor()),
+                  PayoffProfileMatrix(g)]
 
-            for p in [p1, p2]
+            for p in ps
                 @test p.nums_actions == nums_actions
-                @test p.payoffs == payoffs
+                @test as_vector(p, PlayerMajor()) == payoffs
+                @test as_vector(p, ProfileMajor()) == payoffs
+                @test same_players(NormalFormGame(p), g)
+            end
+        end
+
+        @testset "Storage and memory" begin
+            nums_actions = (3, 2)
+            v = collect(1:12)
+
+            p_F = PayoffProfileMatrix(nums_actions, v, PlayerMajor())
+            p_C = PayoffProfileMatrix(nums_actions, v, ProfileMajor())
+
+            # Backed by the input vector, without copying
+            @test p_F.payoffs isa Matrix{Int}
+            @test p_C.payoffs isa Transpose{Int,Matrix{Int}}
+            @test Base.mightalias(p_F.payoffs, v)
+            @test Base.mightalias(p_C.payoffs, v)
+
+            # as_vector shares memory if the layout matches the storage,
+            # and copies otherwise
+            for (p, matching, other) in [(p_F, PlayerMajor(), ProfileMajor()),
+                                         (p_C, ProfileMajor(), PlayerMajor())]
+                w = as_vector(p, matching)
+                @test w isa Vector{Int}
+                @test w == v
+                @test Base.mightalias(w, v)
+
+                w = as_vector(p, other)
+                @test w isa Vector{Int}
+                @test !Base.mightalias(w, v)
+
+                # Player blocks are views; the game copies
+                b = GameTheory._player_block(p, 2)
+                @test size(b) == nums_actions
+                @test Base.mightalias(b, p.payoffs)
+                g = NormalFormGame(p)
+                @test !Base.mightalias(g.players[2].payoff_array, p.payoffs)
+            end
+
+            # The player blocks read the same matrix in both storages
+            for i in 1:2
+                @test GameTheory._player_block(p_F, i) ==
+                      reshape(p_F.payoffs[:, i], nums_actions)
+                @test GameTheory._player_block(p_C, i) ==
+                      reshape(p_C.payoffs[:, i], nums_actions)
             end
         end
 
         @testset "Invalid inputs" begin
-            @test_throws ArgumentError GAMPayoffVector((2, 2), [1, 2, 3])
-            @test_throws ArgumentError GAMPayoffVector((2, 0), Int[])
+            for layout in [PlayerMajor(), ProfileMajor()]
+                @test_throws ArgumentError PayoffProfileMatrix((2, 2), [1, 2, 3], layout)
+                @test_throws ArgumentError PayoffProfileMatrix((2, 0), Int[], layout)
+            end
+            @test_throws ArgumentError PayoffProfileMatrix((2, 2), zeros(Int, 2, 4))
+            @test_throws ArgumentError PayoffProfileMatrix((2, 0), zeros(Int, 0, 2))
         end
     end
 
@@ -108,8 +196,14 @@ struct UnsupportedReal <: Real end
             @test same_game(parse_gam(s), g)
             @test same_game(read_gam(IOBuffer(s)), g)
 
-            p = GAMPayoffVector((3, 2), [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4])
+            v = [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4]
+            p = PayoffProfileMatrix((3, 2), v, PlayerMajor())
             @test gam_string(p) == s
+            # Written in player-major order whatever the storage
+            p_C = PayoffProfileMatrix((3, 2), as_vector(p, ProfileMajor()),
+                                      ProfileMajor())
+            @test p_C.payoffs isa Transpose
+            @test gam_string(p_C) == s
         end
 
         @testset "Golden: N=3" begin
@@ -176,12 +270,12 @@ struct UnsupportedReal <: Real end
             @test same_game(parse_gam(gam_string(g_bool)), g_bool)
 
             # Payoffs are not rounded when the caller's context is compact
-            p_float = GAMPayoffVector((1, 1), [1.12341234, 2.0])
+            p_float = PayoffProfileMatrix((1, 1), [1.12341234, 2.0], PlayerMajor())
             @test sprint(write_gam, p_float; context=:compact => true) ==
                   "2\n1 1\n\n1.12341234 2.0\n"
 
             # An unsupported game is rejected before the file is opened
-            p = GAMPayoffVector{2,UnsupportedReal}((1, 1), fill(UnsupportedReal(), 2))
+            p = PayoffProfileMatrix((1, 1), fill(UnsupportedReal(), 2), PlayerMajor())
             @test_throws MethodError write_gam(IOBuffer(), p)
             mktempdir() do dir
                 path = joinpath(dir, "game.gam")

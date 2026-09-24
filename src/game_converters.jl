@@ -1,51 +1,180 @@
-# GAMPayoffVector #
+# PayoffProfileMatrix #
 
 """
-    GAMPayoffVector{N,T}
+    PayoffLayout
 
-Intermediate representation that stores payoffs in a single flat vector.
+Abstract supertype of the singleton types that specify the order in which the
+payoffs of a game are listed in a flat vector; see [`PlayerMajor`](@ref) and
+[`ProfileMajor`](@ref).
+"""
+abstract type PayoffLayout end
 
-Payoff values are ordered as in the GameTracer .gam format:
-1. Player-major blocks: player 1, ..., player N.
-2. Within each block, action profiles are ordered with player 1 varying fastest,
-   then player 2, ..., player N (i.e., Fortran/column-major order).
+"""
+    PlayerMajor()
+
+Player-major order, as in the GameTracer .gam format: all the payoffs to
+player 1, then all the payoffs to player 2, ..., then all the payoffs to player
+N. Within each block, action profiles are ordered with player 1 varying
+fastest, then player 2, ..., player N (i.e., column-major order).
+"""
+struct PlayerMajor <: PayoffLayout end
+
+"""
+    ProfileMajor()
+
+Profile-major order, as in the Gambit .nfg format: the payoffs to players 1,
+..., N at the first action profile, then those at the second action profile,
+and so on. Action profiles are ordered with player 1 varying fastest, then
+player 2, ..., player N (i.e., column-major order).
+"""
+struct ProfileMajor <: PayoffLayout end
+
+"""
+    PayoffProfileMatrix{N,T,TM}
+
+Intermediate representation of the payoffs of an `N`-player game: the matrix
+of size `prod(nums_actions) × N` whose `[a, i]` entry is the payoff to player
+`i` at the `a`-th action profile, where action profiles are ordered with player
+1 varying fastest, then player 2, ..., player N (i.e., column-major order).
+This is the `payoff_profile_array` of the game with the action-profile axes
+flattened into one.
+
+The .gam and .nfg formats list the payoffs in a flat vector, in the
+[`PlayerMajor`](@ref) and [`ProfileMajor`](@ref) orders respectively, which
+are the column-major flattenings of this matrix and of its transpose. A
+`PayoffProfileMatrix` constructed from such a vector stores a matrix backed by
+the vector without copying: a `Matrix` for `PlayerMajor()`, and the
+`Transpose` of a `Matrix` for `ProfileMajor()`. See [`as_vector`](@ref) for
+the converse.
 
 # Fields
 
 - `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for each
   player.
-- `payoffs::Vector{T}` : Vector storing payoffs in .gam order.
+- `payoffs::TM` : Matrix of size `prod(nums_actions) × N` storing the
+  payoffs, where `TM<:AbstractMatrix{T}`.
 """
-struct GAMPayoffVector{N,T<:Real}
+struct PayoffProfileMatrix{N,T<:Real,TM<:AbstractMatrix{T}}
     nums_actions::NTuple{N,Int}
-    payoffs::Vector{T}
+    payoffs::TM
 
-    function GAMPayoffVector{N,T}(
-        nums_actions::NTuple{N,Int}, payoffs::Vector{T}
-    ) where {N,T<:Real}
-        any(n -> n <= 0, nums_actions) &&
-            throw(ArgumentError("all nums_actions must be positive"))
-        expected = prod(nums_actions) * N
-        length(payoffs) == expected || throw(ArgumentError(
-            "payoffs length mismatch: expected $expected, got $(length(payoffs))"
+    function PayoffProfileMatrix{N,T,TM}(
+        nums_actions::NTuple{N,Int}, payoffs::TM
+    ) where {N,T<:Real,TM<:AbstractMatrix{T}}
+        _check_nums_actions(nums_actions)
+        expected = (prod(nums_actions), N)
+        size(payoffs) == expected || throw(ArgumentError(
+            "payoffs size mismatch: expected $expected, got $(size(payoffs))"
         ))
         return new(nums_actions, payoffs)
     end
 end
 
-num_players(::GAMPayoffVector{N}) where {N} = N
+function _check_nums_actions(nums_actions)
+    any(n -> n <= 0, nums_actions) &&
+        throw(ArgumentError("all nums_actions must be positive"))
+    return nothing
+end
 
-GAMPayoffVector(
-    nums_actions::NTuple{N,Int}, payoffs::Vector{T}
-) where {N,T<:Real} = GAMPayoffVector{N,T}(nums_actions, payoffs)
+num_players(::PayoffProfileMatrix{N}) where {N} = N
 
-GAMPayoffVector(
-    ::Type{T}, nums_actions::NTuple{N,Int}, payoffs::AbstractVector
+PayoffProfileMatrix(
+    nums_actions::NTuple{N,Int}, payoffs::AbstractMatrix{T}
 ) where {N,T<:Real} =
-    GAMPayoffVector{N,T}(nums_actions, convert(Vector{T}, payoffs))
-GAMPayoffVector(
-    nums_actions::NTuple{N,Int}, payoffs::AbstractVector{T}
-) where {N,T<:Real} = GAMPayoffVector(T, nums_actions, payoffs)
+    PayoffProfileMatrix{N,T,typeof(payoffs)}(nums_actions, payoffs)
+
+# The matrix backed by the vector `v` listing the payoffs in the given order
+_as_matrix(v::Vector, nums_actions::NTuple{N,Int}, ::PlayerMajor) where {N} =
+    reshape(v, prod(nums_actions), N)
+_as_matrix(v::Vector, nums_actions::NTuple{N,Int}, ::ProfileMajor) where {N} =
+    transpose(reshape(v, N, prod(nums_actions)))
+
+"""
+    PayoffProfileMatrix([T], nums_actions, payoffs, layout)
+
+Construct a PayoffProfileMatrix (of eltype `T` if specified) from the vector
+`payoffs` listing the payoffs of a game in the order `layout`, a
+[`PlayerMajor`](@ref) or a [`ProfileMajor`](@ref). `payoffs` is converted to a
+`Vector{T}`, which makes no copy if it already is one, and the matrix stored is
+backed by that vector: a `Matrix` if `layout` is `PlayerMajor()`, and the
+`Transpose` of a `Matrix` if `ProfileMajor()`.
+
+# Examples
+
+```julia
+julia> payoffs = collect(1:12);
+
+julia> p = GameTheory.PayoffProfileMatrix((3, 2), payoffs, GameTheory.PlayerMajor());
+
+julia> p.payoffs
+6×2 Matrix{Int64}:
+ 1   7
+ 2   8
+ 3   9
+ 4  10
+ 5  11
+ 6  12
+
+julia> p = GameTheory.PayoffProfileMatrix((3, 2), payoffs, GameTheory.ProfileMajor());
+
+julia> p.payoffs
+6×2 transpose(::Matrix{Int64}) with eltype Int64:
+  1   2
+  3   4
+  5   6
+  7   8
+  9  10
+ 11  12
+```
+"""
+function PayoffProfileMatrix(
+    ::Type{T}, nums_actions::NTuple{N,Int}, payoffs::AbstractVector,
+    layout::PayoffLayout
+) where {N,T<:Real}
+    _check_nums_actions(nums_actions)
+    expected = prod(nums_actions) * N
+    length(payoffs) == expected || throw(ArgumentError(
+        "payoffs length mismatch: expected $expected, got $(length(payoffs))"
+    ))
+    v = convert(Vector{T}, payoffs)
+    return PayoffProfileMatrix(nums_actions, _as_matrix(v, nums_actions, layout))
+end
+
+PayoffProfileMatrix(
+    nums_actions::NTuple{N,Int}, payoffs::AbstractVector{T}, layout::PayoffLayout
+) where {N,T<:Real} = PayoffProfileMatrix(T, nums_actions, payoffs, layout)
+
+# `p.payoffs` or its transpose, whichever lists the payoffs in the order
+# `layout` when iterated (in column-major order); no copy is made
+_in_layout(p::PayoffProfileMatrix, ::PlayerMajor) = p.payoffs
+_in_layout(p::PayoffProfileMatrix, ::ProfileMajor) = transpose(p.payoffs)
+
+"""
+    as_vector(p, layout)
+
+Return the payoffs of the PayoffProfileMatrix `p` as a `Vector` listing them in
+the order `layout`, a [`PlayerMajor`](@ref) or a [`ProfileMajor`](@ref). The
+vector shares memory with `p.payoffs` if that is possible without copying,
+i.e., if `p.payoffs` is a `Matrix` and `layout` is `PlayerMajor()`, or if
+`p.payoffs` is the `Transpose` of a `Matrix` and `layout` is `ProfileMajor()`;
+otherwise it is a copy.
+
+# Examples
+
+```julia
+julia> p = GameTheory.PayoffProfileMatrix((3, 2), collect(1:12), GameTheory.PlayerMajor());
+
+julia> GameTheory.as_vector(p, GameTheory.PlayerMajor())'
+1×12 adjoint(::Vector{Int64}) with eltype Int64:
+ 1  2  3  4  5  6  7  8  9  10  11  12
+
+julia> GameTheory.as_vector(p, GameTheory.ProfileMajor())'
+1×12 adjoint(::Vector{Int64}) with eltype Int64:
+ 1  7  2  8  3  9  4  10  5  11  6  12
+```
+"""
+as_vector(p::PayoffProfileMatrix{N,T}, layout::PayoffLayout) where {N,T} =
+    convert(Vector{T}, vec(_in_layout(p, layout)))
 
 
 # Forward: (i, i+1, ..., N, 1, ..., i-1)
@@ -56,12 +185,19 @@ GAMPayoffVector(
 @inline _perm_back(::Val{N}, ::Val{i}) where {N,i} =
     ntuple(k -> mod1(k - i + 1, N), Val(N))
 
+# The payoffs to player i as an N-dim array indexed by the action profile
+# (a_1, ..., a_N); shares memory with `p.payoffs`
+_player_block(p::PayoffProfileMatrix{N,T,Matrix{T}}, i::Int) where {N,T} =
+    selectdim(reshape(p.payoffs, (p.nums_actions..., N)), N+1, i)
+_player_block(p::PayoffProfileMatrix{N}, i::Int) where {N} =
+    reshape(view(p.payoffs, :, i), p.nums_actions)
+
 
 """
-    GAMPayoffVector([T], g)
+    PayoffProfileMatrix([T], g)
 
-Construct a GAMPayoffVector (of eltype `T` if specified) from a NormalFormGame
-`g`.
+Construct a PayoffProfileMatrix (of eltype `T` if specified) from a
+NormalFormGame `g`. The matrix stored is a `Matrix{T}`.
 
 # Examples
 
@@ -76,81 +212,86 @@ julia> g = NormalFormGame(player1, player2)
  (2, 8)  (5, 11)
  (3, 9)  (6, 12)
 
-julia> p = GameTheory.GAMPayoffVector(g);
+julia> p = GameTheory.PayoffProfileMatrix(g);
 
-julia> @show p.payoffs;
-p.payoffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+julia> p.payoffs
+6×2 Matrix{Int64}:
+ 1   7
+ 2   8
+ 3   9
+ 4  10
+ 5  11
+ 6  12
 ```
 """
-function GAMPayoffVector(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
+function PayoffProfileMatrix(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
     nums_actions = g.nums_actions
-    na = prod(nums_actions)
-    payoffs = Vector{T}(undef, na*N)
+    payoffs = Matrix{T}(undef, prod(nums_actions), N)
+    p = PayoffProfileMatrix(nums_actions, payoffs)
 
     ntuple(Val(N)) do i
         copyto!(
-            reshape(view(payoffs, na*(i-1)+1:na*i), nums_actions),
+            _player_block(p, i),
             PermutedDimsArray(g.players[i].payoff_array, _perm_back(Val(N), Val(i)))
         )
         nothing
     end
 
-    return GAMPayoffVector{N,T}(nums_actions, payoffs)
+    return p
 end
 
-GAMPayoffVector(g::NormalFormGame{N,T}) where {N,T<:Real} = GAMPayoffVector(T, g)
+PayoffProfileMatrix(g::NormalFormGame{N,T}) where {N,T<:Real} =
+    PayoffProfileMatrix(T, g)
 
 
 """
     NormalFormGame([T], p)
 
-Construct a NormalFormGame (of eltype `T` if specified) from a GAMPayoffVector
-`p`.
+Construct a NormalFormGame (of eltype `T` if specified) from a
+PayoffProfileMatrix `p`. The payoffs are copied.
 
 # Examples
 
 ```julia
-julia> nums_actions = (3, 2);
-
 julia> payoffs = collect(1:12);
 
-julia> @show payoffs;
-payoffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-
-julia> p = GameTheory.GAMPayoffVector(nums_actions, payoffs);
+julia> p = GameTheory.PayoffProfileMatrix((3, 2), payoffs, GameTheory.PlayerMajor());
 
 julia> NormalFormGame(p)
 3×2 NormalFormGame{2, Int64}:
  (1, 7)  (4, 10)
  (2, 8)  (5, 11)
  (3, 9)  (6, 12)
+
+julia> p = GameTheory.PayoffProfileMatrix((3, 2), payoffs, GameTheory.ProfileMajor());
+
+julia> NormalFormGame(p)
+3×2 NormalFormGame{2, Int64}:
+ (1, 2)  (7, 8)
+ (3, 4)  (9, 10)
+ (5, 6)  (11, 12)
 ```
 """
-function NormalFormGame(::Type{T}, p::GAMPayoffVector{N}) where {N,T<:Real}
-    nums_actions = p.nums_actions
-    na = prod(nums_actions)
-
+function NormalFormGame(::Type{T}, p::PayoffProfileMatrix{N}) where {N,T<:Real}
     players = ntuple(Val(N)) do i
         Player(
             T,
-            PermutedDimsArray(
-                reshape(view(p.payoffs, na*(i-1)+1:na*i), nums_actions),
-                _perm_fwd(Val(N), Val(i))
-            )
+            PermutedDimsArray(_player_block(p, i), _perm_fwd(Val(N), Val(i)))
         )
     end
 
-    return NormalFormGame{N,T}(players, nums_actions)
+    return NormalFormGame{N,T}(players, p.nums_actions)
 end
 
-NormalFormGame(p::GAMPayoffVector{N,T}) where {N,T<:Real} = NormalFormGame(T, p)
+NormalFormGame(p::PayoffProfileMatrix{N,T}) where {N,T<:Real} =
+    NormalFormGame(T, p)
 
 
 # .gam reader and writer #
 
 # The GameTracer .gam format is a whitespace-separated text format: the number
 # of players N, the N numbers of actions, and then the prod(nums_actions) * N
-# payoffs in the order described in the docstring of `GAMPayoffVector`.
+# payoffs in the order described in the docstring of `PlayerMajor`.
 # Reference: B. Blum, D. Koller, and C. Shelton, "Game Theory: GameTracer",
 # http://dags.stanford.edu/Games/gametracer.html
 
@@ -160,7 +301,7 @@ NormalFormGame(p::GAMPayoffVector{N,T}) where {N,T<:Real} = NormalFormGame(T, p)
 
 Read a normal form game in the GameTracer .gam format from the stream `io` or
 the file at `path`, and return it as a `NormalFormGame`. See
-[`GAMPayoffVector`](@ref) for the ordering of the payoffs in the format, and
+[`PlayerMajor`](@ref) for the ordering of the payoffs in the format, and
 [`parse_gam`](@ref) for reading from a string.
 
 # Arguments
@@ -264,10 +405,12 @@ function _read_gam(parse_payoffs, io::IO)
     ))
     nums_actions = ntuple(i -> parse(Int, tokens[i+1]), N)
 
-    # Payoffs, in .gam order; the length is checked by GAMPayoffVector
+    # Payoffs, in .gam order; the length is checked by PayoffProfileMatrix
     payoffs = parse_payoffs(@view tokens[N+2:end])
 
-    return NormalFormGame(GAMPayoffVector(nums_actions, payoffs))
+    return NormalFormGame(
+        PayoffProfileMatrix(nums_actions, payoffs, PlayerMajor())
+    )
 end
 
 # Number parsing, shared by the readers #
@@ -353,7 +496,7 @@ string.
 - `io::IO` : Output stream.
 - `path::AbstractString` : Path to the file to write; an existing file is
   overwritten.
-- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+- `g::Union{NormalFormGame,PayoffProfileMatrix}` : Game to write.
 
 # Examples
 
@@ -369,13 +512,14 @@ julia> write_gam(stdout, g)
 julia> write_gam("game.gam", g)
 ```
 """
-function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
+function write_gam(io::IO, p::PayoffProfileMatrix{N,T}) where {N,T<:_PayoffNumber}
     # `print` would round floats if the caller's context has `:compact => true`
     io = IOContext(io, :compact => false)
     print(io, N, '\n')
     join(io, p.nums_actions, ' ')
     print(io, "\n\n")  # blank line between the header and the payoffs
-    for (k, x) in enumerate(p.payoffs)
+    # Iterated in column-major order, i.e., in player-major order; no copy
+    for (k, x) in enumerate(_in_layout(p, PlayerMajor()))
         k > 1 && print(io, ' ')
         _print_payoff(io, x)
     end
@@ -384,12 +528,12 @@ function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
 end
 
 write_gam(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
-    write_gam(io, GAMPayoffVector(g))
+    write_gam(io, PayoffProfileMatrix(g))
 
 # Same bound on the element type as the methods for `io`, so that an
 # unsupported game is rejected before the file is opened
 write_gam(
-    path::AbstractString, g::Union{NormalFormGame{N,T},GAMPayoffVector{N,T}}
+    path::AbstractString, g::Union{NormalFormGame{N,T},PayoffProfileMatrix{N,T}}
 ) where {N,T<:_PayoffNumber} = open(io -> write_gam(io, g), path, "w")
 
 """
@@ -400,7 +544,7 @@ Return the GameTracer .gam representation of the game `g` as a string. See
 
 # Arguments
 
-- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+- `g::Union{NormalFormGame,PayoffProfileMatrix}` : Game to write.
 
 # Returns
 
@@ -421,4 +565,4 @@ julia> print(gam_string(g))
 3 0 2 1 4 5 2 6 1 3 0 4
 ```
 """
-gam_string(g::Union{NormalFormGame,GAMPayoffVector}) = sprint(write_gam, g)
+gam_string(g::Union{NormalFormGame,PayoffProfileMatrix}) = sprint(write_gam, g)
