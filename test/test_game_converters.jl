@@ -471,7 +471,7 @@ struct UnsupportedReal <: Real end
     end
 
 
-    @testset "read_nfg" begin
+    @testset "read_nfg/write_nfg" begin
         same_game(g1, g2) =
             g1.nums_actions == g2.nums_actions &&
             all(g1.players[i].payoff_array == g2.players[i].payoff_array
@@ -511,6 +511,15 @@ struct UnsupportedReal <: Real end
                 @test same_game(g_read, g)
                 @test same_game(read_nfg(IOBuffer(s)), g)
             end
+            @test nfg_string(g) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 3 2 }\n\n3 2 0 6 2 1 1 3 4 0 5 4\n"
+            @test sprint(write_nfg, g) == nfg_string(g)
+
+            # A payoff vector of either layout
+            p_nfg = NFGPayoffVector((3, 2), [3, 2, 0, 6, 2, 1, 1, 3, 4, 0, 5, 4])
+            p_gam = GAMPayoffVector((3, 2), [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4])
+            @test nfg_string(p_nfg) == nfg_string(g)
+            @test nfg_string(p_gam) == nfg_string(g)
         end
 
         @testset "Variants" begin
@@ -573,6 +582,48 @@ struct UnsupportedReal <: Real end
             g_rat = parse_nfg(s_rat)
             @test g_rat isa NormalFormGame{2,Rational{BigInt}}
             @test g_rat[1, 1] == [1//3, 2]
+            @test nfg_string(g_rat) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 3 2 }\n\n1/3 2 0 6 2 1 1 3 4 0 5 4\n"
+            @test same_game(parse_nfg(nfg_string(g_rat)), g_rat)
+
+            # Bool payoffs are written as 0 and 1
+            g_bool = NormalFormGame(Player([true false; false true]),
+                                    Player([true false; false true]))
+            @test nfg_string(g_bool) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 2 2 }\n\n1 1 0 0 0 0 1 1\n"
+
+            # Payoffs are not rounded when the caller's context is compact
+            p_float = NFGPayoffVector((1, 1), [1.12341234, 2.0])
+            @test sprint(write_nfg, p_float; context=:compact => true) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 1 1 }\n\n1.12341234 2.0\n"
+
+            # An unsupported game is rejected before the file is opened
+            p = NFGPayoffVector((1, 1), fill(UnsupportedReal(), 2))
+            @test_throws MethodError write_nfg(IOBuffer(), p)
+            mktempdir() do dir
+                path = joinpath(dir, "game.nfg")
+                write(path, "old content\n")
+                @test_throws MethodError write_nfg(path, p)
+                @test read(path, String) == "old content\n"
+            end
+        end
+
+        @testset "Round trip: N=$(length(ns)), $S" for ns in [(4, 3), (2, 2, 3, 2)],
+                                                        S in [0:99, Float64]
+            rng = MersenneTwister(12345)
+            g_rand = random_game(rng, S, ns)
+
+            @test same_game(parse_nfg(nfg_string(g_rand)), g_rand)
+            # The same game as through .gam
+            @test same_game(parse_gam(gam_string(g_rand)),
+                            parse_nfg(nfg_string(g_rand)))
+
+            mktempdir() do dir
+                path = joinpath(dir, "game.nfg")
+                @test write_nfg(path, g_rand) === nothing
+                @test read(path, String) == nfg_string(g_rand)
+                @test same_game(read_nfg(path), g_rand)
+            end
         end
 
         @testset "Files shared with QuantEcon.py" begin
@@ -589,6 +640,11 @@ struct UnsupportedReal <: Real end
         @testset "Invalid inputs" begin
             @test_throws ArgumentError parse_nfg("")
             @test_throws ArgumentError parse_nfg("2\n3 2\n\n3 0 2 1 4 5 2 6 1 3 0 4")
+        end
+
+        @testset "Type inference" begin
+            @inferred write_nfg(IOBuffer(), g)
+            @inferred nfg_string(g)
         end
     end
 
