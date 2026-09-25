@@ -557,3 +557,167 @@ julia> print(gam_string(g))
 ```
 """
 gam_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_gam, g)
+
+
+# .nfg reader and writer #
+
+# The Gambit .nfg format is a text format with a prologue (the keyword NFG,
+# the version, R or D, the title, the names of the players, the numbers of
+# actions or the names of the actions, and an optional comment) and a body in
+# one of two versions: the payoffs in the order described in the docstring of
+# `ProfileMajor`, or a list of outcomes (a name and N payoffs each) followed by
+# the index of the outcome at each action profile, 0 for zero payoffs.
+# Reference: The Gambit Project, "Game representation formats",
+# https://gambitproject.readthedocs.io/en/latest/formats.html
+
+# A token is a quoted string (with `\"` for a quote inside), a brace, or a run
+# of other characters; commas are separators
+const _NFG_TOKEN = r"\"(?:[^\"\\]|\\.)*\"|[{}]|[^\s{}\",]+"
+
+# Return the item starting at `tokens[pos]` and the position after it: a
+# nested vector for a braced group, the token itself otherwise (the Lisp
+# reader)
+function _read_tree(tokens, pos)
+    if tokens[pos] == "{"
+        items = Any[]
+        pos += 1
+        while tokens[pos] != "}"
+            item, pos = _read_tree(tokens, pos)
+            push!(items, item)
+        end
+        return items, pos + 1
+    end
+    return tokens[pos], pos + 1
+end
+
+"""
+    read_nfg([T], io)
+    read_nfg([T], path)
+
+Read a normal form game in the Gambit .nfg format from the stream `io` or the
+file at `path`, and return it as a `NormalFormGame`. Both the payoff version
+and the outcome version of the format are read; the title, the names of the
+players, of the actions, and of the outcomes, and the comment are ignored. See
+[`ProfileMajor`](@ref) for the ordering of the payoffs in the format, and
+[`parse_nfg`](@ref) for reading from a string.
+
+# Arguments
+
+- `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
+  when every payoff in the input is written as an integer (`BigInt` if one
+  does not fit in `Int`), `Rational{BigInt}` when the others are written as
+  rationals `n/d`, and `Float64` otherwise.
+- `io::IO` : Input stream.
+- `path::AbstractString` : Path to the file to read.
+
+# Returns
+
+- `::NormalFormGame{N,T}` : The game described by the input.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> path = tempname();
+
+julia> write_nfg(path, g)
+
+julia> read_nfg(path)
+3×2 NormalFormGame{2, Int64}:
+ (3, 2)  (1, 3)
+ (0, 6)  (4, 0)
+ (2, 1)  (5, 4)
+
+julia> read_nfg(Float64, path)
+3×2 NormalFormGame{2, Float64}:
+ (3.0, 2.0)  (1.0, 3.0)
+ (0.0, 6.0)  (4.0, 0.0)
+ (2.0, 1.0)  (5.0, 4.0)
+```
+
+A file at a URL can be read with `read_nfg(Downloads.download(url))`.
+"""
+read_nfg(io::IO) = _read_nfg(_parse_payoffs, io)
+read_nfg(::Type{T}, io::IO) where {T<:Real} =
+    _read_nfg(tokens -> _parse_payoffs(T, tokens), io)
+
+read_nfg(path::AbstractString) = open(read_nfg, path)
+read_nfg(::Type{T}, path::AbstractString) where {T<:Real} =
+    open(io -> read_nfg(T, io), path)
+
+"""
+    parse_nfg([T], text)
+
+Parse the string `text` in the Gambit .nfg format and return the game as a
+`NormalFormGame`. See [`read_nfg`](@ref) for the meaning of `T` and for
+reading from a stream or a file.
+
+# Arguments
+
+- `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, it is
+  determined as in [`read_nfg`](@ref).
+- `text::AbstractString` : String in the .nfg format.
+
+# Returns
+
+- `::NormalFormGame{N,T}` : The game described by `text`.
+
+# Examples
+
+```julia
+julia> s = \"\"\"
+       NFG 1 R "" { "1" "2" } { 3 2 }
+
+       3 2 0 6 2 1 1 3 4 0 5 4
+       \"\"\";
+
+julia> parse_nfg(s)
+3×2 NormalFormGame{2, Int64}:
+ (3, 2)  (1, 3)
+ (0, 6)  (4, 0)
+ (2, 1)  (5, 4)
+```
+"""
+parse_nfg(text::AbstractString) = read_nfg(IOBuffer(text))
+parse_nfg(::Type{T}, text::AbstractString) where {T<:Real} =
+    read_nfg(T, IOBuffer(text))
+
+function _read_nfg(parse_payoffs, io::IO)
+    tokens = SubString{String}[
+        m.match for m in eachmatch(_NFG_TOKEN, read(io, String))
+    ]
+    (!isempty(tokens) && tokens[1] == "NFG") ||
+        throw(ArgumentError("not in the .nfg format"))
+
+    # Prologue: NFG, version, R or D, title, players, actions (the numbers of
+    # actions, or the lists of their names), and an optional comment
+    pos = 4
+    _, pos = _read_tree(tokens, pos)  # title
+    _, pos = _read_tree(tokens, pos)  # players
+    actions, pos = _read_tree(tokens, pos)
+    startswith(tokens[pos], '"') && (pos += 1)  # comment
+    nums_actions = ntuple(length(actions)) do i
+        a = actions[i]
+        a isa Vector ? length(a) : parse(Int, a)
+    end
+
+    if tokens[pos] == "{"
+        # Outcome version: a list of outcomes, each a name and N payoffs, then
+        # the index of the outcome at each action profile, 0 meaning zero
+        # payoffs
+        outcomes, pos = _read_tree(tokens, pos)
+        N = length(nums_actions)
+        values = parse_payoffs(
+            SubString{String}[x for o in outcomes for x in o[2:end]]
+        )
+        table = hcat(zeros(eltype(values), N), reshape(values, N, :))
+        indices = [parse(Int, tok) for tok in @view tokens[pos:end]]
+        payoffs = vec(table[:, indices .+ 1])
+    else
+        # Payoff version: the payoffs at each action profile
+        payoffs = parse_payoffs(@view tokens[pos:end])
+    end
+
+    return NormalFormGame(NFGPayoffVector(nums_actions, payoffs))
+end
