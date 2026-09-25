@@ -100,6 +100,7 @@ export
 
     # Game converters
     read_gam, parse_gam, write_gam, gam_string,
+    read_nfg, parse_nfg,
 
     # General functions
     num_players, num_actions, num_opponents,

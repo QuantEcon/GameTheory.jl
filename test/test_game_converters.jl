@@ -470,4 +470,126 @@ struct UnsupportedReal <: Real end
         end
     end
 
+
+    @testset "read_nfg" begin
+        same_game(g1, g2) =
+            g1.nums_actions == g2.nums_actions &&
+            all(g1.players[i].payoff_array == g2.players[i].payoff_array
+                for i in 1:num_players(g1))
+
+        # 3x2 game with payoff profiles, in column-major order over (a_1, a_2):
+        #   (1,1): (3,2)  (2,1): (0,6)  (3,1): (2,1)
+        #   (1,2): (1,3)  (2,2): (4,0)  (3,2): (5,4)
+        g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]))
+        s_payoff = """
+            NFG 1 R "3x2 game" { "Row" "Column" } { 3 2 }
+
+            3 2 0 6 2 1 1 3 4 0 5 4"""
+        s_outcome = """
+            NFG 1 R "3x2 game" { "Row" "Column" }
+
+            { { "1" "2" "3" }
+            { "1" "2" }
+            }
+            ""
+
+            {
+            { "" 3, 2 }
+            { "" 0, 6 }
+            { "" 2, 1 }
+            { "" 1, 3 }
+            { "" 4, 0 }
+            { "" 5, 4 }
+            }
+            1 2 3 4 5 6
+            """
+
+        @testset "Golden: N=2" begin
+            for s in [s_payoff, s_outcome]
+                g_read = parse_nfg(s)
+                @test g_read isa NormalFormGame{2,Int}
+                @test same_game(g_read, g)
+                @test same_game(read_nfg(IOBuffer(s)), g)
+            end
+        end
+
+        @testset "Variants" begin
+            variants = [
+                # D instead of R
+                replace(s_payoff, "NFG 1 R" => "NFG 1 D"),
+                # Names of the actions instead of their numbers
+                replace(s_payoff,
+                        "{ 3 2 }" => "{ { \"a\" \"b\" \"c\" } { \"x\" \"y\" } }"),
+                # Comment after the actions
+                replace(s_payoff, "{ 3 2 }" => "{ 3 2 } \"a comment\""),
+                # Escaped quote, braces, and a comma in the title
+                replace(s_payoff, "\"3x2 game\"" => "\"a \\\"3x2\\\" {game}, R\""),
+                # Numbers of actions in the outcome version, no comment
+                replace(s_outcome,
+                        "{ { \"1\" \"2\" \"3\" }\n{ \"1\" \"2\" }\n}\n\"\"" => "{ 3 2 }"),
+                # Commas absent
+                replace(s_outcome, "," => ""),
+                # CRLF
+                replace(s_outcome, "\n" => "\r\n"),
+            ]
+            for s in variants
+                @test same_game(parse_nfg(s), g)
+            end
+        end
+
+        @testset "Null outcome" begin
+            s = """
+                NFG 1 R "" { "1" "2" } { 2 2 }
+
+                {
+                { "" 1, 2 }
+                { "" 3/2, -4.5 }
+                }
+                1 0 2 0
+                """
+            g_read = parse_nfg(s)
+            @test g_read isa NormalFormGame{2,Float64}
+            @test g_read[1, 1] == [1.0, 2.0]
+            @test g_read[2, 1] == [0.0, 0.0]
+            @test g_read[1, 2] == [1.5, -4.5]
+            @test g_read[2, 2] == [0.0, 0.0]
+
+            # An empty list of outcomes
+            s_zero = "NFG 1 R \"\" { \"1\" \"2\" } { 2 2 } { } 0 0 0 0"
+            g_zero = parse_nfg(s_zero)
+            @test g_zero isa NormalFormGame{2,Int}
+            @test all(g_zero.players[i].payoff_array == zeros(Int, 2, 2)
+                      for i in 1:2)
+        end
+
+        @testset "Element type" begin
+            @test parse_nfg(Float64, s_payoff) isa NormalFormGame{2,Float64}
+            @test parse_nfg(BigInt, s_outcome) isa NormalFormGame{2,BigInt}
+            @test same_game(parse_nfg(Float64, s_payoff),
+                            NormalFormGame(Float64, g))
+
+            # Rationals are part of the format
+            s_rat = replace(s_payoff, "3 2 0 6" => "1/3 2 0 6")
+            g_rat = parse_nfg(s_rat)
+            @test g_rat isa NormalFormGame{2,Rational{BigInt}}
+            @test g_rat[1, 1] == [1//3, 2]
+        end
+
+        @testset "Files shared with QuantEcon.py" begin
+            dir = joinpath(@__DIR__, "game_files")
+            @test same_game(read_nfg(joinpath(dir, "3x2_payoff.nfg")), g)
+
+            # The fifth action profile, (2, 2), has the null outcome in this file
+            g_expected = NormalFormGame(Player([3 1; 0 4; 2 5]),
+                                        Player([2 6 1; 3 0 4]))
+            g_expected[2, 2] = (0, 0)
+            @test same_game(read_nfg(joinpath(dir, "3x2_outcome.nfg")), g_expected)
+        end
+
+        @testset "Invalid inputs" begin
+            @test_throws ArgumentError parse_nfg("")
+            @test_throws ArgumentError parse_nfg("2\n3 2\n\n3 0 2 1 4 5 2 6 1 3 0 4")
+        end
+    end
+
 end
