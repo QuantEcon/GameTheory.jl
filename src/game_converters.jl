@@ -721,3 +721,93 @@ function _read_nfg(parse_payoffs, io::IO)
 
     return NormalFormGame(NFGPayoffVector(nums_actions, payoffs))
 end
+
+"""
+    write_nfg(io, g)
+    write_nfg(path, g)
+
+Write the game `g` to the stream `io` or the file at `path` in the payoff
+version of the Gambit .nfg format, with an empty title and the players named
+"1", ..., "N". Each payoff is written with `print`, so the element type of `g`
+must be an `Integer`, an `AbstractFloat`, or a `Rational` type. See
+[`nfg_string`](@ref) for writing to a string.
+
+# Arguments
+
+- `io::IO` : Output stream.
+- `path::AbstractString` : Path to the file to write; an existing file is
+  overwritten.
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write. A `PayoffVector` of
+  any layout is accepted; one that is not profile-major is converted first.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> write_nfg(stdout, g)
+NFG 1 R "" { "1" "2" } { 3 2 }
+
+3 2 0 6 2 1 1 3 4 0 5 4
+
+julia> write_nfg("game.nfg", g)
+```
+"""
+function write_nfg(io::IO, p::NFGPayoffVector{N,T}) where {N,T<:_PayoffNumber}
+    # `print` would round floats if the caller's context has `:compact => true`
+    io = IOContext(io, :compact => false)
+    print(io, "NFG 1 R \"\" { ")
+    join(io, ("\"$i\"" for i in 1:N), ' ')
+    print(io, " } { ")
+    join(io, p.nums_actions, ' ')
+    print(io, " }\n\n")  # blank line between the prologue and the payoffs
+    for (k, x) in enumerate(p.payoffs)
+        k > 1 && print(io, ' ')
+        _print_payoff(io, x)
+    end
+    print(io, '\n')
+    return nothing
+end
+
+# Reached only for layouts other than ProfileMajor, which the method above
+# handles; the conversion copies the payoffs into profile-major order
+write_nfg(
+    io::IO, p::PayoffVector{L,N,T}
+) where {L<:PayoffLayout,N,T<:_PayoffNumber} = write_nfg(io, NFGPayoffVector(p))
+
+write_nfg(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
+    write_nfg(io, NFGPayoffVector(g))
+
+# Same bound on the element type as the methods for `io`, so that an
+# unsupported game is rejected before the file is opened
+write_nfg(
+    path::AbstractString,
+    g::Union{NormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
+) where {N,T<:_PayoffNumber} = open(io -> write_nfg(io, g), path, "w")
+
+"""
+    nfg_string(g)
+
+Return the Gambit .nfg representation of the game `g` as a string. See
+[`write_nfg`](@ref) for the requirement on the element type of `g`.
+
+# Arguments
+
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write.
+
+# Returns
+
+- `::String` : The .nfg representation of `g`.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> print(nfg_string(g))
+NFG 1 R "" { "1" "2" } { 3 2 }
+
+3 2 0 6 2 1 1 3 4 0 5 4
+```
+"""
+nfg_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_nfg, g)
