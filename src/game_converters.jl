@@ -214,6 +214,14 @@ end
 
 PayoffVector{L}(p::PayoffVector{L1,N,T}) where {L<:PayoffLayout,L1<:PayoffLayout,N,T<:Real} =
     PayoffVector{L}(T, p)
+PayoffVector{L,N,T}(
+    p::PayoffVector{L1,N}
+) where {L<:PayoffLayout,N,T<:Real,L1<:PayoffLayout} = PayoffVector{L}(T, p)
+
+# As for `Player` and `NormalFormGame`: `p` itself if it already has the
+# layout and eltype, a copy otherwise
+Base.convert(::Type{T}, p::PayoffVector) where {T<:PayoffVector} =
+    p isa T ? p : T(p)
 
 
 """
@@ -268,7 +276,7 @@ NormalFormGame(p::PayoffVector{L,N,T}) where {L<:PayoffLayout,N,T<:Real} =
 
 # The GameTracer .gam format is a whitespace-separated text format: the number
 # of players N, the N numbers of actions, and then the prod(nums_actions) * N
-# payoffs in the order described in the docstring of `GAMPayoffVector`.
+# payoffs in the order described in the docstring of `PlayerMajor`.
 # Reference: B. Blum, D. Koller, and C. Shelton, "Game Theory: GameTracer",
 # http://dags.stanford.edu/Games/gametracer.html
 
@@ -471,7 +479,8 @@ string.
 - `io::IO` : Output stream.
 - `path::AbstractString` : Path to the file to write; an existing file is
   overwritten.
-- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write. A `PayoffVector` of
+  any layout is accepted; one that is not player-major is converted first.
 
 # Examples
 
@@ -501,13 +510,20 @@ function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
     return nothing
 end
 
+# Reached only for layouts other than PlayerMajor, which the method above
+# handles; the conversion copies the payoffs into player-major order
+write_gam(
+    io::IO, p::PayoffVector{L,N,T}
+) where {L<:PayoffLayout,N,T<:_PayoffNumber} = write_gam(io, GAMPayoffVector(p))
+
 write_gam(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
     write_gam(io, GAMPayoffVector(g))
 
 # Same bound on the element type as the methods for `io`, so that an
 # unsupported game is rejected before the file is opened
 write_gam(
-    path::AbstractString, g::Union{NormalFormGame{N,T},GAMPayoffVector{N,T}}
+    path::AbstractString,
+    g::Union{NormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
 ) where {N,T<:_PayoffNumber} = open(io -> write_gam(io, g), path, "w")
 
 """
@@ -518,7 +534,7 @@ Return the GameTracer .gam representation of the game `g` as a string. See
 
 # Arguments
 
-- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write.
 
 # Returns
 
@@ -539,4 +555,4 @@ julia> print(gam_string(g))
 3 0 2 1 4 5 2 6 1 3 0 4
 ```
 """
-gam_string(g::Union{NormalFormGame,GAMPayoffVector}) = sprint(write_gam, g)
+gam_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_gam, g)
