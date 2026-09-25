@@ -112,6 +112,17 @@ struct UnsupportedReal <: Real end
 
             p = GAMPayoffVector((3, 2), [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4])
             @test gam_string(p) == s
+
+            # A payoff vector of another layout is converted before writing
+            p_nfg = NFGPayoffVector((3, 2),
+                                    [3, 2, 0, 6, 2, 1, 1, 3, 4, 0, 5, 4])
+            @test gam_string(p_nfg) == s
+            @test sprint(write_gam, p_nfg) == s
+            mktempdir() do dir
+                path = joinpath(dir, "game.gam")
+                write_gam(path, p_nfg)
+                @test read(path, String) == s
+            end
         end
 
         @testset "Golden: N=3" begin
@@ -423,6 +434,22 @@ struct UnsupportedReal <: Real end
             @test p.payoffs == p_gam.payoffs
 
             p = @inferred GAMPayoffVector(Float64, p_gam)
+            @test p isa GAMPayoffVector{2,Float64}
+            @test p.payoffs == p_gam.payoffs
+            @test p.payoffs !== p_gam.payoffs
+
+            p = @inferred GAMPayoffVector{2,Float64}(p_nfg)
+            @test p isa GAMPayoffVector{2,Float64}
+            @test p.payoffs == p_gam.payoffs
+
+            # convert returns the input itself if nothing is to be converted
+            @test convert(GAMPayoffVector, p_gam) === p_gam
+            @test convert(PayoffVector{PlayerMajor}, p_gam) === p_gam
+            @test convert(GAMPayoffVector{2,Int}, p_gam) === p_gam
+            p = convert(NFGPayoffVector, p_gam)
+            @test p isa NFGPayoffVector{2,Int}
+            @test p.payoffs == p_nfg.payoffs
+            p = convert(GAMPayoffVector{2,Float64}, p_gam)
             @test p isa GAMPayoffVector{2,Float64}
             @test p.payoffs == p_gam.payoffs
             @test p.payoffs !== p_gam.payoffs
