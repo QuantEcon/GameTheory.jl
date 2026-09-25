@@ -92,6 +92,7 @@ struct UnsupportedReal <: Real end
         @testset "Invalid inputs" begin
             @test_throws ArgumentError GAMPayoffVector((2, 2), [1, 2, 3])
             @test_throws ArgumentError GAMPayoffVector((2, 0), Int[])
+            @test_throws ArgumentError GAMPayoffVector((), Int[])
         end
     end
 
@@ -383,6 +384,7 @@ struct UnsupportedReal <: Real end
         @testset "Invalid inputs" begin
             @test_throws ArgumentError NFGPayoffVector((2, 2), [1, 2, 3])
             @test_throws ArgumentError NFGPayoffVector((2, 0), Int[])
+            @test_throws ArgumentError NFGPayoffVector((), Int[])
         end
     end
 
