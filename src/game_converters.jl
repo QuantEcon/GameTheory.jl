@@ -54,6 +54,7 @@ struct PayoffVector{L<:PayoffLayout,N,T<:Real}
     function PayoffVector{L,N,T}(
         nums_actions::NTuple{N,Int}, payoffs::Vector{T}
     ) where {L<:PayoffLayout,N,T<:Real}
+        N > 0 || throw(ArgumentError("nums_actions must be non-empty"))
         any(n -> n <= 0, nums_actions) &&
             throw(ArgumentError("all nums_actions must be positive"))
         expected = prod(nums_actions) * N
