@@ -574,9 +574,12 @@ gam_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_gam, g)
 # of other characters; commas are separators
 const _NFG_TOKEN = r"\"(?:[^\"\\]|\\.)*\"|[{}]|[^\s{}\",]+"
 
-# Return the item starting at `tokens[pos]` and the position after it: a
-# nested vector for a braced group, the token itself otherwise (the Lisp
-# reader)
+# Return the subtree starting at `tokens[pos]` and the position after it: a
+# nested vector for a braced group, the token itself (a leaf) otherwise.
+#
+# Parses the braces only and leaves the meaning to the caller, in the manner
+# of a Lisp reader, which parses only the parentheses. Adapted from Norvig's
+# `read_from_tokens`, https://norvig.com/lispy.html
 function _read_tree(tokens, pos)
     if tokens[pos] == "{"
         items = Any[]
