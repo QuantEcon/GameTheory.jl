@@ -575,14 +575,17 @@ gam_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_gam, g)
 const _NFG_TOKEN = r"\"(?:[^\"\\]|\\.)*\"|[{}]|[^\s{}\",]+"
 
 # Return the item starting at `tokens[pos]` and the position after it: a
-# nested vector for a braced group, the token itself otherwise (the Lisp
-# reader)
-function _read_tree(tokens, pos)
+# nested vector for a braced group, the token itself otherwise.
+#
+# Parses the braces only and leaves the meaning to the caller, in the manner
+# of a Lisp reader, which parses only the parentheses. Adapted from Norvig's
+# `read_from_tokens`, https://norvig.com/lispy.html
+function _read_from_tokens(tokens, pos)
     if tokens[pos] == "{"
         items = Any[]
         pos += 1
         while tokens[pos] != "}"
-            item, pos = _read_tree(tokens, pos)
+            item, pos = _read_from_tokens(tokens, pos)
             push!(items, item)
         end
         return items, pos + 1
@@ -693,9 +696,9 @@ function _read_nfg(parse_payoffs, io::IO)
     # Prologue: NFG, version, R or D, title, players, actions (the numbers of
     # actions, or the lists of their names), and an optional comment
     pos = 4
-    _, pos = _read_tree(tokens, pos)  # title
-    _, pos = _read_tree(tokens, pos)  # players
-    actions, pos = _read_tree(tokens, pos)
+    _, pos = _read_from_tokens(tokens, pos)  # title
+    _, pos = _read_from_tokens(tokens, pos)  # players
+    actions, pos = _read_from_tokens(tokens, pos)
     startswith(tokens[pos], '"') && (pos += 1)  # comment
     nums_actions = ntuple(length(actions)) do i
         a = actions[i]
@@ -706,7 +709,7 @@ function _read_nfg(parse_payoffs, io::IO)
         # Outcome version: a list of outcomes, each a name and N payoffs, then
         # the index of the outcome at each action profile, 0 meaning zero
         # payoffs
-        outcomes, pos = _read_tree(tokens, pos)
+        outcomes, pos = _read_from_tokens(tokens, pos)
         N = length(nums_actions)
         values = parse_payoffs(
             SubString{String}[x for o in outcomes for x in o[2:end]]
