@@ -269,6 +269,14 @@ function payoff_vector(player::Player{1}, opponent_action::Nothing)
     return player.payoff_array
 end
 
+# _rotate
+
+# Rotate the length-N tuple `t` so that its i-th entry comes first:
+# (t[i], t[i+1], ..., t[N], t[1], ..., t[i-1]). The length of the result is
+# known at compile time even though `i` is not, which keeps indexing with the
+# rotated tuple type stable and allocation free.
+_rotate(t::NTuple{N}, i) where {N} = ntuple(k -> t[mod1(k + i - 1, N)], Val(N))
+
 # _reduce_ith_opponent
 
 # Given an N-d array `payoff_array` of shape (n_{1}, ..., n_{i+1}, 1, ..., 1),
@@ -279,9 +287,13 @@ for (S, ex_mat_action) in ((PureAction, :(A[:, action])),
     @eval function _reduce_ith_opponent(payoff_array::Array{T,N},
                                         i::Int, action::$S) where {N,T}
         shape = size(payoff_array)
-        A = reshape(payoff_array, (prod(shape[1:i]), shape[i+1]))::Matrix{T}
+        m = 1
+        for k in 1:i
+            m *= shape[k]
+        end
+        A = reshape(payoff_array, (m, shape[i+1]))::Matrix{T}
         out = $(ex_mat_action)
-        shape_new = tuple(shape[1:i]..., ones(Int, N-i)...)::NTuple{N,Int}
+        shape_new = ntuple(k -> k <= i ? shape[k] : 1, Val(N))
         return reshape(out, shape_new)
     end
 end
@@ -752,10 +764,10 @@ contains a vector of N payoff values, one for each player, for the action profil
 function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
     payoff_profile_array =
         map(index -> Vector{T}(undef, N), CartesianIndices(g.nums_actions))
-    for (i, player) in enumerate(g.players)
+    for i in 1:N
         for index in CartesianIndices(g.nums_actions)
             payoff_profile_array[index][i] =
-                player.payoff_array[(index.I[i:end]..., index.I[1:i-1]...)...]
+                g.players[i].payoff_array[_rotate(index.I, i)...]
         end
     end
     return payoff_profile_array
@@ -802,9 +814,8 @@ function Base.getindex(g::NormalFormGame{N,T},
         throw(DimensionMismatch("index must be of length $N"))
 
     payoff_profile = Array{T}(undef, N)
-    for (i, player) in enumerate(g.players)
-        payoff_profile[i] =
-            player.payoff_array[(index[i:end]..., index[1:i-1]...)...]
+    for i in 1:N
+        payoff_profile[i] = g.players[i].payoff_array[_rotate(index, i)...]
     end
     return payoff_profile
 end
@@ -822,9 +833,8 @@ function Base.setindex!(g::NormalFormGame{N},
     length(payoff_profile) != N &&
         throw(DimensionMismatch("assignment must be of $N-array"))
 
-    for (i, player) in enumerate(g.players)
-        player.payoff_array[(index[i:end]...,
-                             index[1:i-1]...)...] = payoff_profile[i]
+    for i in 1:N
+        g.players[i].payoff_array[_rotate(index, i)...] = payoff_profile[i]
     end
     return payoff_profile
 end
@@ -881,10 +891,8 @@ delete_action(g::NormalFormGame, action::PureAction, player_idx::Integer) =
 
 # get_action_profile
 
-get_opponents_actions(action_profile::ActionProfile{N,T}, i) where {N,T} =
-    Base.tail(
-        (action_profile[i:end]..., action_profile[1:i-1]...)::NTuple{N,T}
-    )
+get_opponents_actions(action_profile::ActionProfile{N}, i) where {N} =
+    ntuple(k -> action_profile[mod1(i + k, N)], Val(N - 1))
 
 # is_nash
 
