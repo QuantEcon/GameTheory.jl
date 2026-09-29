@@ -56,6 +56,9 @@ julia> support_enumeration(g)
  ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 ```
 """
+support_enumeration(g::AbstractNormalFormGame{2}) =
+    support_enumeration(convert(NormalFormGame, g))
+
 function support_enumeration(g::NormalFormGame{2,T}) where T
     S = typeof(zero(T)/one(T))
     c = Channel{Tuple{Vector{S},Vector{S}}}(0)
@@ -111,6 +114,9 @@ julia> for NE in c
 ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 ```
 """
+support_enumeration_task(c::Channel, g::AbstractNormalFormGame{2}) =
+    support_enumeration_task(c, convert(NormalFormGame, g))
+
 function support_enumeration_task(c::Channel,
                                   g::NormalFormGame{2})
 

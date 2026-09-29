@@ -159,6 +159,10 @@ julia> vertex_enumeration(g)
  ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 ```
 """
+vertex_enumeration(g::AbstractNormalFormGame{2};
+                   plib::Polyhedra.Library=CDDLib.Library()) =
+    vertex_enumeration(convert(NormalFormGame, g), plib=plib)
+
 function vertex_enumeration(g::NormalFormGame{2,T};
                             plib::Polyhedra.Library=CDDLib.Library()) where T
     S = _coeftype(T)
@@ -217,6 +221,10 @@ julia> for NE in c
 ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 ```
 """
+vertex_enumeration_task(c::Channel, g::AbstractNormalFormGame{2};
+                        plib::Polyhedra.Library=CDDLib.Library()) =
+    vertex_enumeration_task(c, convert(NormalFormGame, g), plib=plib)
+
 function vertex_enumeration_task(c::Channel,
                                  g::NormalFormGame{2};
                                  plib::Polyhedra.Library=CDDLib.Library())

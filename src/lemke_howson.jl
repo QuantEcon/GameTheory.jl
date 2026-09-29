@@ -143,6 +143,9 @@ julia> res.num_iter  # Number of pivoting steps performed
   and Extensive Form," Chapter 3, N. Nisan, T. Roughgarden, E. Tardos, and
   V. Vazirani eds., Algorithmic Game Theory, 2007.
 """
+lemke_howson(g::AbstractNormalFormGame{2}; kwargs...) =
+    lemke_howson(convert(NormalFormGame, g); kwargs...)
+
 function lemke_howson(g::NormalFormGame{2,T};
                       init_pivot::Int=1,
                       max_iter::Int=10^6,

@@ -121,4 +121,17 @@ GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
         @test_throws MethodError delete_action(mp, 1, 2)
     end
 
+    @testset "Nash equilibrium solvers" begin
+        @test pure_nash(mp) == pure_nash(g_mp)
+        @test pure_nash(ThreePlayerRules()) ==
+            pure_nash(NormalFormGame(ThreePlayerRules()))
+        @test lemke_howson(mp) == lemke_howson(g_mp)
+        @test support_enumeration(mp) == support_enumeration(g_mp)
+        @test vertex_enumeration(mp) == vertex_enumeration(g_mp)
+        @test lrsnash(mp) == lrsnash(g_mp)
+        NEs = hc_solve(mp, show_progress=false)
+        @test length(NEs) == 1
+        @test is_nash(g_mp, NEs[1])
+    end
+
 end

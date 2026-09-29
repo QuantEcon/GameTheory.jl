@@ -69,6 +69,9 @@ julia> all([is_nash(g, NE) for NE in NEs])
 true
 ```
 """
+hc_solve(g::AbstractNormalFormGame; ntofind=Inf, options...) =
+    hc_solve(convert(NormalFormGame, g); ntofind=ntofind, options...)
+
 function hc_solve(g::NormalFormGame{N}; ntofind=Inf, options...) where N
     ntofind <= 0 && return NTuple{N,Vector{Float64}}[]
 
