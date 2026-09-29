@@ -5,7 +5,7 @@
 # LogitDynamics #
 
 """
-    LogitDynamics{N, T, S}
+    LogitDynamics{N, T, S, TC}
 
 Type representing the Logit-Dynamics model.
 
@@ -15,14 +15,15 @@ Type representing the Logit-Dynamics model.
 - `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for each
   player.
 - `beta<:Real` : The level of noise in a player's decision.
-- `choice_probs::Vector{Array}` : The choice probabilities of each action, one
-  for each player.
+- `choice_probs::Vector{Array{TC,N}}` : The cumulative choice probabilities of
+  the actions, one array for each player, indexed by the opponents' actions
+  and then the player's own action.
 """
-struct LogitDynamics{N,T<:Real,S<:Real}
+struct LogitDynamics{N,T<:Real,S<:Real,TC<:Real}
     players::NTuple{N,Player{N,T}}
     nums_actions::NTuple{N,Int}
     beta::S
-    choice_probs::Vector{Array}
+    choice_probs::Vector{Array{TC,N}}
 end
 
 """
@@ -40,7 +41,8 @@ Construct a `LogitDynamics` instance.
 - `::LogitDynamics` : The Logit-Dynamics model.
 """
 function LogitDynamics(g::NormalFormGame{N,T}, beta::S) where {N,T<:Real,S<:Real}
-    choice_probs = Vector{Array}(undef, N)
+    TC = typeof(exp(zero(T) * beta))
+    choice_probs = Vector{Array{TC,N}}(undef, N)
     for (i, player) in enumerate(g.players)
         payoff_array = permutedims(player.payoff_array, vcat(2:N, 1))
         payoff_array_normalized = payoff_array .- maximum(payoff_array, dims=N)
@@ -69,8 +71,8 @@ probabilities.
 """
 function play!(rng::AbstractRNG, ld::LogitDynamics{N}, player_ind::Integer,
                actions::Vector{<:Integer}) where N
-    oppponent_actions = [actions[player_ind+1:N]..., actions[1:player_ind-1]...]
-    cdf = ld.choice_probs[player_ind][oppponent_actions..., :]
+    opponents_actions = ntuple(k -> actions[mod1(player_ind + k, N)], Val(N - 1))
+    cdf = @view ld.choice_probs[player_ind][opponents_actions..., :]
     random_value = rand(rng)
     next_action = searchsortedfirst(cdf, random_value*cdf[end])
     return next_action
