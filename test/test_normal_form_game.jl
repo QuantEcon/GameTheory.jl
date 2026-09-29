@@ -13,6 +13,7 @@ using MathOptInterface
 const MOI = MathOptInterface
 using Clp
 using CDDLib
+using StaticArrays: SVector
 
 
 @testset "Testing normal_form_game.jl" begin
@@ -754,6 +755,22 @@ using CDDLib
 
             @test dominated_actions(T, player, lp_solver=lp_solver) == Int[]
         end
+    end
+
+
+    @testset "payoff profiles as SVectors" begin
+        g = NormalFormGame(Player([1 -1; -1 1]), Player([-1 1; 1 -1]))
+        @test @inferred(g[1, 2]) isa SVector{2,Int}
+        @test g[1, 2] == [-1, 1]
+        @test g[1, 2] + g[2, 1] == [-2, 2]
+        @test payoff_profile_array(g) isa Array{SVector{2,Int},2}
+        g[1, 2] = [5, 6]
+        @test g[1, 2] == [5, 6]
+        g3 = NormalFormGame((2, 3, 4))
+        g3[2, 3, 4] = [1.0, 2.0, 3.0]
+        @test g3[2, 3, 4] isa SVector{3,Float64}
+        @test g3[2, 3, 4] == [1.0, 2.0, 3.0]
+        @test g3[CartesianIndex(2, 3, 4)] == g3[2, 3, 4]
     end
 
 end

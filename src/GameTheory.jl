@@ -7,6 +7,7 @@ using LinearAlgebra, Random
 using QuantEcon
 using Combinatorics
 using Distributions
+using StaticArrays: SVector
 
 # Optimization packages
 using MathOptInterface
