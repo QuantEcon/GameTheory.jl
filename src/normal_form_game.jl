@@ -509,6 +509,12 @@ end
 
 num_players(::NormalFormGame{N}) where {N} = N
 
+# Payoff profile at `index` as an SVector; player i's payoff_array is indexed by
+# (a_i, a_{i+1}, ..., a_{i+N-1})
+_payoff_profile(g::NormalFormGame{N,T}, index) where {N,T} =
+    SVector{N,T}(ntuple(i -> g.players[i].payoff_array[_rotate(index, i)...],
+                        Val(N)))
+
 function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
     throw(ArgumentError("input tuple must not be empty"))
 end
@@ -749,8 +755,8 @@ Base.summary(g::NormalFormGame) =
 """
     payoff_profile_array(g)
 
-Return an N-dimensional array of vectors, whose (a\\_1, ..., a\\_N)-entry
-contains a vector of N payoff values, one for each player, for the action profile
+Return an N-dimensional array of `SVector`s, whose (a\\_1, ..., a\\_N)-entry
+contains the N payoff values, one for each player, for the action profile
 (a\\_1, ..., a\\_N).
 
 # Arguments
@@ -759,19 +765,10 @@ contains a vector of N payoff values, one for each player, for the action profil
 
 # Returns
 
-- `::Array{Vector,N}` : Array of payoff profiles.
+- `::Array{SVector{N,T},N}` : Array of payoff profiles.
 """
-function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
-    payoff_profile_array =
-        map(index -> Vector{T}(undef, N), CartesianIndices(g.nums_actions))
-    for i in 1:N
-        for index in CartesianIndices(g.nums_actions)
-            payoff_profile_array[index][i] =
-                g.players[i].payoff_array[_rotate(index.I, i)...]
-        end
-    end
-    return payoff_profile_array
-end
+payoff_profile_array(g::NormalFormGame{N,T}) where {N,T} =
+    map(index -> _payoff_profile(g, index.I), CartesianIndices(g.nums_actions))
 
 """
     LazyProfileArray
@@ -786,11 +783,8 @@ struct LazyProfileArray{N,T} <: AbstractArray{NTuple{N,T},N}
 end
 
 Base.size(a::LazyProfileArray) = a.g.nums_actions
-function Base.getindex(a::LazyProfileArray{N,T}, index::Vararg{Int,N}) where {N,T}
-    return ntuple(i -> a.g.players[i].payoff_array[
-        ntuple(k -> index[mod1(k + i - 1, N)], Val(N))...
-    ], Val(N))
-end
+Base.getindex(a::LazyProfileArray{N,T}, index::Vararg{Int,N}) where {N,T} =
+    Tuple(_payoff_profile(a.g, index))
 Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = (a.g[index],)
 
 function Base.show(io::IO, g::NormalFormGame)
@@ -808,16 +802,12 @@ function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
     Base.print_array(io, X)
 end
 
+# Return the payoff profile at `index` as an `SVector{N,T}`
 function Base.getindex(g::NormalFormGame{N,T},
                        index::Integer...) where {N,T}
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
-
-    payoff_profile = Array{T}(undef, N)
-    for i in 1:N
-        payoff_profile[i] = g.players[i].payoff_array[_rotate(index, i)...]
-    end
-    return payoff_profile
+    return _payoff_profile(g, index)
 end
 
 # Trivial game with 1 player
