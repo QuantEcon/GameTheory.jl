@@ -17,6 +17,12 @@ using CDDLib
 
 @testset "Testing normal_form_game.jl" begin
 
+    @testset "setindex! with a CartesianIndex and a tuple" begin
+        g = NormalFormGame((2, 2))
+        g[CartesianIndex(1, 2)] = (1, 2)
+        @test g[1, 2] == [1, 2]
+    end
+
     # Player #
 
     @testset "Player with 1 opponent" begin

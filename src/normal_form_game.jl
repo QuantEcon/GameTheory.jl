@@ -838,7 +838,7 @@ function Base.setindex!(g::NormalFormGame{1},
 end
 
 Base.setindex!(g::NormalFormGame{N},
-               payoff_profile::NTuple{N}, index...) where N =
+               payoff_profile::NTuple{N}, index::Integer...) where N =
     setindex!(g, collect(payoff_profile), index...)
 
 # Indexing with CartesianIndices
