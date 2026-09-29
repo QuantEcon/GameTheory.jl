@@ -87,7 +87,7 @@ include("logitdyn.jl")
 
 export
     # Types
-    Player, NormalFormGame,
+    Player, AbstractNormalFormGame, NormalFormGame,
 
     # Type aliases
     Action, MixedAction, PureAction,
