@@ -98,7 +98,11 @@ function GAMPayoffVector(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
     return GAMPayoffVector{N,T}(nums_actions, payoffs)
 end
 
-GAMPayoffVector(g::NormalFormGame{N,T}) where {N,T<:Real} = GAMPayoffVector(T, g)
+GAMPayoffVector(::Type{T}, g::AbstractNormalFormGame{N}) where {N,T<:Real} =
+    GAMPayoffVector(T, convert(NormalFormGame, g))
+
+GAMPayoffVector(g::AbstractNormalFormGame{N,T}) where {N,T<:Real} =
+    GAMPayoffVector(T, g)
 
 
 """
@@ -383,13 +387,14 @@ function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
     return nothing
 end
 
-write_gam(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
+write_gam(io::IO, g::AbstractNormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
     write_gam(io, GAMPayoffVector(g))
 
 # Same bound on the element type as the methods for `io`, so that an
 # unsupported game is rejected before the file is opened
 write_gam(
-    path::AbstractString, g::Union{NormalFormGame{N,T},GAMPayoffVector{N,T}}
+    path::AbstractString,
+    g::Union{AbstractNormalFormGame{N,T},GAMPayoffVector{N,T}}
 ) where {N,T<:_PayoffNumber} = open(io -> write_gam(io, g), path, "w")
 
 """
@@ -421,4 +426,5 @@ julia> print(gam_string(g))
 3 0 2 1 4 5 2 6 1 3 0 4
 ```
 """
-gam_string(g::Union{NormalFormGame,GAMPayoffVector}) = sprint(write_gam, g)
+gam_string(g::Union{AbstractNormalFormGame,GAMPayoffVector}) =
+    sprint(write_gam, g)

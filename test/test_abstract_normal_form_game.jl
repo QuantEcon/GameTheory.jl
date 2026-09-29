@@ -130,4 +130,31 @@ GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
         @test is_nash(g_mp, NEs[1])
     end
 
+    @testset "learning algorithms, repeated game, converters" begin
+        @test FictitiousPlay(mp).players[2].payoff_array ==
+            FictitiousPlay(g_mp).players[2].payoff_array
+        @test StochasticFictitiousPlay(mp, Normal()).players[1].payoff_array ==
+            g_mp.players[1].payoff_array
+        adj = [0 1; 1 0]
+        @test LocalInteraction(mp, adj).players[1].payoff_array ==
+            LocalInteraction(g_mp, adj).players[1].payoff_array
+        @test LogitDynamics(mp, 1.0).players[1].payoff_array ==
+            LogitDynamics(g_mp, 1.0).players[1].payoff_array
+
+        @test RepeatedGame(mp, 0.5).sg.players[1].payoff_array ==
+            g_mp.players[1].payoff_array
+
+        @test GameTheory.GAMPayoffVector(mp).payoffs ==
+            GameTheory.GAMPayoffVector(g_mp).payoffs
+        @test GameTheory.GAMPayoffVector(Float64, mp).payoffs ==
+            GameTheory.GAMPayoffVector(Float64, g_mp).payoffs
+        @test gam_string(mp) == gam_string(g_mp)
+        @test sprint(write_gam, mp) == gam_string(g_mp)
+        mktempdir() do dir
+            path = joinpath(dir, "mp.gam")
+            write_gam(path, mp)
+            @test read(path, String) == gam_string(g_mp)
+        end
+    end
+
 end

@@ -78,6 +78,9 @@ Construct a `FictitiousPlay` instance from `NormalFormGame`.
 FictitiousPlay(g::NormalFormGame, gain::AbstractGain=DecreasingGain()) =
     FictitiousPlay(g.players, g.nums_actions, gain)
 
+FictitiousPlay(g::AbstractNormalFormGame, gain::AbstractGain=DecreasingGain()) =
+    FictitiousPlay(convert(NormalFormGame, g), gain)
+
 """
     FictitiousPlay(fp[, gain=fp.gain])
 
@@ -137,6 +140,10 @@ Construct a `StochasticFictitiousPlay` instance.
 StochasticFictitiousPlay(g::NormalFormGame, d::Distribution,
                          gain::AbstractGain=DecreasingGain()) =
     StochasticFictitiousPlay(g.players, g.nums_actions, d, gain)
+
+StochasticFictitiousPlay(g::AbstractNormalFormGame, d::Distribution,
+                         gain::AbstractGain=DecreasingGain()) =
+    StochasticFictitiousPlay(convert(NormalFormGame, g), d, gain)
 
 """
     StochasticFictitiousPlay(fp[, d=fp.d, gain=fp.gain])
