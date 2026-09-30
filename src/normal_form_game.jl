@@ -493,13 +493,13 @@ A subtype must implement the following two functions:
 
 - `nums_actions(g)` : Return the numbers of actions of the N players as an
   `NTuple{N,Int}`.
-- `payoffs(g, action_profile)` : Return the payoffs to the N players at the
-  pure action profile `action_profile = (a_1, ..., a_N)`, as an indexable
-  collection of length N whose elements can be converted to `T`.
+- `payoff_profile(g, action_profile)` : Return the payoffs to the N players
+  at the pure action profile `action_profile = (a_1, ..., a_N)`, as an
+  indexable collection of length N whose elements can be converted to `T`.
 
-The value returned by `payoffs` is converted to an `SVector{N,T}` before use,
-so it may be a tuple or a vector, with elements of any types convertible to
-`T`.
+The value returned by `payoff_profile` is converted to an `SVector{N,T}`
+before use, so it may be a tuple or a vector, with elements of any types
+convertible to `T`.
 
 # Examples
 
@@ -508,7 +508,7 @@ julia> struct MatchingPennies <: AbstractNormalFormGame{2,Int} end
 
 julia> GameTheory.nums_actions(::MatchingPennies) = (2, 2);
 
-julia> GameTheory.payoffs(::MatchingPennies, a) = a[1] == a[2] ? (1, -1) : (-1, 1);
+julia> GameTheory.payoff_profile(::MatchingPennies, a) = a[1] == a[2] ? (1, -1) : (-1, 1);
 
 julia> g = NormalFormGame(MatchingPennies())
 2×2 NormalFormGame{2, Int64}:
@@ -530,26 +530,26 @@ Part of the interface of [`AbstractNormalFormGame`](@ref).
 function nums_actions end
 
 """
-    payoffs(g, action_profile)
+    payoff_profile(g, action_profile)
 
 Return the payoffs to the N players of `g` at the pure action profile
 `action_profile = (a_1, ..., a_N)`, one for each player in the order of the
 players. Part of the interface of [`AbstractNormalFormGame`](@ref).
 """
-function payoffs end
+function payoff_profile end
 
 num_players(::AbstractNormalFormGame{N}) where {N} = N
 
 # Payoff profile at `action_profile` as an `SVector{N,T}`. This is the one
-# place where the value returned by `payoffs` is checked for length and
-# converted to `T`. The generic code below calls this rather than `payoffs`,
-# so that it indexes a homogeneous `SVector` and stays allocation free
-# whatever kind of collection `payoffs` returns
+# place where the value returned by `payoff_profile` is checked for length
+# and converted to `T`. The generic code below calls this rather than
+# `payoff_profile`, so that it indexes a homogeneous `SVector` and stays
+# allocation free whatever kind of collection `payoff_profile` returns
 function _payoff_profile(g::AbstractNormalFormGame{N,T},
                          action_profile) where {N,T}
-    u = payoffs(g, action_profile)
+    u = payoff_profile(g, action_profile)
     length(u) == N ||
-        throw(DimensionMismatch("payoffs must return $N values"))
+        throw(DimensionMismatch("payoff_profile must return $N values"))
     return SVector{N,T}(u)
 end
 
@@ -581,14 +581,12 @@ end
 
 nums_actions(g::NormalFormGame) = g.nums_actions
 
-# Payoff profile at `index` as an SVector; player i's payoff_array is indexed by
-# (a_i, a_{i+1}, ..., a_{i+N-1})
-_payoff_profile(g::NormalFormGame{N,T}, index) where {N,T} =
-    SVector{N,T}(ntuple(i -> g.players[i].payoff_array[_rotate(index, i)...],
-                        Val(N)))
-
-payoffs(g::NormalFormGame{N}, action_profile::PureActionProfile{N}) where {N} =
-    _payoff_profile(g, action_profile)
+# Player i's payoff_array is indexed by (a_i, a_{i+1}, ..., a_{i+N-1})
+payoff_profile(g::NormalFormGame{N,T},
+               action_profile::PureActionProfile{N}) where {N,T} =
+    SVector{N,T}(ntuple(i -> g.players[i].payoff_array[
+        _rotate(action_profile, i)...
+    ], Val(N)))
 
 function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
     throw(ArgumentError("input tuple must not be empty"))
@@ -798,7 +796,7 @@ function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
     return NormalFormGame(players_new)
 end
 
-# Tabulate the payoffs of `g` by calling `payoffs` once per action profile
+# Tabulate the payoffs of `g` by one call to `payoff_profile` per action profile
 function NormalFormGame{N,T}(g::AbstractNormalFormGame{N}) where {N,T}
     na = nums_actions(g)
     # Player i's payoff_array is indexed by (a_i, a_{i+1}, ..., a_{i+N-1})
@@ -878,7 +876,7 @@ end
 
 Base.size(a::LazyProfileArray) = a.g.nums_actions
 Base.getindex(a::LazyProfileArray{N,T}, index::Vararg{Int,N}) where {N,T} =
-    Tuple(_payoff_profile(a.g, index))
+    Tuple(payoff_profile(a.g, index))
 Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = (a.g[index],)
 
 function Base.show(io::IO, g::NormalFormGame)
@@ -901,7 +899,7 @@ function Base.getindex(g::NormalFormGame{N,T},
                        index::Integer...) where {N,T}
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
-    return _payoff_profile(g, index)
+    return payoff_profile(g, index)
 end
 
 # Trivial game with 1 player
@@ -1049,7 +1047,8 @@ _payoff_vectors(::AbstractNormalFormGame{N,T}, ::Tuple{}) where {N,T} =
     throw(ArgumentError("action profile must not be empty"))
 
 # Payoff vectors of the N players, one entry per own action, when the other
-# players play their pure actions in `a`; n_i calls to `payoffs` for player i
+# players play their pure actions in `a`; n_i calls to `payoff_profile` for
+# player i
 function _payoff_vectors(g::AbstractNormalFormGame{N,T},
                          a::PureActionProfile) where {N,T}
     na = nums_actions(g)
@@ -1061,7 +1060,7 @@ end
 
 # Expected payoff vectors of the N players when the other players play their
 # mixed actions in `x`; one pass over the action profiles, one call to
-# `payoffs` per profile of positive probability for some player
+# `payoff_profile` per profile of positive probability for some player
 function _payoff_vectors(g::AbstractNormalFormGame{N,T},
                          x::MixedActionProfile{M,S}) where {N,T,M,S}
     na = nums_actions(g)
