@@ -4,7 +4,7 @@
 
 using Distributions: Normal
 using StaticArrays: SVector
-using GameTheory: nums_actions, payoffs
+using GameTheory: nums_actions, payoffs, _payoff_profile
 
 # Games defined by their rules, at top level since types must be defined there
 
@@ -19,6 +19,13 @@ struct ThreePlayerRules <: AbstractNormalFormGame{3,Float64} end
 GameTheory.nums_actions(::ThreePlayerRules) = (2, 3, 4)
 GameTheory.payoffs(::ThreePlayerRules, a) =
     [a[1] + 10a[2], a[2] * a[3], (a[1] - a[3]) / 2]
+
+# 3 players, Float64 payoffs, `payoffs` returns a tuple of mixed element types;
+# the same payoffs as `ThreePlayerRules`
+struct MixedTupleRules <: AbstractNormalFormGame{3,Float64} end
+GameTheory.nums_actions(::MixedTupleRules) = (2, 3, 4)
+GameTheory.payoffs(::MixedTupleRules, a) =
+    (a[1] + 10a[2], a[2] * a[3], (a[1] - a[3]) / 2)
 
 # 1 player
 struct OnePlayerRules <: AbstractNormalFormGame{1,Int} end
@@ -53,6 +60,36 @@ GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
         @test g3[2, 3, 4] isa SVector{3,Float64}
         @test payoffs(OnePlayerRules(), (2,)) == (4,)
         @test payoffs(NormalFormGame(OnePlayerRules()), (2,)) isa SVector{1,Int}
+    end
+
+    @testset "payoff profile normalization" begin
+        @test @inferred(_payoff_profile(mp, (1, 2))) === SVector(-1, 1)
+        @test _payoff_profile(ThreePlayerRules(), (1, 1, 1)) isa
+            SVector{3,Float64}
+        @test_throws DimensionMismatch _payoff_profile(BadRules(), (1, 1))
+        @test_throws DimensionMismatch payoff_profile_array(BadRules())
+        @test_throws DimensionMismatch is_nash(BadRules(), (1, 1))
+
+        mt = MixedTupleRules()
+        tp = ThreePlayerRules()
+        @test payoffs(mt, (1, 2, 3)) isa Tuple{Int,Int,Float64}
+        @test @inferred(_payoff_profile(mt, (1, 2, 3))) isa SVector{3,Float64}
+        g_mt = @inferred NormalFormGame(mt)
+        g_tp = NormalFormGame(tp)
+        @test g_mt isa NormalFormGame{3,Float64}
+        for i in 1:3
+            @test g_mt.players[i].payoff_array == g_tp.players[i].payoff_array
+        end
+        @test @inferred(payoff_profile_array(mt)) == payoff_profile_array(tp)
+        for a in CartesianIndices(nums_actions(mt))
+            @test is_nash(mt, Tuple(a)) == is_nash(g_mt, Tuple(a))
+            @test is_pareto_efficient(mt, Tuple(a)) ==
+                is_pareto_efficient(g_mt, Tuple(a))
+            @test is_pareto_dominant(mt, Tuple(a)) ==
+                is_pareto_dominant(g_mt, Tuple(a))
+        end
+        x = ([0.5, 0.5], [0.2, 0.3, 0.5], [0.25, 0.25, 0.25, 0.25])
+        @test is_nash(mt, x) == is_nash(g_mt, x)
     end
 
     @testset "tabulation" begin
