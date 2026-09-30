@@ -16,6 +16,7 @@ using BenchmarkTools
 
 const SUITE = BenchmarkGroup()
 
+SUITE["pure_nash"] = include("pure_nash.jl")
 SUITE["lemke_howson"] = include("lemke_howson.jl")
 SUITE["support_enumeration"] = include("support_enumeration.jl")
 SUITE["repeated_game"] = include("repeated_game.jl")

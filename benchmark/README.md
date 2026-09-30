@@ -9,6 +9,8 @@ which can be run standalone or through
 Each benchmarked module has its own file, included by `benchmarks.jl`.
 Currently covered:
 
+- [`pure_nash.jl`](pure_nash.jl): `pure_nash` (`src/pure_nash.jl`), under
+  `SUITE["pure_nash"]`;
 - [`lemke_howson.jl`](lemke_howson.jl): `lemke_howson` and `lemke_howson!`
   (`src/lemke_howson.jl`), under `SUITE["lemke_howson"]`;
 - [`support_enumeration.jl`](support_enumeration.jl): `support_enumeration`
@@ -20,6 +22,18 @@ Currently covered:
   `GENERATORS_SUITE`, excluded from `SUITE` — run separately; see below.
 
 ## What is benchmarked
+
+### `pure_nash` ([`pure_nash.jl`](pure_nash.jl))
+
+Brute-force enumeration of the pure-action Nash equilibria of random games
+(each generated with its own fixed-seed RNG); the cost is the number of
+action profiles times a payoff-vector lookup per player:
+
+| Key | Description |
+|:----|:------------|
+| `random_2p_n100` | 2 players with 100 actions each (10^4 profiles) |
+| `random_3p_n20` | 3 players with 20 actions each (8 x 10^3 profiles) |
+| `random_4p_n10` | 4 players with 10 actions each (10^4 profiles) |
 
 ### `lemke_howson` ([`lemke_howson.jl`](lemke_howson.jl))
 
