@@ -9,3 +9,8 @@
     end
     @test isempty(ambiguities)
 end
+
+@testset "Exports are defined" begin
+    undefined = [n for n in names(GameTheory) if !isdefined(GameTheory, n)]
+    @test isempty(undefined)
+end
