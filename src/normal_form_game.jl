@@ -497,6 +497,10 @@ A subtype must implement the following two functions:
   pure action profile `action_profile = (a_1, ..., a_N)`, as an indexable
   collection of length N whose elements can be converted to `T`.
 
+The value returned by `payoffs` is converted to an `SVector{N,T}` before use,
+so it may be a tuple or a vector, with elements of any types convertible to
+`T`.
+
 # Examples
 
 ```julia
@@ -535,6 +539,19 @@ players. Part of the interface of [`AbstractNormalFormGame`](@ref).
 function payoffs end
 
 num_players(::AbstractNormalFormGame{N}) where {N} = N
+
+# Payoff profile at `action_profile` as an `SVector{N,T}`. This is the one
+# place where the value returned by `payoffs` is checked for length and
+# converted to `T`. The generic code below calls this rather than `payoffs`,
+# so that it indexes a homogeneous `SVector` and stays allocation free
+# whatever kind of collection `payoffs` returns
+function _payoff_profile(g::AbstractNormalFormGame{N,T},
+                         action_profile) where {N,T}
+    u = payoffs(g, action_profile)
+    length(u) == N ||
+        throw(DimensionMismatch("payoffs must return $N values"))
+    return SVector{N,T}(u)
+end
 
 
 # NormalFormGame #
@@ -788,9 +805,7 @@ function NormalFormGame{N,T}(g::AbstractNormalFormGame{N}) where {N,T}
     payoff_arrays = ntuple(i -> Array{T}(undef, _rotate(na, i)), Val(N))
     for a in CartesianIndices(na)
         t = Tuple(a)
-        u = payoffs(g, t)
-        length(u) == N ||
-            throw(DimensionMismatch("payoffs must return $N values"))
+        u = _payoff_profile(g, t)
         for i in 1:N
             payoff_arrays[i][_rotate(t, i)...] = u[i]
         end
@@ -844,8 +859,8 @@ contains the N payoff values, one for each player, for the action profile
 
 - `::Array{SVector{N,T},N}` : Array of payoff profiles.
 """
-payoff_profile_array(g::AbstractNormalFormGame{N,T}) where {N,T} =
-    map(index -> SVector{N,T}(payoffs(g, index.I)),
+payoff_profile_array(g::AbstractNormalFormGame) =
+    map(index -> _payoff_profile(g, index.I),
         CartesianIndices(nums_actions(g)))
 
 """
@@ -1023,7 +1038,7 @@ function _payoff_vectors(g::AbstractNormalFormGame{N,T},
                          a::PureActionProfile) where {N,T}
     na = nums_actions(g)
     return ntuple(Val(N)) do i
-        T[payoffs(g, ntuple(k -> k == i ? a_i : a[k], Val(N)))[i]
+        T[_payoff_profile(g, ntuple(k -> k == i ? a_i : a[k], Val(N)))[i]
           for a_i in 1:na[i]]
     end
 end
@@ -1042,7 +1057,7 @@ function _payoff_vectors(g::AbstractNormalFormGame{N,T},
             prod(k -> k == i ? one(S) : x[k][a[k]], 1:N)
         end
         all(iszero, w) && continue
-        u = payoffs(g, Tuple(a))
+        u = _payoff_profile(g, Tuple(a))
         for i in 1:N
             vs[i][a[i]] += w[i] * u[i]
         end
@@ -1120,12 +1135,12 @@ end
 
 for (f, op) = ((:is_pareto_efficient, pareto_inferior_to),
                (:is_pareto_dominant, not_pareto_superior_to))
-    @eval function $(f)(g::AbstractNormalFormGame{N,T},
-                        action_profile::PureActionProfile) where {N,T}
-        payoff_profile0 = SVector{N,T}(payoffs(g, action_profile))
+    @eval function $(f)(g::AbstractNormalFormGame,
+                        action_profile::PureActionProfile)
+        payoff_profile0 = _payoff_profile(g, action_profile)
         for profile in CartesianIndices(nums_actions(g))
             if CartesianIndex(action_profile) != profile
-                payoff_profile = SVector{N,T}(payoffs(g, Tuple(profile)))
+                payoff_profile = _payoff_profile(g, Tuple(profile))
                 if ($(op)(payoff_profile0, payoff_profile))
                     return false
                 end
