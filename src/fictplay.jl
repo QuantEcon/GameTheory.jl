@@ -170,8 +170,7 @@ function play!(rng::AbstractRNG,
                options::BROptions,
                brs::Vector{Int}, t::Integer) where {N,TA<:Real}
     for i in 1:N
-        opponents_actions =
-            tuple(actions[i+1:end]..., actions[1:i-1]...)
+        opponents_actions = get_opponents_actions(actions, i)
         brs[i] = best_response(fp.players[i], opponents_actions, options)
     end
 
@@ -189,8 +188,7 @@ function play!(rng::AbstractRNG,
                options::BROptions,
                brs::Vector{Int}, t::Integer) where {N,TA<:Real}
     for i in 1:N
-        opponents_actions =
-            tuple(actions[i+1:end]..., actions[1:i-1]...)
+        opponents_actions = get_opponents_actions(actions, i)
         perturbations = rand(rng, fp.d, fp.nums_actions[i])
         brs[i] = best_response(fp.players[i], opponents_actions, perturbations)
     end
