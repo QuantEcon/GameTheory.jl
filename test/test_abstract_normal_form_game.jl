@@ -4,38 +4,39 @@
 
 using Distributions: Normal
 using StaticArrays: SVector
-using GameTheory: nums_actions, payoffs, _payoff_profile
+using GameTheory: nums_actions, payoff_profile, _payoff_profile
 
 # Games defined by their rules, at top level since types must be defined there
 
-# 2 players, Int payoffs, `payoffs` returns a tuple
+# 2 players, Int payoffs, `payoff_profile` returns a tuple
 struct MatchingPenniesRules <: AbstractNormalFormGame{2,Int} end
 GameTheory.nums_actions(::MatchingPenniesRules) = (2, 2)
-GameTheory.payoffs(::MatchingPenniesRules, a) = a[1] == a[2] ? (1, -1) : (-1, 1)
+GameTheory.payoff_profile(::MatchingPenniesRules, a) =
+    a[1] == a[2] ? (1, -1) : (-1, 1)
 
-# 3 players, Float64 payoffs, unequal numbers of actions, `payoffs` returns a
-# vector
+# 3 players, Float64 payoffs, unequal numbers of actions, `payoff_profile`
+# returns a vector
 struct ThreePlayerRules <: AbstractNormalFormGame{3,Float64} end
 GameTheory.nums_actions(::ThreePlayerRules) = (2, 3, 4)
-GameTheory.payoffs(::ThreePlayerRules, a) =
+GameTheory.payoff_profile(::ThreePlayerRules, a) =
     [a[1] + 10a[2], a[2] * a[3], (a[1] - a[3]) / 2]
 
-# 3 players, Float64 payoffs, `payoffs` returns a tuple of mixed element types;
-# the same payoffs as `ThreePlayerRules`
+# 3 players, Float64 payoffs, `payoff_profile` returns a tuple of mixed element
+# types; the same payoffs as `ThreePlayerRules`
 struct MixedTupleRules <: AbstractNormalFormGame{3,Float64} end
 GameTheory.nums_actions(::MixedTupleRules) = (2, 3, 4)
-GameTheory.payoffs(::MixedTupleRules, a) =
+GameTheory.payoff_profile(::MixedTupleRules, a) =
     (a[1] + 10a[2], a[2] * a[3], (a[1] - a[3]) / 2)
 
 # 1 player
 struct OnePlayerRules <: AbstractNormalFormGame{1,Int} end
 GameTheory.nums_actions(::OnePlayerRules) = (3,)
-GameTheory.payoffs(::OnePlayerRules, a) = (a[1]^2,)
+GameTheory.payoff_profile(::OnePlayerRules, a) = (a[1]^2,)
 
-# `payoffs` of the wrong length
+# `payoff_profile` of the wrong length
 struct BadRules <: AbstractNormalFormGame{2,Int} end
 GameTheory.nums_actions(::BadRules) = (2, 2)
-GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
+GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
 
 
 @testset "Testing AbstractNormalFormGame" begin
@@ -46,8 +47,8 @@ GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
     @testset "interface on NormalFormGame" begin
         @test NormalFormGame <: AbstractNormalFormGame
         @test @inferred(nums_actions(g_mp)) == (2, 2)
-        @test @inferred(payoffs(g_mp, (1, 2))) == g_mp[1, 2]
-        @test payoffs(g_mp, (1, 2)) isa SVector{2,Int}
+        @test @inferred(payoff_profile(g_mp, (1, 2))) == g_mp[1, 2]
+        @test payoff_profile(g_mp, (1, 2)) isa SVector{2,Int}
         @test num_players(g_mp) == 2
     end
 
@@ -58,8 +59,9 @@ GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
         @test payoff_profile_array(g_mp) isa Array{SVector{2,Int},2}
         g3 = NormalFormGame(ThreePlayerRules())
         @test g3[2, 3, 4] isa SVector{3,Float64}
-        @test payoffs(OnePlayerRules(), (2,)) == (4,)
-        @test payoffs(NormalFormGame(OnePlayerRules()), (2,)) isa SVector{1,Int}
+        @test payoff_profile(OnePlayerRules(), (2,)) == (4,)
+        @test payoff_profile(NormalFormGame(OnePlayerRules()), (2,)) isa
+            SVector{1,Int}
     end
 
     @testset "payoff profile normalization" begin
@@ -72,7 +74,7 @@ GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
 
         mt = MixedTupleRules()
         tp = ThreePlayerRules()
-        @test payoffs(mt, (1, 2, 3)) isa Tuple{Int,Int,Float64}
+        @test payoff_profile(mt, (1, 2, 3)) isa Tuple{Int,Int,Float64}
         @test @inferred(_payoff_profile(mt, (1, 2, 3))) isa SVector{3,Float64}
         g_mt = @inferred NormalFormGame(mt)
         g_tp = NormalFormGame(tp)
@@ -104,7 +106,8 @@ GameTheory.payoffs(::BadRules, a) = (1, 2, 3)
         @test g3 isa NormalFormGame{3,Float64}
         @test nums_actions(g3) == (2, 3, 4)
         for a in CartesianIndices(nums_actions(g3))
-            @test g3[Tuple(a)...] == payoffs(ThreePlayerRules(), Tuple(a))
+            @test g3[Tuple(a)...] ==
+                payoff_profile(ThreePlayerRules(), Tuple(a))
         end
 
         g1 = @inferred NormalFormGame(OnePlayerRules())
