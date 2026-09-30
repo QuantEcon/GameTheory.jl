@@ -271,6 +271,17 @@ play(fp::AbstractFictitiousPlay, actions::PureActionProfile,
     play(Random.GLOBAL_RNG, fp, actions, options,
          num_reps=num_reps, t_init=t_init)
 
+# An empty tuple is both a pure and a mixed action profile; these methods
+# resolve the resulting ambiguity
+play(rng::AbstractRNG, fp::AbstractFictitiousPlay{N}, actions::Tuple{},
+     options::BROptions=BROptions();
+     num_reps::Integer=1, t_init::Integer=1) where {N} =
+    throw(ArgumentError("actions must not be empty"))
+
+play(fp::AbstractFictitiousPlay, actions::Tuple{},
+     options::BROptions=BROptions(); num_reps::Integer=1, t_init::Integer=1) =
+    throw(ArgumentError("actions must not be empty"))
+
 function play(rng::AbstractRNG,
               fp::AbstractFictitiousPlay{N},
               options::BROptions=BROptions();
@@ -383,6 +394,13 @@ time_series(fp::AbstractFictitiousPlay, ts_length::Integer,
             t_init::Integer=1) =
     time_series(Random.GLOBAL_RNG, fp, ts_length, init_actions, options,
                 t_init=t_init)
+
+# An empty tuple is both a pure and a mixed action profile; this method
+# resolves the resulting ambiguity
+time_series(rng::AbstractRNG, fp::AbstractFictitiousPlay{N,T},
+            ts_length::Integer, init_actions::Tuple{},
+            options::BROptions=BROptions(); t_init::Integer=1) where {N,T<:Real} =
+    throw(ArgumentError("init_actions must not be empty"))
 
 function time_series(rng::AbstractRNG,
                      fp::AbstractFictitiousPlay{N},

@@ -9,6 +9,13 @@ using Random
 
 @testset "Testing fictplay.jl" begin
 
+    @testset "empty action profile" begin
+        fp = FictitiousPlay(NormalFormGame((2, 2)))
+        @test_throws ArgumentError play(fp, ())
+        @test_throws ArgumentError play(Random.default_rng(), fp, ())
+        @test_throws ArgumentError time_series(Random.default_rng(), fp, 3, ())
+    end
+
     matching_pennies_bimatrix = Array{Float64}(undef, 2, 2, 2)
     matching_pennies_bimatrix[:, 1, 1] = [1, -1]
     matching_pennies_bimatrix[:, 1, 2] = [-1, 1]
