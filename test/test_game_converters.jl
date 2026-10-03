@@ -539,6 +539,8 @@ struct UnsupportedReal <: Real end
                 replace(s_payoff, "\"3x2 game\"" => "\"a \\\"3x2\\\" {game}, R\""),
                 # Backslash followed by a newline in the title
                 replace(s_payoff, "\"3x2 game\"" => "\"first\\\nsecond\""),
+                # Quote preceded by two backslashes in the title
+                replace(s_payoff, "\"3x2 game\"" => "\"a\\\\\"b\""),
                 # Numbers of actions in the outcome version, no comment
                 replace(s_outcome,
                         "{ { \"1\" \"2\" \"3\" }\n{ \"1\" \"2\" }\n}\n\"\"" => "{ 3 2 }"),
