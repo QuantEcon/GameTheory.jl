@@ -646,6 +646,15 @@ struct UnsupportedReal <: Real end
         @testset "Invalid inputs" begin
             @test_throws ArgumentError parse_nfg("")
             @test_throws ArgumentError parse_nfg("2\n3 2\n\n3 0 2 1 4 5 2 6 1 3 0 4")
+            # Outcomes with the wrong numbers of payoffs, whose total still
+            # fits the table
+            head = "NFG 1 R \"\" { \"Row\" \"Col\" } { 1 2 } "
+            @test_throws ArgumentError parse_nfg(
+                head * "{ { \"\" 1 } { \"\" 2, 3, 4 } } 1 2"
+            )
+            @test_throws ArgumentError parse_nfg(
+                head * "{ { \"\" 1, 2, 3 } { \"\" 4, 5, 6 } } 1 2"
+            )
         end
 
         @testset "Type inference" begin

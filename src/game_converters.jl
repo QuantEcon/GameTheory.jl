@@ -712,6 +712,8 @@ function _read_nfg(parse_payoffs, io::IO)
         # payoffs
         outcomes, pos = _read_from_tokens(tokens, pos)
         N = length(nums_actions)
+        all(o -> length(o) == N + 1, outcomes) ||
+            throw(ArgumentError("each outcome must have a name and $N payoffs"))
         values = parse_payoffs(
             SubString{String}[x for o in outcomes for x in o[2:end]]
         )
