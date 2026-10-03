@@ -87,6 +87,11 @@ struct UnsupportedReal <: Real end
                 @test p.nums_actions == nums_actions
                 @test p.payoffs == payoffs
             end
+
+            # The game does not share memory with the payoff vector
+            g1 = NormalFormGame(p1)
+            g1.players[1].payoff_array[1] = -1
+            @test p1.payoffs == payoffs
         end
 
         @testset "Invalid inputs" begin
@@ -381,6 +386,11 @@ struct UnsupportedReal <: Real end
                 @test p.nums_actions == nums_actions
                 @test p.payoffs == payoffs
             end
+
+            # The game does not share memory with the payoff vector
+            g1 = NormalFormGame(p1)
+            g1.players[1].payoff_array[1] = -1
+            @test p1.payoffs == payoffs
         end
 
         @testset "Invalid inputs" begin
@@ -577,6 +587,31 @@ struct UnsupportedReal <: Real end
             @test g_zero isa NormalFormGame{2,Int}
             @test all(g_zero.players[i].payoff_array == zeros(Int, 2, 2)
                       for i in 1:2)
+
+            # The null outcome takes the inferred element type
+            head = "NFG 1 R \"\" { \"Row\" \"Col\" } { 1 2 } "
+            g_big = parse_nfg(head * "{ { \"\" 0, 9223372036854775809 } } 1 0")
+            @test g_big isa NormalFormGame{2,BigInt}
+            @test g_big[1, 1] == [0, big(2)^63 + 1]
+            @test g_big[1, 2] == [0, 0]
+            g_rat = parse_nfg(head * "{ { \"\" 1/3, 2 } } 1 0")
+            @test g_rat isa NormalFormGame{2,Rational{BigInt}}
+            @test g_rat[1, 1] == [1//3, 2]
+            @test g_rat[1, 2] == [0, 0]
+        end
+
+        @testset "Floating-point boundaries: $name" for (name, to_string, from_string) in
+                [("gam", gam_string, parse_gam), ("nfg", nfg_string, parse_nfg)]
+            xs = [5.0e-324, floatmin(Float64), floatmax(Float64),
+                  -floatmax(Float64), prevfloat(1.0), nextfloat(1.0), 0.1,
+                  0.0, -0.0]
+            g_float = NormalFormGame(Player(reshape(xs, :, 1)),
+                                     Player(reshape(reverse(xs), 1, :)))
+            g_read = from_string(to_string(g_float))
+            @test g_read isa NormalFormGame{2,Float64}
+            # `isequal` distinguishes -0.0 from 0.0
+            @test all(isequal(g_read.players[i].payoff_array,
+                              g_float.players[i].payoff_array) for i in 1:2)
         end
 
         @testset "Element type" begin
