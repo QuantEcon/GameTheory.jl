@@ -294,7 +294,8 @@ the file at `path`, and return it as a `NormalFormGame`. See
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
   when every payoff in the input is written as an integer (`BigInt` if one
-  does not fit in `Int`) and `Float64` otherwise.
+  does not fit in `Int`), `Rational{BigInt}` when the others are written as
+  rationals `n/d`, and `Float64` otherwise.
 - `io::IO` : Input stream.
 - `path::AbstractString` : Path to the file to read.
 
@@ -345,7 +346,8 @@ reading from a stream or a file.
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
   when every payoff in `text` is written as an integer (`BigInt` if one does
-  not fit in `Int`) and `Float64` otherwise.
+  not fit in `Int`), `Rational{BigInt}` when the others are written as
+  rationals `n/d`, and `Float64` otherwise.
 - `text::AbstractString` : String in the .gam format.
 
 # Returns
@@ -470,10 +472,10 @@ end
     write_gam(path, g)
 
 Write the game `g` to the stream `io` or the file at `path` in the GameTracer
-.gam format. Each payoff is written with `print`, so the element type of `g`
-must be an `Integer` or an `AbstractFloat` type; convert first otherwise, e.g.
-with `NormalFormGame(Float64, g)`. See [`gam_string`](@ref) for writing to a
-string.
+.gam format. Each payoff is written with `print`, a `Rational` as `n/d`; hence
+the element type of `g` must be an `Integer`, an `AbstractFloat`, or a
+`Rational` type; convert first otherwise, e.g. with
+`NormalFormGame(Float64, g)`. See [`gam_string`](@ref) for writing to a string.
 
 # Arguments
 
@@ -734,9 +736,9 @@ end
 
 Write the game `g` to the stream `io` or the file at `path` in the payoff
 version of the Gambit .nfg format, with an empty title and the players named
-"1", ..., "N". Each payoff is written with `print`, so the element type of `g`
-must be an `Integer`, an `AbstractFloat`, or a `Rational` type. See
-[`nfg_string`](@ref) for writing to a string.
+"1", ..., "N". Each payoff is written with `print`, a `Rational` as `n/d`; hence
+the element type of `g` must be an `Integer`, an `AbstractFloat`, or a
+`Rational` type. See [`nfg_string`](@ref) for writing to a string.
 
 # Arguments
 
