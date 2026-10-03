@@ -57,7 +57,7 @@ struct PayoffVector{L<:PayoffLayout,N,T<:Real}
         N > 0 || throw(ArgumentError("nums_actions must be non-empty"))
         any(n -> n <= 0, nums_actions) &&
             throw(ArgumentError("all nums_actions must be positive"))
-        expected = prod(nums_actions) * N
+        expected = prod(big, nums_actions) * N  # no overflow
         length(payoffs) == expected || throw(ArgumentError(
             "payoffs length mismatch: expected $expected, got $(length(payoffs))"
         ))

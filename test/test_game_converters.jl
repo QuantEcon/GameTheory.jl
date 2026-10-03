@@ -93,6 +93,8 @@ struct UnsupportedReal <: Real end
             @test_throws ArgumentError GAMPayoffVector((2, 2), [1, 2, 3])
             @test_throws ArgumentError GAMPayoffVector((2, 0), Int[])
             @test_throws ArgumentError GAMPayoffVector((), Int[])
+            # prod(nums_actions) overflows Int to 0
+            @test_throws ArgumentError GAMPayoffVector((2^62, 2^62), Int[])
         end
     end
 
@@ -385,6 +387,8 @@ struct UnsupportedReal <: Real end
             @test_throws ArgumentError NFGPayoffVector((2, 2), [1, 2, 3])
             @test_throws ArgumentError NFGPayoffVector((2, 0), Int[])
             @test_throws ArgumentError NFGPayoffVector((), Int[])
+            # prod(nums_actions) overflows Int to 0
+            @test_throws ArgumentError NFGPayoffVector((2^62, 2^62), Int[])
         end
     end
 
