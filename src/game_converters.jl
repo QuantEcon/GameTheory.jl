@@ -571,8 +571,9 @@ gam_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_gam, g)
 # https://gambitproject.readthedocs.io/en/latest/formats.html
 
 # A token is a quoted string (with `\"` for a quote inside), a brace, or a run
-# of other characters; commas are separators
-const _NFG_TOKEN = r"\"(?:[^\"\\]|\\.)*\"|[{}]|[^\s{}\",]+"
+# of other characters; commas are separators. The `s` flag lets a backslash
+# escape a newline as well.
+const _NFG_TOKEN = r"\"(?:[^\"\\]|\\.)*\"|[{}]|[^\s{}\",]+"s
 
 # Return the item starting at `tokens[pos]` and the position after it: a
 # nested vector for a braced group, the token itself otherwise.
