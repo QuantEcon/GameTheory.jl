@@ -392,7 +392,9 @@ function support_enumeration(g::NormalFormGame{N},
 
     # Support size profiles, ordered by total support size
     size_profiles =
-        vec(collect(Iterators.product(ntuple(i -> 1:nums_actions[i], N)...)))
+        vec(collect(Iterators.product(
+            ntuple(i -> 1:nums_actions[i], Val(N))...
+        )))
     sort!(size_profiles, by=ks -> (sum(ks), ks))
 
     for ks in size_profiles
@@ -408,7 +410,7 @@ function support_enumeration(g::NormalFormGame{N},
                 continue
         end
 
-        supps = ntuple(i -> collect(1:ks[i]), N)
+        supps = ntuple(i -> collect(1:ks[i]), Val(N))
         while true
             if isempty(mixing_players)
                 action_profile = _support_action_profile(nums_actions, supps)
@@ -461,7 +463,7 @@ system on such a support profile is a Nash equilibrium (with tolerance
 """
 function _has_dominated_action(g::NormalFormGame{N}, supps, tol::Real) where N
     for i in 1:N
-        opponents_supports = ntuple(l -> supps[mod1(i + l, N)], N - 1)
+        opponents_supports = Base.tail(_rotate(supps, i))
         for a in supps[i]
             is_dominated_by_pure(g.players[i], a, opponents_supports,
                                  tol=tol) && return true
@@ -480,7 +482,7 @@ omitted, `supps` must be a pure action profile.
 """
 function _support_action_profile(nums_actions::NTuple{N,Int}, supps,
                                  sol::Vector{Float64}, tol::Real) where N
-    action_profile = ntuple(i -> zeros(nums_actions[i]), N)
+    action_profile = ntuple(i -> zeros(nums_actions[i]), Val(N))
     idx = 0
     for i in 1:N
         k = length(supps[i])
@@ -504,7 +506,7 @@ function _support_action_profile(nums_actions::NTuple{N,Int}, supps,
 end
 
 function _support_action_profile(nums_actions::NTuple{N,Int}, supps) where N
-    action_profile = ntuple(i -> zeros(nums_actions[i]), N)
+    action_profile = ntuple(i -> zeros(nums_actions[i]), Val(N))
     for i in 1:N
         action_profile[i][supps[i][1]] = 1.
     end
@@ -538,7 +540,7 @@ function _support_equations(::Type{V}, g::NormalFormGame{N}, supps,
     end
     eqs = V[]
     for i in mixing_players
-        opponents = ntuple(l -> mod1(i + l, N), N - 1)
+        opponents = ntuple(l -> mod1(i + l, N), Val(N - 1))
         payoffs = [_support_expected_payoff(g.players[i].payoff_array, a,
                                             opponents, supps, probs, zero(V))
                    for a in supps[i]]
@@ -559,8 +561,9 @@ zero expression used to initialize the sum.
 function _support_expected_payoff(payoff_array::Array{T,N}, a::Int, opponents,
                                   supps, probs, z) where {T,N}
     ex = z
-    for idx in CartesianIndices(ntuple(l -> length(supps[opponents[l]]), N-1))
-        acts = ntuple(l -> supps[opponents[l]][idx[l]], N-1)
+    nums_opp_actions = ntuple(l -> length(supps[opponents[l]]), Val(N-1))
+    for idx in CartesianIndices(nums_opp_actions)
+        acts = ntuple(l -> supps[opponents[l]][idx[l]], Val(N-1))
         coef = payoff_array[a, acts...]
         iszero(coef) && continue
         term = nothing

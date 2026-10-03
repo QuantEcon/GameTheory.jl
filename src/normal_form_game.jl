@@ -1213,12 +1213,14 @@ of the opponents if `opponents_supports` is omitted.
 function is_dominated_by_pure(player::Player{N}, action::PureAction,
                               opponents_supports; tol::Real=1e-8) where N
     payoff_array = player.payoff_array
-    idxs = CartesianIndices(ntuple(l -> length(opponents_supports[l]), N-1))
+    idxs = CartesianIndices(
+        ntuple(l -> length(opponents_supports[l]), Val(N-1))
+    )
     for b in 1:num_actions(player)
         b == action && continue
         dominates = true
         for idx in idxs
-            a_opps = ntuple(l -> opponents_supports[l][idx[l]], N-1)
+            a_opps = ntuple(l -> opponents_supports[l][idx[l]], Val(N-1))
             u_b = payoff_array[b, a_opps...]
             u_a = payoff_array[action, a_opps...]
             if u_b <= u_a + tol
@@ -1233,6 +1235,7 @@ end
 
 function is_dominated_by_pure(player::Player{N}, action::PureAction;
                               tol::Real=1e-8) where N
-    opponents_supports = ntuple(l -> 1:size(player.payoff_array, l+1), N-1)
+    opponents_supports =
+        ntuple(l -> 1:size(player.payoff_array, l+1), Val(N-1))
     return is_dominated_by_pure(player, action, opponents_supports, tol=tol)
 end
