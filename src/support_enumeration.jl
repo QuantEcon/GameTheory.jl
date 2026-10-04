@@ -395,6 +395,13 @@ true
 ```
 """
 function support_enumeration(g::NormalFormGame{N}; options...) where N
+    # A 2-player game without keyword arguments is dispatched to the method
+    # for `NormalFormGame{2}`, so `N == 2` here means that some were given
+    N == 2 && throw(ArgumentError(
+        "keyword arguments are accepted for a 2-player game only with a " *
+        "solver given explicitly, as in " *
+        "`support_enumeration(g, GameTheory.HCSolver(); options...)`"
+    ))
     return support_enumeration(g, HCSolver(); options...)
 end
 

@@ -174,6 +174,18 @@ using GameTheory: HCSolver
             NEs_computed = @inferred support_enumeration(g, HCSolver())
             @test isapprox_vecs_act_profs(NEs_computed, NEs)
 
+            # Keyword arguments do not select the solver implicitly
+            g_rational = NormalFormGame(Rational{Int}, g)
+            @test support_enumeration(g_rational) isa
+                Vector{NTuple{2,Vector{Rational{Int}}}}
+            @test_throws ArgumentError support_enumeration(g_rational,
+                                                           tol=1e-8)
+            @test_throws ArgumentError support_enumeration(g_rational,
+                                                           ntofind=1)
+            NEs_computed =
+                @inferred support_enumeration(g_rational, HCSolver(), tol=1e-8)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
             # Payoffs are converted to Float64
             for T in (Rational{Int}, BigFloat)
                 g_T = NormalFormGame(T, g)
