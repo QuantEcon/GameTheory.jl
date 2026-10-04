@@ -238,5 +238,5 @@ function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
         e isa OverflowError || rethrow()
         return Vector{Float64}[]
     end
-    return real_solutions(res)
+    return real_solutions(res, only_nonsingular=true)
 end

@@ -194,6 +194,20 @@ using GameTheory: HCSolver
             @test isapprox_vecs_act_profs(NEs_computed, NEs)
         end
 
+        @testset "pure equilibria with large integer payoffs" begin
+            # Payoffs 2^53 and 2^53 + 1 are not distinguished in Float64
+            g = NormalFormGame(Int, (2, 2, 2))
+            for a2 in 1:2, a3 in 1:2
+                g[1, a2, a3] = [2^53, 0, 0]
+                g[2, a2, a3] = [2^53 + 1, 0, 0]
+            end
+            NEs_computed = @inferred support_enumeration(g, tol=0)
+            @test length(NEs_computed) == length(pure_nash(g, tol=0)) == 4
+            for NE in NEs_computed
+                @test NE[1] == [0, 1]
+            end
+        end
+
         @testset "degenerate game with all payoffs zero" begin
             g = NormalFormGame((2, 2, 2))
             NEs_computed = @inferred support_enumeration(g)

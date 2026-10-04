@@ -429,9 +429,11 @@ function support_enumeration(g::NormalFormGame{N},
         supps = ntuple(i -> collect(1:ks[i]), Val(N))
         while true
             if isempty(mixing_players)
-                action_profile = _support_action_profile(nums_actions, supps)
-                is_nash(g, action_profile, tol=tol) &&
-                    push!(NEs, action_profile)
+                # Check with pure actions, so that payoffs are compared in
+                # their own type as in `pure_nash`
+                pure_actions = ntuple(i -> supps[i][1], Val(N))
+                is_nash(g, pure_actions, tol=tol) &&
+                    push!(NEs, _support_action_profile(nums_actions, supps))
                 length(NEs) >= ntofind && return NEs
             elseif !_has_dominated_action(g, supps, tol)
                 for sol in _support_solutions(solver, g, supps,
