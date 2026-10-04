@@ -14,7 +14,7 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 ### Setup and tests:
 - Install dependencies: `julia --project=. -e "using Pkg; Pkg.instantiate()"`
 - Run all tests: `julia --project=. -e "using Pkg; Pkg.test()"`
-- Run a single test file: `julia --project=. -e 'using GameTheory, Test, Random; include("test/util.jl"); include("test/test_pure_nash.jl")'`. The test files are written to be included from `test/runtests.jl`, which always includes all of them: a test file cannot be run on its own (`julia test/test_pure_nash.jl` fails), and some rely on `using` statements in files included before them (hence `Random` above). `test/test_aqua.jl` needs Aqua.jl, a test-only dependency, so it runs only through `Pkg.test()`.
+- Run a single test file: `julia --project=. -e 'using GameTheory, Test; include("test/util.jl"); include("test/test_pure_nash.jl")'`. The test files are written to be included from `test/runtests.jl`, which always includes all of them: a test file cannot be run on its own (`julia test/test_pure_nash.jl` fails), since `GameTheory`, `Test` and the helpers in `test/util.jl` are loaded there. `test/test_aqua.jl` needs Aqua.jl, a test-only dependency, so it runs only through `Pkg.test()`.
 - Julia 1.10+ is required (the `[compat]` bound in `Project.toml` is `julia = "1.10"`).
 
 ### Documentation:
@@ -76,7 +76,8 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 - In allocation tests, do not assert `@allocated ... == 0` or hard-code byte counts: older Julia versions heap-allocate returned non-isbits immutable objects that newer versions elide; bound the measurement by a baseline measured in the same escape pattern (see `test/test_lemke_howson.jl`), and scope "allocation-free" claims to machine-float element types
 
 ### Testing
-- Each source file has a corresponding test file (e.g., `src/normal_form_game.jl` → `test/test_normal_form_game.jl`), included from `test/runtests.jl`; add new test files there.
+- Most source files have a corresponding test file (e.g., `src/normal_form_game.jl` → `test/test_normal_form_game.jl`), included from `test/runtests.jl`; the tests for `src/generators/` are in `test/generators/` and are included from `test/generators/runtests.jl`. Add new test files to the respective `runtests.jl`.
+- Each test file loads the packages it uses, other than `GameTheory` and `Test`, with its own `using` statements, so that it does not depend on the files included before it.
 
 ## Common Patterns and Idioms
 
