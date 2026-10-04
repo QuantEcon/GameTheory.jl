@@ -1,14 +1,28 @@
 #=
-Compute all mixed Nash equilibria of a 2-player (non-degenerate) normal
-form game by support enumeration.
+Contains support enumeration solvers:
 
-Julia version of QuantEcon.py/support_enumeration.py
+1. `support_enumeration(g::NormalFormGame{2,T})`:
+
+   Compute all mixed-action Nash equilibria of a 2-player non-degenerate normal
+   form game by solving the systems of linear indifference equations.
+
+   Julia version of QuantEcon.py/support_enumeration.py
+
+2. `support_enumeration(g::NormalFormGame{N},
+                        solver::AbstractSupportEnumerationSolver; ...)`:
+
+   Compute all mixed-action Nash equilibria of an N-player regular game
+   (Harsanyi, 1973) by solving the systems of polynomial indifference equations,
+   by default using HomotopyContinuation.jl.
 
 References
 ----------
 B. von Stengel, "Equilibrium Computation for Two-Player Games in
 Strategic and Extensive Form," Chapter 3, N. Nisan, T. Roughgarden, E.
 Tardos, and V. Vazirani eds., Algorithmic Game Theory, 2007.
+
+J. C. Harsanyi, "Oddness of the Number of Equilibrium Points: A New Proof,"
+International Journal of Game Theory 2 (1973), 235-250.
 =#
 
 using LinearAlgebra: LAPACKException, SingularException
@@ -314,12 +328,11 @@ where the default uses HomotopyContinuation.jl. A solution is a Nash
 equilibrium if the probabilities on the supports are positive and no action
 outside the supports is a profitable deviation, as checked by `is_nash`.
 
-For a regular game in the sense of Harsanyi (1973), this function returns all
-the Nash equilibria. For a non-regular game, all pure-action Nash equilibria
-are returned, while mixed-action ones are returned only if they are
-nonsingular solutions of their support systems. This function is typically
-much faster than `hc_solve`, which solves a single large system of polynomial
-equations at once.
+For a regular game, this function returns all the Nash equilibria. For a
+non-regular game, all pure-action Nash equilibria are returned, while
+mixed-action ones are returned only if they are nonsingular solutions of their
+support systems. This function is typically much faster than `hc_solve`, which
+solves a single large system of polynomial equations at once.
 
 # Arguments
 
@@ -352,6 +365,16 @@ julia> g[1, 2, 2] = [3, 4, 6];
 
 julia> g[2, 1, 2] = [3, 4, 4];
 
+julia> g
+2×2×2 NormalFormGame{3, Float64}:
+[:, :, 1] =
+ (9.0, 8.0, 12.0)  (0.0, 0.0, 0.0)
+ (0.0, 0.0, 0.0)   (9.0, 8.0, 2.0)
+
+[:, :, 2] =
+ (0.0, 0.0, 0.0)  (3.0, 4.0, 6.0)
+ (3.0, 4.0, 4.0)  (0.0, 0.0, 0.0)
+
 julia> Base.active_repl.options.iocontext[:compact] = true;  # Reduce digits to display
 
 julia> NEs = support_enumeration(g)
@@ -369,13 +392,6 @@ julia> NEs = support_enumeration(g)
 julia> all([is_nash(g, NE) for NE in NEs])
 true
 ```
-
-# References
-
-- J. C. Harsanyi, "Oddness of the Number of Equilibrium Points: A New Proof,"
-  International Journal of Game Theory 2 (1973), 235-250.
-- R. D. McKelvey and A. McLennan, "Computation of Equilibria in Finite Games,"
-  Handbook of Computational Economics 1 (1996), 87-142.
 """
 function support_enumeration(g::NormalFormGame{N}; options...) where N
     return support_enumeration(g, HCSolver(); options...)
