@@ -171,9 +171,10 @@ homotopy.
   For example, the option `seed::UInt32` can set the random seed used during
   the computations; by default, the global random number generator is used
   without being reseeded. The defaults `compile=false`,
-  `show_progress=false`, and `threading=false` are used unless overridden;
-  note that compilation is much slower than interpreted evaluation for the
-  small systems solved here. See the
+  `show_progress=false`, `threading=false`, and `catch_interrupt=false` are
+  used unless overridden; note that compilation is much slower than
+  interpreted evaluation for the small systems solved here, and that an
+  interrupt caught within a solve would not stop the enumeration. See the
   [documentation](https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
   for `HomotopyContinuation.solve` for details.
 
@@ -205,7 +206,7 @@ end
 
 function HCSolver(; options...)
     defaults = (compile=false, show_progress=false, threading=false,
-                seed=nothing)
+                seed=nothing, catch_interrupt=false)
     return HCSolver(merge(defaults, NamedTuple(options)))
 end
 

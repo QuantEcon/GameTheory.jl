@@ -208,6 +208,33 @@ using GameTheory: HCSolver
             end
         end
 
+        @testset "dominance check with large integer payoffs" begin
+            # Matching pennies between players 1 and 2; player 3 has two
+            # actions with the same constant payoff c, where c + tol rounds
+            # below c in Float64
+            c = Int64(2)^53 + 1
+            g = NormalFormGame(Int, (2, 2, 2))
+            for a1 in 1:2, a2 in 1:2, a3 in 1:2
+                s = a1 == a2 ? 1 : -1
+                g[a1, a2, a3] = [s, -s, c]
+            end
+            NEs = [([1/2, 1/2], [1/2, 1/2], [1, 0]),
+                   ([1/2, 1/2], [1/2, 1/2], [0, 1])]
+            NEs_computed = @inferred support_enumeration(g)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+        end
+
+        @testset "interrupt during a solve" begin
+            # An interrupt must not be caught within the solve, after which
+            # the enumeration would continue with the next support profile
+            g = NormalFormGame(Player([1 -1; -1 1]), Player([-1 1; 1 -1]))
+            solver = HCSolver(stop_early_cb = _ -> throw(InterruptException()))
+            @test_throws InterruptException GameTheory._support_solutions(
+                solver, g, ([1, 2], [1, 2]), [1, 2]
+            )
+            @test_throws InterruptException support_enumeration(g, solver)
+        end
+
         @testset "degenerate game with all payoffs zero" begin
             g = NormalFormGame((2, 2, 2))
             NEs_computed = @inferred support_enumeration(g)

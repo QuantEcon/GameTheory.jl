@@ -761,6 +761,12 @@ using CDDLib
             player = Player([0//1 0//1; e e])
             @test !is_dom_pure(player, 1, tol=e)
             @test is_dom_pure(player, 1, tol=0)
+
+            # Equal large integer payoffs: c + tol rounds below c in Float64
+            c = Int64(2)^53 + 1
+            player = Player(fill(c, 2, 2))
+            @test !is_dom_pure(player, 1)
+            @test !is_dom_pure(player, 2)
         end
 
         @testset "Test player corner cases" begin

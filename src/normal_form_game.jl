@@ -1223,7 +1223,9 @@ function is_dominated_by_pure(player::Player{N}, action::PureAction,
             a_opps = ntuple(l -> opponents_supports[l][idx[l]], Val(N-1))
             u_b = payoff_array[b, a_opps...]
             u_a = payoff_array[action, a_opps...]
-            if u_b <= u_a + tol
+            # Compare the gain with `tol`, requiring `u_b > u_a` first:
+            # `u_a + tol` can round below `u_a` for large integer payoffs
+            if !(u_b > u_a && u_b - u_a > tol)
                 dominates = false
                 break
             end
