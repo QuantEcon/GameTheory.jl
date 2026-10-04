@@ -2,6 +2,7 @@
 # Testing local interaction #
 # ------------------------- #
 
+using Random
 
 @testset "Testing localint.jl" begin
     payoff_matrix = [4 0; 2 3]
