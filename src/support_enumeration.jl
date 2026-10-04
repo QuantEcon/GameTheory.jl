@@ -329,10 +329,11 @@ equilibrium if the probabilities on the supports are positive and no action
 outside the supports is a profitable deviation, as checked by `is_nash`.
 
 For a regular game, this function returns all the Nash equilibria. For a
-non-regular game, all pure-action Nash equilibria are returned, while
-mixed-action ones are returned only if they are nonsingular solutions of their
-support systems. This function is typically much faster than `hc_solve`, which
-solves a single large system of polynomial equations at once.
+non-regular game, all pure-action Nash equilibria are returned, as are the
+mixed-action ones that are nonsingular solutions of their support systems;
+other mixed-action equilibria may or may not be returned. This function is
+typically much faster than `hc_solve`, which solves a single large system of
+polynomial equations at once.
 
 # Arguments
 

@@ -215,9 +215,10 @@ end
 
 Return the real nonsingular solutions of the indifference system on the
 support profile `supps` (see `_support_equations`), computed by
-`HomotopyContinuation.solve`. If the system has zero mixed volume, in which
-case it has no isolated solution with all the free probabilities nonzero, an
-empty vector is returned.
+`HomotopyContinuation.solve`. An empty vector is returned if the start system
+cannot be computed because the system has zero mixed volume or an identically
+zero equation, in which case it has no isolated solution with all the free
+probabilities nonzero.
 """
 function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
                             supps, mixing_players) where N
@@ -235,8 +236,11 @@ function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
     res = try
         HomotopyContinuation.solve(F; solver.options...)::HomotopyContinuation.Result
     catch e
-        # "Cannot compute a start system": zero mixed volume
+        # "Cannot compute a start system" is thrown if there is no mixed
+        # cell, but also if their computation fails: confirm the former
         e isa OverflowError || rethrow()
+        any(eq -> iszero(HomotopyContinuation.expand(eq)), eqs) ||
+            HomotopyContinuation.mixed_volume(F) == 0 || rethrow()
         return Vector{Float64}[]
     end
     return real_solutions(res, only_nonsingular=true)

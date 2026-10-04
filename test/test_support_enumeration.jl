@@ -224,6 +224,16 @@ using GameTheory: HCSolver
             @test isapprox_vecs_act_profs(NEs_computed, NEs)
         end
 
+        @testset "OverflowError other than zero mixed volume" begin
+            # Only a start system failure due to zero mixed volume means
+            # that there is no solution; other errors must propagate
+            g = NormalFormGame(Player([1 -1; -1 1]), Player([-1 1; 1 -1]))
+            solver = HCSolver(stop_early_cb = _ -> throw(OverflowError("")))
+            @test_throws OverflowError GameTheory._support_solutions(
+                solver, g, ([1, 2], [1, 2]), [1, 2]
+            )
+        end
+
         @testset "interrupt during a solve" begin
             # An interrupt must not be caught within the solve, after which
             # the enumeration would continue with the next support profile
