@@ -835,8 +835,8 @@ NormalFormGame(::Type{T}, g::AbstractNormalFormGame{N}) where {T<:Real,N} =
 NormalFormGame(g::AbstractNormalFormGame{N,T}) where {N,T} =
     NormalFormGame{N,T}(g)
 
-Base.summary(g::NormalFormGame) =
-    string(Base.dims2string(g.nums_actions),
+Base.summary(g::AbstractNormalFormGame) =
+    string(Base.dims2string(nums_actions(g)),
            " ",
            split(string(typeof(g)), ".")[end])
 
@@ -894,17 +894,16 @@ function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
 end
 
 # Return the payoff profile at `index` as an `SVector{N,T}`
-function Base.getindex(g::NormalFormGame{N,T},
-                       index::Integer...) where {N,T}
+function Base.getindex(g::AbstractNormalFormGame{N},
+                       index::Integer...) where {N}
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
-    return payoff_profile(g, index)
+    return _payoff_profile(g, index)
 end
 
 # Trivial game with 1 player
-function Base.getindex(g::NormalFormGame{1}, index::Integer)
-    return g.players[1].payoff_array[index]
-end
+Base.getindex(g::AbstractNormalFormGame{1}, index::Integer) =
+    _payoff_profile(g, (index,))[1]
 
 function Base.setindex!(g::NormalFormGame{N},
                         v::AbstractVector{<:Real},
@@ -933,10 +932,10 @@ Base.setindex!(g::NormalFormGame{N},
     setindex!(g, collect(v), index...)
 
 # Indexing with CartesianIndices
-Base.getindex(g::NormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
-    g[to_indices(g, (ci,))...]
+Base.getindex(g::AbstractNormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
+    g[Tuple(ci)...]
 Base.setindex!(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) where {N} =
-    g[to_indices(g, (ci,))...] = v
+    g[Tuple(ci)...] = v
 
 # delete_action
 
