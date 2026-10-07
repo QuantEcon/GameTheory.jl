@@ -4,7 +4,7 @@
 
 using Distributions: Normal
 using StaticArrays: SVector
-using GameTheory: nums_actions, payoff_profile, _payoff_profile
+using GameTheory: nums_actions, payoff_profile, _payoff_profile, _payoff_vector
 
 # Games defined by their rules, at top level since types must be defined there
 
@@ -27,6 +27,17 @@ struct MixedTupleRules <: AbstractNormalFormGame{3,Float64} end
 GameTheory.nums_actions(::MixedTupleRules) = (2, 3, 4)
 GameTheory.payoff_profile(::MixedTupleRules, a) =
     (a[1] + 10a[2], a[2] * a[3], (a[1] - a[3]) / 2)
+
+# Matching pennies counting the calls to `payoff_profile`
+struct CountingRules <: AbstractNormalFormGame{2,Int}
+    calls::Base.RefValue{Int}
+end
+CountingRules() = CountingRules(Ref(0))
+GameTheory.nums_actions(::CountingRules) = (2, 2)
+function GameTheory.payoff_profile(g::CountingRules, a)
+    g.calls[] += 1
+    return a[1] == a[2] ? (1, -1) : (-1, 1)
+end
 
 # 1 player
 struct OnePlayerRules <: AbstractNormalFormGame{1,Int} end
@@ -180,6 +191,52 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
         @test payoff_profile_array(tp) isa Array{SVector{3,Float64},3}
         @test payoff_profile_array(tp) == payoff_profile_array(g3)
         @test_throws MethodError delete_action(mp, 1, 2)
+    end
+
+    @testset "_payoff_vector" begin
+        tp = ThreePlayerRules()
+        g3 = NormalFormGame(tp)
+        xs = ([0.5, 0.5], [0.2, 0.3, 0.5], [0.25, 0.25, 0.25, 0.25])
+        for i in 1:3
+            player = g3.players[i]
+            for a in CartesianIndices(nums_actions(tp))
+                opp = GameTheory.get_opponents_actions(Tuple(a), i)
+                @test @inferred(_payoff_vector(tp, i, opp)) ==
+                    payoff_vector(player, opp)
+                @test _payoff_vector(g3, i, opp) == payoff_vector(player, opp)
+            end
+            opp = GameTheory.get_opponents_actions(xs, i)
+            @test _payoff_vector(tp, i, opp) ≈ payoff_vector(player, opp)
+            @test _payoff_vector(g3, i, opp) == payoff_vector(player, opp)
+        end
+        x = [0.3, 0.7]
+        for i in 1:2
+            player = g_mp.players[i]
+            for a in 1:2
+                @test _payoff_vector(mp, i, (a,)) == payoff_vector(player, a)
+                @test _payoff_vector(g_mp, i, (a,)) == payoff_vector(player, a)
+            end
+            @test _payoff_vector(mp, i, (x,)) ≈ payoff_vector(player, x)
+            @test _payoff_vector(g_mp, i, (x,)) == payoff_vector(player, x)
+        end
+        one = OnePlayerRules()
+        @test _payoff_vector(one, 1, ()) == [1, 4, 9]
+        @test _payoff_vector(NormalFormGame(one), 1, ()) == [1, 4, 9]
+    end
+
+    @testset "no tabulation in the functions on the interface" begin
+        g = CountingRules()
+        @test !is_nash(g, (1, 2))
+        @test g.calls[] == 2 + 2             # n_i calls per player
+        g = CountingRules()
+        @test is_nash(g, ([0.5, 0.5], [0.5, 0.5]))
+        @test g.calls[] == 2 * 2             # one pass over the profiles
+        g = CountingRules()
+        @test _payoff_vector(g, 1, (2,)) == [-1, 1]
+        @test g.calls[] == 2
+        g = CountingRules()
+        @test g[2, 1] == [-1, 1]
+        @test g.calls[] == 1
     end
 
     @testset "Nash equilibrium solvers" begin
