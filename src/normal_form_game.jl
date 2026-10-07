@@ -373,10 +373,28 @@ Return all the best response actions to `opponents_actions`.
 function best_responses(player::Player,
                         opponents_actions::Union{Action,ActionProfile,Nothing};
                         tol::Real=1e-8)
-    payoffs = payoff_vector(player, opponents_actions)
-    payoff_max = maximum(payoffs)
-    best_responses = findall(x -> x >= payoff_max - tol, payoffs)
-    return best_responses
+    return _best_responses(payoff_vector(player, opponents_actions), tol)
+end
+
+# Indices of the entries of `payoff_vec` within `tol` of its maximum
+function _best_responses(payoff_vec, tol)
+    payoff_max = maximum(payoff_vec)
+    return findall(x -> x >= payoff_max - tol, payoff_vec)
+end
+
+# A best response given the payoff vector: the index of its maximum with
+# `tie_breaking=:smallest`, one of `_best_responses` at random with `:random`
+function _best_response(rng::AbstractRNG, payoff_vec, tie_breaking::Symbol,
+                        tol)
+    if tie_breaking == :smallest
+        return argmax(payoff_vec)
+    elseif tie_breaking == :random
+        return rand(rng, _best_responses(payoff_vec, tol))
+    else
+        throw(ArgumentError(
+            "tie_breaking must be one of `:smallest` or `:random`"
+        ))
+    end
 end
 
 """
@@ -404,17 +422,8 @@ function best_response(rng::AbstractRNG, player::Player,
                        opponents_actions::Union{Action,ActionProfile,Nothing};
                        tie_breaking::Symbol=:smallest,
                        tol::Real=1e-8)
-    if tie_breaking == :smallest
-        payoffs = payoff_vector(player, opponents_actions)
-        return argmax(payoffs)
-    elseif tie_breaking == :random
-        brs = best_responses(player, opponents_actions; tol=tol)
-        return rand(rng, brs)
-    else
-        throw(ArgumentError(
-            "tie_breaking must be one of `:smallest` or `:random`"
-        ))
-    end
+    return _best_response(rng, payoff_vector(player, opponents_actions),
+                          tie_breaking, tol)
 end
 
 best_response(player::Player,
@@ -1025,6 +1034,58 @@ is_nash(g::NormalFormGame{1}, action::Action; tol::Real=1e-8) =
 is_nash(g::NormalFormGame{1}, action_profile::ActionProfile;
         tol::Real=1e-8) = is_nash(g, action_profile..., tol=tol)
 
+# _payoff_vector: the payoff vector of one player of an AbstractNormalFormGame,
+# for `_payoff_vectors` below and the algorithms that run on the interface.
+# The opponents' actions are always given as a tuple, in the order
+# (i+1, ..., i+N-1) mod N, which is empty for N = 1; a best response to the
+# vector is then computed by `_best_responses` or `_best_response` above, or
+# `_is_best_response` below, as for a `Player`
+
+# Full action profile with `a_i` as player `i`'s action and `opp[k]` as the
+# action of player `i+k` (mod N), `k = 1, ..., N-1`
+_insert_own_action(::Val{N}, i, a_i, opp) where {N} =
+    ntuple(k -> k == i ? a_i : opp[mod1(k - i, N)], Val(N))
+
+# Given the opponents' pure actions; `n_i` calls to `_payoff_profile`
+function _payoff_vector(g::AbstractNormalFormGame{N,T}, i,
+                        opp::NTuple{M,<:Integer}) where {N,T,M}
+    n_i = nums_actions(g)[i]
+    return T[_payoff_profile(g, _insert_own_action(Val(N), i, a_i, opp))[i]
+             for a_i in 1:n_i]
+end
+
+# Given the opponents' mixed actions: the expected payoffs, by one pass over
+# the opponents' action profiles of positive probability
+function _payoff_vector(g::AbstractNormalFormGame{N,T}, i,
+                        opp::NTuple{M,MixedAction{S}}) where {N,T,M,S}
+    na = nums_actions(g)
+    R = promote_type(T, S)
+    v = zeros(R, na[i])
+    na_opp = ntuple(k -> na[mod1(i + k, N)], Val(M))
+    for b in CartesianIndices(na_opp)
+        w = prod(k -> opp[k][b[k]], 1:M; init=one(S))
+        iszero(w) && continue
+        for a_i in 1:na[i]
+            u = _payoff_profile(g, _insert_own_action(Val(N), i, a_i, Tuple(b)))
+            v[a_i] += w * u[i]
+        end
+    end
+    return v
+end
+
+# To resolve the ambiguity between the pure and mixed methods; the case N = 1
+_payoff_vector(g::AbstractNormalFormGame{N,T}, i, ::Tuple{}) where {N,T} =
+    T[_payoff_profile(g, (a_i,))[i] for a_i in 1:nums_actions(g)[i]]
+
+# For a NormalFormGame, the lookup in the player's payoff array
+_payoff_vector(g::NormalFormGame, i, opp::NTuple{M,<:Integer}) where {M} =
+    payoff_vector(g.players[i], opp)
+_payoff_vector(g::NormalFormGame, i,
+               opp::NTuple{M,MixedAction{S}}) where {M,S} =
+    payoff_vector(g.players[i], opp)
+_payoff_vector(g::NormalFormGame, i, ::Tuple{}) =
+    payoff_vector(g.players[i], nothing)
+
 # To resolve the ambiguity between the pure and mixed profile methods
 _payoff_vectors(::AbstractNormalFormGame{N,T}, ::Tuple{}) where {N,T} =
     throw(ArgumentError("action profile must not be empty"))
@@ -1032,14 +1093,8 @@ _payoff_vectors(::AbstractNormalFormGame{N,T}, ::Tuple{}) where {N,T} =
 # Payoff vectors of the N players, one entry per own action, when the other
 # players play their pure actions in `a`; n_i calls to `payoff_profile` for
 # player i
-function _payoff_vectors(g::AbstractNormalFormGame{N,T},
-                         a::PureActionProfile) where {N,T}
-    na = nums_actions(g)
-    return ntuple(Val(N)) do i
-        T[_payoff_profile(g, ntuple(k -> k == i ? a_i : a[k], Val(N)))[i]
-          for a_i in 1:na[i]]
-    end
-end
+_payoff_vectors(g::AbstractNormalFormGame{N,T}, a::PureActionProfile) where {N,T} =
+    ntuple(i -> _payoff_vector(g, i, get_opponents_actions(a, i)), Val(N))
 
 # Expected payoff vectors of the N players when the other players play their
 # mixed actions in `x`; one pass over the action profiles, one call to
