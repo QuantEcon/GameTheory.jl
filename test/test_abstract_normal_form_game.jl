@@ -94,6 +94,27 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
         @test is_nash(mt, x) == is_nash(g_mt, x)
     end
 
+    @testset "indexing and summary" begin
+        @test @inferred(mp[1, 2]) === SVector(-1, 1)
+        @test mp[1, 2] == g_mp[1, 2]
+        @test mp[CartesianIndex(2, 1)] == g_mp[CartesianIndex(2, 1)]
+        tp = ThreePlayerRules()
+        g3 = NormalFormGame(tp)
+        for a in CartesianIndices(nums_actions(tp))
+            @test tp[Tuple(a)...] == g3[a]
+        end
+        @test @inferred(tp[2, 3, 4]) isa SVector{3,Float64}
+        @test @inferred(OnePlayerRules()[2]) === 4
+        @test NormalFormGame(OnePlayerRules())[2] === 4
+        @test_throws DimensionMismatch mp[1]
+        @test_throws DimensionMismatch mp[1, 2, 3]
+        @test_throws DimensionMismatch tp[1, 2]
+        @test summary(mp) == "2×2 MatchingPenniesRules"
+        @test summary(tp) == "2×3×4 ThreePlayerRules"
+        @test summary(OnePlayerRules()) == "3-element OnePlayerRules"
+        @test summary(g_mp) == "2×2 NormalFormGame{2, Int64}"
+    end
+
     @testset "tabulation" begin
         @test num_players(mp) == 2
         g = @inferred NormalFormGame(mp)
