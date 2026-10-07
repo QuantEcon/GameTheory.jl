@@ -907,17 +907,17 @@ function Base.getindex(g::NormalFormGame{1}, index::Integer)
 end
 
 function Base.setindex!(g::NormalFormGame{N},
-                        payoff_profile::AbstractVector{<:Real},
+                        v::AbstractVector{<:Real},
                         index::Integer...) where N
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
-    length(payoff_profile) != N &&
+    length(v) != N &&
         throw(DimensionMismatch("assignment must be of $N-array"))
 
     for i in 1:N
-        g.players[i].payoff_array[_rotate(index, i)...] = payoff_profile[i]
+        g.players[i].payoff_array[_rotate(index, i)...] = v[i]
     end
-    return payoff_profile
+    return v
 end
 
 # Trivial game with 1 player
@@ -929,8 +929,8 @@ function Base.setindex!(g::NormalFormGame{1},
 end
 
 Base.setindex!(g::NormalFormGame{N},
-               payoff_profile::NTuple{N}, index::Integer...) where N =
-    setindex!(g, collect(payoff_profile), index...)
+               v::NTuple{N}, index::Integer...) where N =
+    setindex!(g, collect(v), index...)
 
 # Indexing with CartesianIndices
 Base.getindex(g::NormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
@@ -1136,11 +1136,11 @@ for (f, op) = ((:is_pareto_efficient, pareto_inferior_to),
                (:is_pareto_dominant, not_pareto_superior_to))
     @eval function $(f)(g::AbstractNormalFormGame,
                         action_profile::PureActionProfile)
-        payoff_profile0 = _payoff_profile(g, action_profile)
+        u0 = _payoff_profile(g, action_profile)
         for profile in CartesianIndices(nums_actions(g))
             if CartesianIndex(action_profile) != profile
-                payoff_profile = _payoff_profile(g, Tuple(profile))
-                if ($(op)(payoff_profile0, payoff_profile))
+                u = _payoff_profile(g, Tuple(profile))
+                if ($(op)(u0, u))
                     return false
                 end
             end
