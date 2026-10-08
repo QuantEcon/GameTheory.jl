@@ -133,9 +133,9 @@ where the layout `L` matters; no copy is made.
     PayoffVector{L}([T], g)
 
 Construct a `PayoffVector` of layout `L` (and of eltype `T` if specified) from
-a game `g`, a `NormalFormGame` or any `AbstractNormalFormGame` (a game defined
-by its rules is tabulated first). `GAMPayoffVector([T], g)` and
-`NFGPayoffVector([T], g)` are the versions for the two layouts.
+a game `g`, a `NormalFormGame` or any `AbstractNormalFormGame`.
+`GAMPayoffVector([T], g)` and `NFGPayoffVector([T], g)` are the versions for
+the two layouts.
 
 # Examples
 
@@ -179,11 +179,29 @@ function PayoffVector{L}(
     return p
 end
 
-# A game defined by its rules is tabulated first
-PayoffVector{L}(
+# A game defined by its rules: one call to `payoff_profile` per action
+# profile, written straight into the players' blocks, with no NormalFormGame
+# in between. `_player_block` handles the layout
+function PayoffVector{L}(
     ::Type{T}, g::AbstractNormalFormGame{N}
-) where {L<:PayoffLayout,N,T<:Real} =
-    PayoffVector{L}(T, convert(NormalFormGame, g))
+) where {L<:PayoffLayout,N,T<:Real}
+    na = nums_actions(g)
+    payoffs = Vector{T}(undef, prod(na)*N)
+    p = PayoffVector{L,N,T}(na, payoffs)
+    blocks = ntuple(i -> _player_block(p, i), Val(N))
+
+    # `a` ranges over the indices of every block and `i` over 1:N, so the
+    # stores are in bounds; checking them through the views costs more than
+    # the stores themselves
+    for a in CartesianIndices(na)
+        u = _payoff_profile(g, Tuple(a))
+        for i in 1:N
+            @inbounds blocks[i][a] = u[i]
+        end
+    end
+
+    return p
+end
 
 PayoffVector{L}(
     g::AbstractNormalFormGame{N,T}
