@@ -56,6 +56,9 @@ Helper constructor that builds a repeated game for two players.
 RepeatedGame(p1::Player, p2::Player, delta::TD) where TD =
     RepeatedGame(NormalFormGame((p1, p2)), delta)
 
+RepeatedGame(g::AbstractNormalFormGame, delta) =
+    RepeatedGame(convert(NormalFormGame, g), delta)
+
 """
     unpack(rpd)
 

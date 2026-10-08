@@ -40,6 +40,9 @@ Construct a `LogitDynamics` instance.
 
 - `::LogitDynamics` : The Logit-Dynamics model.
 """
+LogitDynamics(g::AbstractNormalFormGame, beta::Real) =
+    LogitDynamics(convert(NormalFormGame, g), beta)
+
 function LogitDynamics(g::NormalFormGame{N,T}, beta::S) where {N,T<:Real,S<:Real}
     TC = typeof(exp(zero(T) * beta))
     choice_probs = Vector{Array{TC,N}}(undef, N)
