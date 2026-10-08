@@ -1,4 +1,5 @@
 using Random
+using HomotopyContinuation: TrackerOptions
 using GameTheory: HCSolver
 
 @testset "Testing Support Enumeration" begin
@@ -145,6 +146,33 @@ using GameTheory: HCSolver
             sols = @inferred GameTheory._support_solutions(HCSolver(), g,
                                                           supps, [1, 2, 3])
             @test sols isa Vector{Vector{Float64}}
+
+            @testset "retry on failed solution paths" begin
+                # Seeds with which one of the two solution paths of the
+                # full-support system fails to be tracked (with
+                # HomotopyContinuation v2.22.4), so that the totally mixed
+                # equilibrium is missed unless the solve is retried; every
+                # path leads to an equilibrium in this game, so a warning is
+                # issued iff one is missed
+                for seed in UInt32[9366, 22425, 23167]
+                    logs, NEs_noretry = Test.collect_test_logs() do
+                        support_enumeration(g, HCSolver(seed=seed,
+                                                        max_retries=0))
+                    end
+                    @test !isempty(logs) == (length(NEs_noretry) < length(NEs))
+                    NEs_computed =
+                        @test_logs support_enumeration(g, HCSolver(seed=seed))
+                    @test isapprox_vecs_act_profs(NEs_computed, NEs)
+                end
+
+                # With at most one step per path, every attempt fails: a
+                # warning is issued and only the pure equilibria are found
+                solver = HCSolver(tracker_options=TrackerOptions(max_steps=1))
+                NEs_computed = @test_logs((:warn, r"solution paths failed"),
+                                          match_mode=:any,
+                                          support_enumeration(g, solver))
+                @test isapprox_vecs_act_profs(NEs_computed, NEs[1:4])
+            end
         end
 
         @testset "2x2x2 game from Nau, Canovas, and Hansen" begin

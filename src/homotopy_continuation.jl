@@ -159,7 +159,7 @@ end
 # HCSolver for support_enumeration
 
 """
-    HCSolver(; options...)
+    HCSolver(; max_retries=2, options...)
 
 Solver for the systems of polynomial equations in `support_enumeration` for
 N-player games, using `HomotopyContinuation.solve` with the polyhedral
@@ -167,6 +167,10 @@ homotopy.
 
 # Arguments
 
+- `max_retries::Integer=2`: Maximal number of times a system is solved again,
+  with fresh random numbers, when some solution paths fail to be tracked,
+  which happens with a small probability; a warning is issued if paths still
+  fail.
 - `options...`: Optional arguments to pass to `HomotopyContinuation.solve`.
   For example, the option `seed::UInt32` can set the random seed used during
   the computations; by default, the global random number generator is used
@@ -202,12 +206,13 @@ julia> length(NEs)
 """
 struct HCSolver{O<:NamedTuple} <: AbstractSupportEnumerationSolver
     options::O
+    max_retries::Int
 end
 
-function HCSolver(; options...)
+function HCSolver(; max_retries::Integer=2, options...)
     defaults = (compile=false, show_progress=false, threading=false,
                 seed=nothing, catch_interrupt=false)
-    return HCSolver(merge(defaults, NamedTuple(options)))
+    return HCSolver(merge(defaults, NamedTuple(options)), max_retries)
 end
 
 """
@@ -218,7 +223,8 @@ support profile `supps` (see `_support_equations`), computed by
 `HomotopyContinuation.solve`. An empty vector is returned if the start system
 cannot be computed because the system has zero mixed volume or an identically
 zero equation, in which case it has no isolated solution with all the free
-probabilities nonzero.
+probabilities nonzero. The solve is retried if some solution paths fail; see
+`HCSolver`.
 """
 function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
                             supps, mixing_players) where N
@@ -234,7 +240,7 @@ function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
     F = System(eqs,
                variables=reduce(vcat, (vars[i] for i in mixing_players)))
     res = try
-        HomotopyContinuation.solve(F; solver.options...)::HomotopyContinuation.Result
+        _hc_solve(F, solver.options)
     catch e
         # "Cannot compute a start system" is thrown if there is no mixed
         # cell, but also if their computation fails: confirm the former
@@ -243,5 +249,23 @@ function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
             HomotopyContinuation.mixed_volume(F) == 0 || rethrow()
         return Vector{Float64}[]
     end
+
+    # Tracking a path fails with a small probability, which would lose the
+    # solution at its end: solve again with fresh random numbers, shifting an
+    # explicit seed, with which the same failure would be reproduced
+    for attempt in 1:solver.max_retries
+        nfailed(res) == 0 && break
+        seed = solver.options.seed
+        options = seed === nothing ? solver.options :
+                  merge(solver.options, (seed=UInt32(seed) + UInt32(attempt),))
+        res = _hc_solve(F, options)
+    end
+    nfailed(res) > 0 && @warn "$(nfailed(res)) of $(ntracked(res)) solution " *
+        "paths failed for the support profile $supps; Nash equilibria with " *
+        "this support profile may be missed"
+
     return real_solutions(res, only_nonsingular=true)
 end
+
+_hc_solve(F::System, options::NamedTuple) =
+    HomotopyContinuation.solve(F; options...)::HomotopyContinuation.Result
