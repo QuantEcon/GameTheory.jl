@@ -164,9 +164,9 @@ p.payoffs = [1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12]
 function PayoffVector{L}(
     ::Type{T}, g::NormalFormGame{N}
 ) where {L<:PayoffLayout,N,T<:Real}
-    nums_actions = g.nums_actions
-    payoffs = Vector{T}(undef, prod(nums_actions)*N)
-    p = PayoffVector{L,N,T}(nums_actions, payoffs)
+    na = g.nums_actions
+    payoffs = Vector{T}(undef, prod(na)*N)
+    p = PayoffVector{L,N,T}(na, payoffs)
 
     ntuple(Val(N)) do i
         copyto!(
