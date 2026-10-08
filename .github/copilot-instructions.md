@@ -54,7 +54,7 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 - `homotopy_continuation.jl`: Nash equilibria using polynomial homotopy continuation
 - `repeated_game.jl`: Tools for repeated games analysis
 - `random.jl`: Random game generation utilities
-- `game_converters.jl`: Reader and writer for the GameTracer `.gam` format
+- `game_converters.jl`: Readers and writers for the GameTracer `.gam` and Gambit `.nfg` formats
 - `util.jl`: General utility functions
 
 ### Learning Algorithms (`src/`)
