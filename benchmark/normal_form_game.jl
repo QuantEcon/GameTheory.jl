@@ -6,10 +6,12 @@ action profile and normalizes the returned value to an `SVector` in
 `_payoff_profile`. The cases are 3-player games with 30 actions each, about
 2.7 * 10^4 profiles, whose `payoff_profile` returns a tuple of `Float64`s, a
 tuple of mixed element types, or a `Vector`. The operations are the tabulation
-into a `NormalFormGame`, `payoff_profile_array`, and `is_nash` with a mixed
-action profile, each a single pass over the profiles.
+into a `NormalFormGame` and into a `PayoffVector` of either layout,
+`payoff_profile_array`, and `is_nash` with a mixed action profile, each a
+single pass over the profiles.
 =#
 using GameTheory
+using GameTheory: GAMPayoffVector, NFGPayoffVector
 using BenchmarkTools
 
 #= Games =#
@@ -35,7 +37,8 @@ GameTheory.payoff_profile(::VectorGame, a) =
 
 suite = BenchmarkGroup()
 
-for op in ("NormalFormGame", "payoff_profile_array", "is_nash_mixed")
+for op in ("NormalFormGame", "GAMPayoffVector", "NFGPayoffVector",
+           "payoff_profile_array", "is_nash_mixed")
     suite[op] = BenchmarkGroup()
 end
 
@@ -44,6 +47,8 @@ let x = ntuple(_ -> fill(1/30, 30), 3)
                       ("mixed_tuple", MixedTupleGame()),
                       ("vector", VectorGame()))
         suite["NormalFormGame"][name] = @benchmarkable NormalFormGame($g)
+        suite["GAMPayoffVector"][name] = @benchmarkable GAMPayoffVector($g)
+        suite["NFGPayoffVector"][name] = @benchmarkable NFGPayoffVector($g)
         suite["payoff_profile_array"][name] =
             @benchmarkable payoff_profile_array($g)
         suite["is_nash_mixed"][name] = @benchmarkable is_nash($g, $x)

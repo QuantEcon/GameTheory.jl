@@ -239,6 +239,19 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
         @test g.calls[] == 1
     end
 
+    @testset "PayoffVector from the interface" begin
+        tp = ThreePlayerRules()
+        g3 = NormalFormGame(tp)
+        for PV in (GameTheory.GAMPayoffVector, GameTheory.NFGPayoffVector)
+            p = @inferred PV(tp)
+            @test p.nums_actions == (2, 3, 4)
+            @test p.payoffs == PV(g3).payoffs
+            @test PV(MixedTupleRules()).payoffs == PV(g3).payoffs
+            @test PV(Float32, tp).payoffs == PV(Float32, g3).payoffs
+            @test_throws DimensionMismatch PV(BadRules())
+        end
+    end
+
     @testset "Nash equilibrium solvers" begin
         @test pure_nash(mp) == pure_nash(g_mp)
         @test pure_nash(ThreePlayerRules()) ==
