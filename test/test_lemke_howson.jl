@@ -1,3 +1,5 @@
+using GameTheory: _initialize_tableaux!, _lemke_howson_tbl!
+
 @testset "lemke_howson.jl" begin
 
     function test_lh_case(case)
@@ -112,6 +114,60 @@
                                  capping = 1, full_output=Val(true))
         @test res.num_iter == max_iter
         @test res.init == init_pivot-1
+    end
+
+    @testset "Numerical breakdown" begin
+        # With payoffs of order 1e15 or more, the ratios in the
+        # lexico-minimum ratio test all tie within the (absolute)
+        # `tol_ratio_diff`, and the tie breaking fails. The routine must
+        # then report non-convergence rather than return a wrong
+        # "equilibrium" with `converged = true`
+        for scale in (1e15, 1e16)
+            A = scale * [3. 1.; 1. 3.]
+            B = scale * [1. 3.; 3. 1.]
+            g = NormalFormGame(Player(A), Player(B))
+            NE, res = lemke_howson(g, full_output=Val(true))
+            @test !res.converged
+            # Without capping, no other initial pivot is tried on breakdown
+            @test res.init == 1
+            @test res.num_iter == 0
+        end
+
+        # No positive entry in the column of the initial pivot: the
+        # routine must stop and report non-convergence rather than pivot
+        # on a meaningless row
+        A = [3 3; 2 5; 0 6]
+        B = [3 2 3; 2 6 1]
+        m, n = size(A)
+        tableaux = (Matrix{Float64}(undef, n, m+n+1),
+                    Matrix{Float64}(undef, m, m+n+1))
+        bases = (Vector{Int}(undef, n), Vector{Int}(undef, m))
+        _initialize_tableaux!((A, B), tableaux, bases)
+        col_bufs = (Vector{Float64}(undef, n), Vector{Float64}(undef, m))
+        argmins = Vector{Int}(undef, max(m, n))
+        init_pivot = 1
+        tableaux[1][:, init_pivot] .= 0
+        converged, num_iter, breakdown = @inferred(
+            _lemke_howson_tbl!(tableaux, bases, init_pivot, 10,
+                               col_bufs, argmins)
+        )
+        @test !converged
+        @test num_iter == 0
+        @test breakdown
+
+        # With capping enabled, another initial pivot is tried after the
+        # breakdown, and the routine can recover
+        g = NormalFormGame(Player([3. 1.; 1. 3.]),
+                           Player([1e15 1.; 1e15 1e15]))
+        NE, res = lemke_howson(g; max_iter=100, full_output=Val(true))
+        @test !res.converged
+        @test res.init == 1
+        @test res.num_iter == 0
+        NE, res = lemke_howson(g; max_iter=100, capping=10,
+                               full_output=Val(true))
+        @test res.converged
+        @test res.init == 2
+        @test NE == ([0., 1.], [0., 1.])
     end
 
     @testset "Invalid init_pivot" begin

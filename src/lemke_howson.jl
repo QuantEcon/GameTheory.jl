@@ -311,8 +311,7 @@ Codenotti et al.
 
 # Returns
 
-- `converged::Bool`: Whether the pivoting terminated before `max_iter` was
-  reached.
+- `converged::Bool`: Whether the routine has converged.
 - `total_num_iter::Int`: Total number of pivoting steps performed across runs.
 - `init_pivot_curr::Int`: The initial pivot used in the final run.
 """
@@ -333,13 +332,17 @@ function _lemke_howson_capping!(payoff_matrices::NTuple{2,Matrix},
         capping_curr = min(max_iter_curr, capping)
 
         _initialize_tableaux!(payoff_matrices, tableaux, bases)
-        converged, num_iter =
+        converged, num_iter, breakdown =
             _lemke_howson_tbl!(tableaux, bases, init_pivot_curr, capping_curr,
                                col_bufs, argmins)
 
         total_num_iter += num_iter
 
         if converged || total_num_iter >= max_iter
+            return converged, total_num_iter, init_pivot_curr
+        end
+        if breakdown && capping >= max_iter
+            # Capping not enabled: do not try another initial pivot
             return converged, total_num_iter, init_pivot_curr
         end
 
@@ -351,7 +354,7 @@ function _lemke_howson_capping!(payoff_matrices::NTuple{2,Matrix},
     end
 
     _initialize_tableaux!(payoff_matrices, tableaux, bases)
-    converged, num_iter =
+    converged, num_iter, _ =
         _lemke_howson_tbl!(tableaux, bases, init_pivot_curr, max_iter_curr,
                            col_bufs, argmins)
     total_num_iter += num_iter
@@ -494,9 +497,11 @@ Perform the complementary pivoting. Modify `tableaux` and `bases` in place.
 
 # Returns
 
-- `converged::Bool`: Whether the pivoting terminated before `max_iter` was
-  reached.
+- `converged::Bool`: Whether the routine has converged.
 - `num_iter::Int`: Number of pivoting steps performed.
+- `breakdown::Bool`: Whether the pivoting stopped because of a numerical
+  breakdown (no positive entry in the pivot column, or lexicographic tie not
+  broken, neither of which can happen in exact arithmetic).
 
 # Examples
 
@@ -561,13 +566,23 @@ function _lemke_howson_tbl!(tableaux::NTuple{2,Matrix{T}},
     slack_starts = (m+1, 1)
 
     converged = false
+    breakdown = false
     num_iter  = 0
 
     while true
         @inbounds for pl in pls
             # Determine the leaving variable
-            _, row_min = _lex_min_ratio_test!(tableaux[pl], pivot,
-                                              slack_starts[pl], argmins)
+            found, row_min, resolved = _lex_min_ratio_test!(
+                tableaux[pl], pivot, slack_starts[pl], argmins
+            )
+            if !(found && resolved)
+                # Numerical breakdown: no positive entry in the pivot
+                # column, or lexicographic tie not broken, both
+                # impossible in exact arithmetic; stop with
+                # `converged = false`
+                breakdown = true
+                break
+            end
 
             # Pivoting step: modify tableau in place
             _pivoting!(tableaux[pl], pivot, row_min, col_bufs[pl])
@@ -586,12 +601,12 @@ function _lemke_howson_tbl!(tableaux::NTuple{2,Matrix{T}},
             end
         end
 
-        if converged || num_iter >= max_iter
+        if converged || num_iter >= max_iter || breakdown
             break
         end
     end
 
-    return converged, num_iter
+    return converged, num_iter, breakdown
 end
 
 
