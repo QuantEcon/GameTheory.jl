@@ -54,7 +54,7 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 - `homotopy_continuation.jl`: Nash equilibria using polynomial homotopy continuation (`hc_solve`), and `HCSolver`, the default solver for N-player `support_enumeration` (so this file is included after `support_enumeration.jl`)
 - `repeated_game.jl`: Tools for repeated games analysis
 - `random.jl`: Random game generation utilities
-- `game_converters.jl`: Reader and writer for the GameTracer `.gam` format
+- `game_converters.jl`: Readers and writers for the GameTracer `.gam` and Gambit `.nfg` formats
 - `util.jl`: General utility functions
 
 ### Learning Algorithms (`src/`)

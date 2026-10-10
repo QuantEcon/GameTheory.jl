@@ -1,31 +1,63 @@
-# GAMPayoffVector #
+# PayoffVector #
 
 """
-    GAMPayoffVector{N,T}
+    PayoffLayout
 
-Intermediate representation that stores payoffs in a single flat vector.
+Abstract supertype of the singleton types that specify the ordering of the
+payoff values in a [`PayoffVector`](@ref).
+"""
+abstract type PayoffLayout end
 
-Payoff values are ordered as in the GameTracer .gam format:
-1. Player-major blocks: player 1, ..., player N.
-2. Within each block, action profiles are ordered with player 1 varying fastest,
-   then player 2, ..., player N (i.e., Fortran/column-major order).
+"""
+    PlayerMajor <: PayoffLayout
+
+Player-major ordering, as in the GameTracer .gam format: all the payoffs of
+player 1 come first, then those of player 2, and so on. Within each block,
+action profiles are ordered with player 1 varying fastest, then player 2, ...,
+player N (i.e., column-major order).
+"""
+struct PlayerMajor <: PayoffLayout end
+
+"""
+    ProfileMajor <: PayoffLayout
+
+Profile-major ordering, as in the Gambit .nfg format: the payoffs of players
+1, ..., N at the first action profile come first, then those at the second
+action profile, and so on. Action profiles are ordered with player 1 varying
+fastest, then player 2, ..., player N (i.e., column-major order).
+"""
+struct ProfileMajor <: PayoffLayout end
+
+"""
+    PayoffVector{L,N,T}
+
+Intermediate representation that stores the payoffs of an `N`-player
+game in a single flat vector of eltype `T`, ordered according to the layout
+`L<:PayoffLayout`. See [`GAMPayoffVector`](@ref) and
+[`NFGPayoffVector`](@ref) for the two layouts available.
+
+Viewed as a `prod(nums_actions) × N` matrix whose `[a, i]` entry is the payoff
+to player `i` at the `a`-th action profile in column-major order, `payoffs` is
+that matrix vectorized in column-major order for `PlayerMajor`, and in
+row-major order for `ProfileMajor`.
 
 # Fields
 
 - `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for each
   player.
-- `payoffs::Vector{T}` : Vector storing payoffs in .gam order.
+- `payoffs::Vector{T}` : Vector storing payoffs in the order specified by `L`.
 """
-struct GAMPayoffVector{N,T<:Real}
+struct PayoffVector{L<:PayoffLayout,N,T<:Real}
     nums_actions::NTuple{N,Int}
     payoffs::Vector{T}
 
-    function GAMPayoffVector{N,T}(
+    function PayoffVector{L,N,T}(
         nums_actions::NTuple{N,Int}, payoffs::Vector{T}
-    ) where {N,T<:Real}
+    ) where {L<:PayoffLayout,N,T<:Real}
+        N > 0 || throw(ArgumentError("nums_actions must be non-empty"))
         any(n -> n <= 0, nums_actions) &&
             throw(ArgumentError("all nums_actions must be positive"))
-        expected = prod(nums_actions) * N
+        expected = prod(big, nums_actions) * N  # no overflow
         length(payoffs) == expected || throw(ArgumentError(
             "payoffs length mismatch: expected $expected, got $(length(payoffs))"
         ))
@@ -33,19 +65,45 @@ struct GAMPayoffVector{N,T<:Real}
     end
 end
 
-num_players(::GAMPayoffVector{N}) where {N} = N
+# NOTE: The parameter bounds of an alias must be identical to those of
+# `PayoffVector` (`T<:Real`), so that e.g. `GAMPayoffVector === PayoffVector{PlayerMajor}`
+# holds and the `PayoffVector{L}(...)` constructors below apply to the alias.
 
-GAMPayoffVector(
+"""
+    GAMPayoffVector{N,T}
+
+Alias for `PayoffVector{PlayerMajor,N,T}`: payoff values are ordered as in the
+GameTracer .gam format:
+1. Player-major blocks: player 1, ..., player N.
+2. Within each block, action profiles are ordered with player 1 varying fastest,
+   then player 2, ..., player N (i.e., column-major order).
+"""
+const GAMPayoffVector{N,T<:Real} = PayoffVector{PlayerMajor,N,T}
+
+"""
+    NFGPayoffVector{N,T}
+
+Alias for `PayoffVector{ProfileMajor,N,T}`: payoff values are ordered as in the
+Gambit .nfg format:
+1. Profile-major blocks: action profiles are ordered with player 1 varying
+   fastest, then player 2, ..., player N (i.e., column-major order).
+2. Within each block, the payoffs to player 1, ..., player N.
+"""
+const NFGPayoffVector{N,T<:Real} = PayoffVector{ProfileMajor,N,T}
+
+num_players(::PayoffVector{L,N}) where {L,N} = N
+
+PayoffVector{L}(
     nums_actions::NTuple{N,Int}, payoffs::Vector{T}
-) where {N,T<:Real} = GAMPayoffVector{N,T}(nums_actions, payoffs)
+) where {L<:PayoffLayout,N,T<:Real} = PayoffVector{L,N,T}(nums_actions, payoffs)
 
-GAMPayoffVector(
+PayoffVector{L}(
     ::Type{T}, nums_actions::NTuple{N,Int}, payoffs::AbstractVector
-) where {N,T<:Real} =
-    GAMPayoffVector{N,T}(nums_actions, convert(Vector{T}, payoffs))
-GAMPayoffVector(
+) where {L<:PayoffLayout,N,T<:Real} =
+    PayoffVector{L,N,T}(nums_actions, convert(Vector{T}, payoffs))
+PayoffVector{L}(
     nums_actions::NTuple{N,Int}, payoffs::AbstractVector{T}
-) where {N,T<:Real} = GAMPayoffVector(T, nums_actions, payoffs)
+) where {L<:PayoffLayout,N,T<:Real} = PayoffVector{L}(T, nums_actions, payoffs)
 
 
 # Forward: (i, i+1, ..., N, 1, ..., i-1)
@@ -56,12 +114,27 @@ GAMPayoffVector(
 @inline _perm_back(::Val{N}, ::Val{i}) where {N,i} =
     ntuple(k -> mod1(k - i + 1, N), Val(N))
 
+@inline _colons(::Val{N}) where {N} = ntuple(_ -> Colon(), Val(N))
 
 """
-    GAMPayoffVector([T], g)
+    _player_block(p, i)
 
-Construct a GAMPayoffVector (of eltype `T` if specified) from a NormalFormGame
-`g`.
+Return a view of `p.payoffs` holding the payoffs to player `i`, as an `N`-dim
+array indexed by the action profile `(a_1, ..., a_N)`. This is the only place
+where the layout `L` matters; no copy is made.
+"""
+@inline _player_block(p::PayoffVector{PlayerMajor,N}, i::Int) where {N} =
+    view(reshape(p.payoffs, (p.nums_actions..., N)), _colons(Val(N))..., i)
+@inline _player_block(p::PayoffVector{ProfileMajor,N}, i::Int) where {N} =
+    view(reshape(p.payoffs, (N, p.nums_actions...)), i, _colons(Val(N))...)
+
+
+"""
+    PayoffVector{L}([T], g)
+
+Construct a `PayoffVector` of layout `L` (and of eltype `T` if specified) from
+a NormalFormGame `g`. `GAMPayoffVector([T], g)` and `NFGPayoffVector([T], g)`
+are the versions for the two layouts.
 
 # Examples
 
@@ -80,31 +153,82 @@ julia> p = GameTheory.GAMPayoffVector(g);
 
 julia> @show p.payoffs;
 p.payoffs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+julia> p = GameTheory.NFGPayoffVector(g);
+
+julia> @show p.payoffs;
+p.payoffs = [1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12]
 ```
 """
-function GAMPayoffVector(::Type{T}, g::NormalFormGame{N}) where {N,T<:Real}
+function PayoffVector{L}(
+    ::Type{T}, g::NormalFormGame{N}
+) where {L<:PayoffLayout,N,T<:Real}
     nums_actions = g.nums_actions
-    na = prod(nums_actions)
-    payoffs = Vector{T}(undef, na*N)
+    payoffs = Vector{T}(undef, prod(nums_actions)*N)
+    p = PayoffVector{L,N,T}(nums_actions, payoffs)
 
     ntuple(Val(N)) do i
         copyto!(
-            reshape(view(payoffs, na*(i-1)+1:na*i), nums_actions),
+            _player_block(p, i),
             PermutedDimsArray(g.players[i].payoff_array, _perm_back(Val(N), Val(i)))
         )
         nothing
     end
 
-    return GAMPayoffVector{N,T}(nums_actions, payoffs)
+    return p
 end
 
-GAMPayoffVector(g::NormalFormGame{N,T}) where {N,T<:Real} = GAMPayoffVector(T, g)
+PayoffVector{L}(g::NormalFormGame{N,T}) where {L<:PayoffLayout,N,T<:Real} =
+    PayoffVector{L}(T, g)
+
+
+"""
+    PayoffVector{L}([T], p)
+
+Construct a `PayoffVector` of layout `L` (and of eltype `T` if specified) from
+a PayoffVector `p` of possibly another layout. The payoffs are copied.
+
+# Examples
+
+```julia
+julia> p = GameTheory.GAMPayoffVector((3, 2), collect(1:12));
+
+julia> p_nfg = GameTheory.NFGPayoffVector(p);
+
+julia> @show p_nfg.payoffs;
+p_nfg.payoffs = [1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12]
+```
+"""
+function PayoffVector{L}(
+    ::Type{T}, p::PayoffVector{L1,N}
+) where {L<:PayoffLayout,L1<:PayoffLayout,N,T<:Real}
+    payoffs = Vector{T}(undef, length(p.payoffs))
+    p_new = PayoffVector{L,N,T}(p.nums_actions, payoffs)
+
+    ntuple(Val(N)) do i
+        copyto!(_player_block(p_new, i), _player_block(p, i))
+        nothing
+    end
+
+    return p_new
+end
+
+PayoffVector{L}(p::PayoffVector{L1,N,T}) where {L<:PayoffLayout,L1<:PayoffLayout,N,T<:Real} =
+    PayoffVector{L}(T, p)
+PayoffVector{L,N,T}(
+    p::PayoffVector{L1,N}
+) where {L<:PayoffLayout,N,T<:Real,L1<:PayoffLayout} = PayoffVector{L}(T, p)
+
+# As for `Player` and `NormalFormGame`: `p` itself if it already has the
+# layout and eltype, a copy otherwise
+Base.convert(::Type{T}, p::PayoffVector) where {T<:PayoffVector} =
+    p isa T ? p : T(p)
 
 
 """
     NormalFormGame([T], p)
 
-Construct a NormalFormGame (of eltype `T` if specified) from a GAMPayoffVector
+Construct a NormalFormGame (of eltype `T` if specified) from a PayoffVector
 `p`.
 
 # Examples
@@ -124,33 +248,36 @@ julia> NormalFormGame(p)
  (1, 7)  (4, 10)
  (2, 8)  (5, 11)
  (3, 9)  (6, 12)
+
+julia> p = GameTheory.NFGPayoffVector(nums_actions, payoffs);
+
+julia> NormalFormGame(p)
+3×2 NormalFormGame{2, Int64}:
+ (1, 2)  (7, 8)
+ (3, 4)  (9, 10)
+ (5, 6)  (11, 12)
 ```
 """
-function NormalFormGame(::Type{T}, p::GAMPayoffVector{N}) where {N,T<:Real}
-    nums_actions = p.nums_actions
-    na = prod(nums_actions)
-
+function NormalFormGame(::Type{T}, p::PayoffVector{L,N}) where {L<:PayoffLayout,N,T<:Real}
     players = ntuple(Val(N)) do i
         Player(
             T,
-            PermutedDimsArray(
-                reshape(view(p.payoffs, na*(i-1)+1:na*i), nums_actions),
-                _perm_fwd(Val(N), Val(i))
-            )
+            PermutedDimsArray(_player_block(p, i), _perm_fwd(Val(N), Val(i)))
         )
     end
 
-    return NormalFormGame{N,T}(players, nums_actions)
+    return NormalFormGame{N,T}(players, p.nums_actions)
 end
 
-NormalFormGame(p::GAMPayoffVector{N,T}) where {N,T<:Real} = NormalFormGame(T, p)
+NormalFormGame(p::PayoffVector{L,N,T}) where {L<:PayoffLayout,N,T<:Real} =
+    NormalFormGame(T, p)
 
 
 # .gam reader and writer #
 
 # The GameTracer .gam format is a whitespace-separated text format: the number
 # of players N, the N numbers of actions, and then the prod(nums_actions) * N
-# payoffs in the order described in the docstring of `GAMPayoffVector`.
+# payoffs in the order described in the docstring of `PlayerMajor`.
 # Reference: B. Blum, D. Koller, and C. Shelton, "Game Theory: GameTracer",
 # http://dags.stanford.edu/Games/gametracer.html
 
@@ -167,7 +294,8 @@ the file at `path`, and return it as a `NormalFormGame`. See
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
   when every payoff in the input is written as an integer (`BigInt` if one
-  does not fit in `Int`) and `Float64` otherwise.
+  does not fit in `Int`), `Rational{BigInt}` when the others are written as
+  rationals `n/d`, and `Float64` otherwise.
 - `io::IO` : Input stream.
 - `path::AbstractString` : Path to the file to read.
 
@@ -218,7 +346,8 @@ reading from a stream or a file.
 
 - `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
   when every payoff in `text` is written as an integer (`BigInt` if one does
-  not fit in `Int`) and `Float64` otherwise.
+  not fit in `Int`), `Rational{BigInt}` when the others are written as
+  rationals `n/d`, and `Float64` otherwise.
 - `text::AbstractString` : String in the .gam format.
 
 # Returns
@@ -343,17 +472,18 @@ end
     write_gam(path, g)
 
 Write the game `g` to the stream `io` or the file at `path` in the GameTracer
-.gam format. Each payoff is written with `print`, so the element type of `g`
-must be an `Integer` or an `AbstractFloat` type; convert first otherwise, e.g.
-with `NormalFormGame(Float64, g)`. See [`gam_string`](@ref) for writing to a
-string.
+.gam format. Each payoff is written with `print`, a `Rational` as `n/d`; hence
+the element type of `g` must be an `Integer`, an `AbstractFloat`, or a
+`Rational` type; convert first otherwise, e.g. with
+`NormalFormGame(Float64, g)`. See [`gam_string`](@ref) for writing to a string.
 
 # Arguments
 
 - `io::IO` : Output stream.
 - `path::AbstractString` : Path to the file to write; an existing file is
   overwritten.
-- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write. A `PayoffVector` of
+  any layout is accepted; one that is not player-major is converted first.
 
 # Examples
 
@@ -383,13 +513,20 @@ function write_gam(io::IO, p::GAMPayoffVector{N,T}) where {N,T<:_PayoffNumber}
     return nothing
 end
 
+# Reached only for layouts other than PlayerMajor, which the method above
+# handles; the conversion copies the payoffs into player-major order
+write_gam(
+    io::IO, p::PayoffVector{L,N,T}
+) where {L<:PayoffLayout,N,T<:_PayoffNumber} = write_gam(io, GAMPayoffVector(p))
+
 write_gam(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
     write_gam(io, GAMPayoffVector(g))
 
 # Same bound on the element type as the methods for `io`, so that an
 # unsupported game is rejected before the file is opened
 write_gam(
-    path::AbstractString, g::Union{NormalFormGame{N,T},GAMPayoffVector{N,T}}
+    path::AbstractString,
+    g::Union{NormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
 ) where {N,T<:_PayoffNumber} = open(io -> write_gam(io, g), path, "w")
 
 """
@@ -400,7 +537,7 @@ Return the GameTracer .gam representation of the game `g` as a string. See
 
 # Arguments
 
-- `g::Union{NormalFormGame,GAMPayoffVector}` : Game to write.
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write.
 
 # Returns
 
@@ -421,4 +558,264 @@ julia> print(gam_string(g))
 3 0 2 1 4 5 2 6 1 3 0 4
 ```
 """
-gam_string(g::Union{NormalFormGame,GAMPayoffVector}) = sprint(write_gam, g)
+gam_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_gam, g)
+
+
+# .nfg reader and writer #
+
+# The Gambit .nfg format is a text format with a prologue (the keyword NFG,
+# the version, R or D, the title, the names of the players, the numbers of
+# actions or the names of the actions, and an optional comment) and a body in
+# one of two versions: the payoffs in the order described in the docstring of
+# `ProfileMajor`, or a list of outcomes (a name and N payoffs each) followed by
+# the index of the outcome at each action profile, 0 for zero payoffs.
+# Reference: The Gambit Project, "Game representation formats",
+# https://gambitproject.readthedocs.io/en/latest/formats.html
+
+# A token is a quoted string, a brace, or a run of other characters; commas
+# are separators. A quoted string ends at the first quote not preceded by a
+# backslash, `\"` being the only escape that the format defines.
+const _NFG_TOKEN = r"\"(?:[^\"\\]|\\+[^\\])*\"|[{}]|[^\s{}\",]+"
+
+# Return the item starting at `tokens[pos]` and the position after it: a
+# nested vector for a braced group, the token itself otherwise.
+#
+# Parses the braces only and leaves the meaning to the caller, in the manner
+# of a Lisp reader, which parses only the parentheses. Adapted from Norvig's
+# `read_from_tokens`, https://norvig.com/lispy.html
+function _read_from_tokens(tokens, pos)
+    if tokens[pos] == "{"
+        items = Any[]
+        pos += 1
+        while tokens[pos] != "}"
+            item, pos = _read_from_tokens(tokens, pos)
+            push!(items, item)
+        end
+        return items, pos + 1
+    end
+    return tokens[pos], pos + 1
+end
+
+"""
+    read_nfg([T], io)
+    read_nfg([T], path)
+
+Read a normal form game in the Gambit .nfg format from the stream `io` or the
+file at `path`, and return it as a `NormalFormGame`. Both the payoff version
+and the outcome version of the format are read; the title, the names of the
+players, of the actions, and of the outcomes, and the comment are ignored. See
+[`ProfileMajor`](@ref) for the ordering of the payoffs in the format, and
+[`parse_nfg`](@ref) for reading from a string.
+
+# Arguments
+
+- `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, `Int`
+  when every payoff in the input is written as an integer (`BigInt` if one
+  does not fit in `Int`), `Rational{BigInt}` when the others are written as
+  rationals `n/d`, and `Float64` otherwise.
+- `io::IO` : Input stream.
+- `path::AbstractString` : Path to the file to read.
+
+# Returns
+
+- `::NormalFormGame{N,T}` : The game described by the input.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> path = tempname();
+
+julia> write_nfg(path, g)
+
+julia> read_nfg(path)
+3×2 NormalFormGame{2, Int64}:
+ (3, 2)  (1, 3)
+ (0, 6)  (4, 0)
+ (2, 1)  (5, 4)
+
+julia> read_nfg(Float64, path)
+3×2 NormalFormGame{2, Float64}:
+ (3.0, 2.0)  (1.0, 3.0)
+ (0.0, 6.0)  (4.0, 0.0)
+ (2.0, 1.0)  (5.0, 4.0)
+```
+
+A file at a URL can be read with `read_nfg(Downloads.download(url))`.
+"""
+read_nfg(io::IO) = _read_nfg(_parse_payoffs, io)
+read_nfg(::Type{T}, io::IO) where {T<:Real} =
+    _read_nfg(tokens -> _parse_payoffs(T, tokens), io)
+
+read_nfg(path::AbstractString) = open(read_nfg, path)
+read_nfg(::Type{T}, path::AbstractString) where {T<:Real} =
+    open(io -> read_nfg(T, io), path)
+
+"""
+    parse_nfg([T], text)
+
+Parse the string `text` in the Gambit .nfg format and return the game as a
+`NormalFormGame`. See [`read_nfg`](@ref) for the meaning of `T` and for
+reading from a stream or a file.
+
+# Arguments
+
+- `T::Type` : Element type of the payoffs, where `T<:Real`. If omitted, it is
+  determined as in [`read_nfg`](@ref).
+- `text::AbstractString` : String in the .nfg format.
+
+# Returns
+
+- `::NormalFormGame{N,T}` : The game described by `text`.
+
+# Examples
+
+```julia
+julia> s = \"\"\"
+       NFG 1 R "" { "1" "2" } { 3 2 }
+
+       3 2 0 6 2 1 1 3 4 0 5 4
+       \"\"\";
+
+julia> parse_nfg(s)
+3×2 NormalFormGame{2, Int64}:
+ (3, 2)  (1, 3)
+ (0, 6)  (4, 0)
+ (2, 1)  (5, 4)
+```
+"""
+parse_nfg(text::AbstractString) = read_nfg(IOBuffer(text))
+parse_nfg(::Type{T}, text::AbstractString) where {T<:Real} =
+    read_nfg(T, IOBuffer(text))
+
+function _read_nfg(parse_payoffs, io::IO)
+    tokens = SubString{String}[
+        m.match for m in eachmatch(_NFG_TOKEN, read(io, String))
+    ]
+    (!isempty(tokens) && tokens[1] == "NFG") ||
+        throw(ArgumentError("not in the .nfg format"))
+
+    # Prologue: NFG, version, R or D, title, players, actions (the numbers of
+    # actions, or the lists of their names), and an optional comment
+    pos = 4
+    _, pos = _read_from_tokens(tokens, pos)  # title
+    _, pos = _read_from_tokens(tokens, pos)  # players
+    actions, pos = _read_from_tokens(tokens, pos)
+    startswith(tokens[pos], '"') && (pos += 1)  # comment
+    nums_actions = ntuple(length(actions)) do i
+        a = actions[i]
+        a isa Vector ? length(a) : parse(Int, a)
+    end
+
+    if tokens[pos] == "{"
+        # Outcome version: a list of outcomes, each a name and N payoffs, then
+        # the index of the outcome at each action profile, 0 meaning zero
+        # payoffs
+        outcomes, pos = _read_from_tokens(tokens, pos)
+        N = length(nums_actions)
+        all(o -> length(o) == N + 1, outcomes) ||
+            throw(ArgumentError("each outcome must have a name and $N payoffs"))
+        values = parse_payoffs(
+            SubString{String}[x for o in outcomes for x in o[2:end]]
+        )
+        table = hcat(zeros(eltype(values), N), reshape(values, N, :))
+        indices = [parse(Int, tok) for tok in @view tokens[pos:end]]
+        payoffs = vec(table[:, indices .+ 1])
+    else
+        # Payoff version: the payoffs at each action profile
+        payoffs = parse_payoffs(@view tokens[pos:end])
+    end
+
+    return NormalFormGame(NFGPayoffVector(nums_actions, payoffs))
+end
+
+"""
+    write_nfg(io, g)
+    write_nfg(path, g)
+
+Write the game `g` to the stream `io` or the file at `path` in the payoff
+version of the Gambit .nfg format, with an empty title and the players named
+"1", ..., "N". Each payoff is written with `print`, a `Rational` as `n/d`; hence
+the element type of `g` must be an `Integer`, an `AbstractFloat`, or a
+`Rational` type. See [`nfg_string`](@ref) for writing to a string.
+
+# Arguments
+
+- `io::IO` : Output stream.
+- `path::AbstractString` : Path to the file to write; an existing file is
+  overwritten.
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write. A `PayoffVector` of
+  any layout is accepted; one that is not profile-major is converted first.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> write_nfg(stdout, g)
+NFG 1 R "" { "1" "2" } { 3 2 }
+
+3 2 0 6 2 1 1 3 4 0 5 4
+
+julia> write_nfg("game.nfg", g)
+```
+"""
+function write_nfg(io::IO, p::NFGPayoffVector{N,T}) where {N,T<:_PayoffNumber}
+    # `print` would round floats if the caller's context has `:compact => true`
+    io = IOContext(io, :compact => false)
+    print(io, "NFG 1 R \"\" { ")
+    join(io, ("\"$i\"" for i in 1:N), ' ')
+    print(io, " } { ")
+    join(io, p.nums_actions, ' ')
+    print(io, " }\n\n")  # blank line between the prologue and the payoffs
+    for (k, x) in enumerate(p.payoffs)
+        k > 1 && print(io, ' ')
+        _print_payoff(io, x)
+    end
+    print(io, '\n')
+    return nothing
+end
+
+# Reached only for layouts other than ProfileMajor, which the method above
+# handles; the conversion copies the payoffs into profile-major order
+write_nfg(
+    io::IO, p::PayoffVector{L,N,T}
+) where {L<:PayoffLayout,N,T<:_PayoffNumber} = write_nfg(io, NFGPayoffVector(p))
+
+write_nfg(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
+    write_nfg(io, NFGPayoffVector(g))
+
+# Same bound on the element type as the methods for `io`, so that an
+# unsupported game is rejected before the file is opened
+write_nfg(
+    path::AbstractString,
+    g::Union{NormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
+) where {N,T<:_PayoffNumber} = open(io -> write_nfg(io, g), path, "w")
+
+"""
+    nfg_string(g)
+
+Return the Gambit .nfg representation of the game `g` as a string. See
+[`write_nfg`](@ref) for the requirement on the element type of `g`.
+
+# Arguments
+
+- `g::Union{NormalFormGame,PayoffVector}` : Game to write.
+
+# Returns
+
+- `::String` : The .nfg representation of `g`.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]));
+
+julia> print(nfg_string(g))
+NFG 1 R "" { "1" "2" } { 3 2 }
+
+3 2 0 6 2 1 1 3 4 0 5 4
+```
+"""
+nfg_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_nfg, g)

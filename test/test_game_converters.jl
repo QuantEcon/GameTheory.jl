@@ -1,4 +1,6 @@
-using GameTheory: GAMPayoffVector
+using GameTheory:
+    PayoffVector, PlayerMajor, ProfileMajor, GAMPayoffVector, NFGPayoffVector,
+    _player_block
 
 using Random
 
@@ -85,11 +87,19 @@ struct UnsupportedReal <: Real end
                 @test p.nums_actions == nums_actions
                 @test p.payoffs == payoffs
             end
+
+            # The game does not share memory with the payoff vector
+            g1 = NormalFormGame(p1)
+            g1.players[1].payoff_array[1] = -1
+            @test p1.payoffs == payoffs
         end
 
         @testset "Invalid inputs" begin
             @test_throws ArgumentError GAMPayoffVector((2, 2), [1, 2, 3])
             @test_throws ArgumentError GAMPayoffVector((2, 0), Int[])
+            @test_throws ArgumentError GAMPayoffVector((), Int[])
+            # prod(nums_actions) overflows Int to 0
+            @test_throws ArgumentError GAMPayoffVector((2^62, 2^62), Int[])
         end
     end
 
@@ -110,6 +120,17 @@ struct UnsupportedReal <: Real end
 
             p = GAMPayoffVector((3, 2), [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4])
             @test gam_string(p) == s
+
+            # A payoff vector of another layout is converted before writing
+            p_nfg = NFGPayoffVector((3, 2),
+                                    [3, 2, 0, 6, 2, 1, 1, 3, 4, 0, 5, 4])
+            @test gam_string(p_nfg) == s
+            @test sprint(write_gam, p_nfg) == s
+            mktempdir() do dir
+                path = joinpath(dir, "game.gam")
+                write_gam(path, p_nfg)
+                @test read(path, String) == s
+            end
         end
 
         @testset "Golden: N=3" begin
@@ -284,6 +305,398 @@ struct UnsupportedReal <: Real end
             tokens = split("1 2 3 4.5")
             @inferred GameTheory._parse_payoffs(Float64, tokens)
             @inferred GameTheory._parse_payoffs(BigInt, split("1 2 3 4"))
+        end
+    end
+
+    @testset "NFGPayoffVector" begin
+        @testset "Golden: N=3" begin
+            nums_actions = (2, 3, 4)
+            N = length(nums_actions)
+            na = prod(nums_actions)
+
+            A1 = reshape(collect(1:na), nums_actions)
+            A2 = reshape(collect(101:100+na), nums_actions)
+            A3 = reshape(collect(201:200+na), nums_actions)
+
+            # Profile-major: row-major vectorization of the (na, N) matrix
+            payoffs1d = vec(permutedims(hcat(vec(A1), vec(A2), vec(A3))))
+
+            p = @inferred NFGPayoffVector(nums_actions, payoffs1d)
+
+            @test p.nums_actions == nums_actions
+            @test p.payoffs == payoffs1d
+            @test num_players(p) == N
+
+            payoffs4d = Array{Int,N+1}(undef, nums_actions..., N)
+            payoffs4d[:, :, :, 1] .= A1
+            payoffs4d[:, :, :, 2] .= A2
+            payoffs4d[:, :, :, 3] .= A3
+
+            g = NormalFormGame(payoffs4d)
+            p = @inferred NFGPayoffVector(g)
+
+            @test p.nums_actions == nums_actions
+            @test p.payoffs == payoffs1d
+
+            g_from_p = @inferred NormalFormGame(p)
+
+            @test g_from_p.nums_actions == g.nums_actions
+            for i in 1:N
+                @test g_from_p.players[i].payoff_array ==
+                      g.players[i].payoff_array
+            end
+
+            payoffs1d_view = @view vcat([-999], payoffs1d, [999])[2:end-1]
+
+            p = @inferred NFGPayoffVector(nums_actions, payoffs1d_view)
+
+            @test p.nums_actions == nums_actions
+            @test p.payoffs == payoffs1d
+        end
+
+        @testset "Round trip: N=$(length(ns))" for ns in [(4, 3), (2, 2, 3, 2)]
+            N = length(ns)
+            rng = MersenneTwister(12345)
+            g = random_game(rng, 0:99, ns)
+            p = @inferred NFGPayoffVector(g)
+            g2 = @inferred NormalFormGame(p)
+
+            p_BI = @inferred NFGPayoffVector(BigInt, g)
+            g3 = @inferred NormalFormGame(Int, p_BI)
+
+            for g_new in [g2, g3]
+                @test g_new.nums_actions == g.nums_actions
+                for i in 1:N
+                    @test g_new.players[i].payoff_array ==
+                          g.players[i].payoff_array
+                end
+            end
+        end
+
+        @testset "N=1" begin
+            payoffs = [1., 2., 3.]
+            nums_actions = (3,)
+
+            p1 = NFGPayoffVector(nums_actions, payoffs)
+
+            g = NormalFormGame(Player(payoffs))
+            p2 = NFGPayoffVector(g)
+
+            for p in [p1, p2]
+                @test p.nums_actions == nums_actions
+                @test p.payoffs == payoffs
+            end
+
+            # The game does not share memory with the payoff vector
+            g1 = NormalFormGame(p1)
+            g1.players[1].payoff_array[1] = -1
+            @test p1.payoffs == payoffs
+        end
+
+        @testset "Invalid inputs" begin
+            @test_throws ArgumentError NFGPayoffVector((2, 2), [1, 2, 3])
+            @test_throws ArgumentError NFGPayoffVector((2, 0), Int[])
+            @test_throws ArgumentError NFGPayoffVector((), Int[])
+            # prod(nums_actions) overflows Int to 0
+            @test_throws ArgumentError NFGPayoffVector((2^62, 2^62), Int[])
+        end
+    end
+
+    @testset "Golden: N=2, both layouts" begin
+        # 3x2 game with payoff profiles, in column-major order over
+        # (a_1, a_2):
+        #   (1,1): (3,2)  (2,1): (0,6)  (3,1): (2,1)
+        #   (1,2): (1,3)  (2,2): (4,0)  (3,2): (5,4)
+        nums_actions = (3, 2)
+        g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]))
+
+        # Profile-major: (payoffs at profile 1)..., (payoffs at profile 2)...
+        payoffs_nfg = [3, 2, 0, 6, 2, 1, 1, 3, 4, 0, 5, 4]
+        # Player-major: (payoffs to player 1)..., (payoffs to player 2)...
+        payoffs_gam = [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4]
+
+        @test NFGPayoffVector(g).payoffs == payoffs_nfg
+        @test GAMPayoffVector(g).payoffs == payoffs_gam
+
+        for (PV, payoffs) in [(NFGPayoffVector, payoffs_nfg),
+                              (GAMPayoffVector, payoffs_gam)]
+            p = PV(nums_actions, payoffs)
+            g_from_p = NormalFormGame(p)
+            for i in 1:2
+                @test g_from_p.players[i].payoff_array ==
+                      g.players[i].payoff_array
+            end
+        end
+    end
+
+    @testset "Layouts" begin
+        @test GAMPayoffVector === PayoffVector{PlayerMajor}
+        @test NFGPayoffVector === PayoffVector{ProfileMajor}
+        @test_throws MethodError PayoffVector((3, 2), collect(1:12))
+
+        nums_actions = (3, 2)
+        p_gam = GAMPayoffVector(nums_actions, collect(1:12))
+        p_nfg = NFGPayoffVector(nums_actions, [1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12])
+
+        @test p_gam isa GAMPayoffVector
+        @test !(p_gam isa NFGPayoffVector)
+
+        @testset "Conversion between layouts" begin
+            p = @inferred NFGPayoffVector(p_gam)
+            @test p.nums_actions == p_nfg.nums_actions
+            @test p.payoffs == p_nfg.payoffs
+
+            p = @inferred GAMPayoffVector(p_nfg)
+            @test p.payoffs == p_gam.payoffs
+
+            p = @inferred GAMPayoffVector(Float64, p_gam)
+            @test p isa GAMPayoffVector{2,Float64}
+            @test p.payoffs == p_gam.payoffs
+            @test p.payoffs !== p_gam.payoffs
+
+            p = @inferred GAMPayoffVector{2,Float64}(p_nfg)
+            @test p isa GAMPayoffVector{2,Float64}
+            @test p.payoffs == p_gam.payoffs
+
+            # convert returns the input itself if nothing is to be converted
+            @test convert(GAMPayoffVector, p_gam) === p_gam
+            @test convert(PayoffVector{PlayerMajor}, p_gam) === p_gam
+            @test convert(GAMPayoffVector{2,Int}, p_gam) === p_gam
+            p = convert(NFGPayoffVector, p_gam)
+            @test p isa NFGPayoffVector{2,Int}
+            @test p.payoffs == p_nfg.payoffs
+            p = convert(GAMPayoffVector{2,Float64}, p_gam)
+            @test p isa GAMPayoffVector{2,Float64}
+            @test p.payoffs == p_gam.payoffs
+            @test p.payoffs !== p_gam.payoffs
+        end
+
+        @testset "_player_block is a view" begin
+            for p in [p_gam, p_nfg]
+                b = @inferred _player_block(p, 2)
+                @test size(b) == nums_actions
+                @test Base.mightalias(b, p.payoffs)
+                @test b == [7 10; 8 11; 9 12]
+
+                g = NormalFormGame(p)
+                @test !Base.mightalias(g.players[2].payoff_array, p.payoffs)
+            end
+        end
+    end
+
+
+    @testset "read_nfg/write_nfg" begin
+        same_game(g1, g2) =
+            g1.nums_actions == g2.nums_actions &&
+            all(g1.players[i].payoff_array == g2.players[i].payoff_array
+                for i in 1:num_players(g1))
+
+        # 3x2 game with payoff profiles, in column-major order over (a_1, a_2):
+        #   (1,1): (3,2)  (2,1): (0,6)  (3,1): (2,1)
+        #   (1,2): (1,3)  (2,2): (4,0)  (3,2): (5,4)
+        g = NormalFormGame(Player([3 1; 0 4; 2 5]), Player([2 6 1; 3 0 4]))
+        s_payoff = """
+            NFG 1 R "3x2 game" { "Row" "Column" } { 3 2 }
+
+            3 2 0 6 2 1 1 3 4 0 5 4"""
+        s_outcome = """
+            NFG 1 R "3x2 game" { "Row" "Column" }
+
+            { { "1" "2" "3" }
+            { "1" "2" }
+            }
+            ""
+
+            {
+            { "" 3, 2 }
+            { "" 0, 6 }
+            { "" 2, 1 }
+            { "" 1, 3 }
+            { "" 4, 0 }
+            { "" 5, 4 }
+            }
+            1 2 3 4 5 6
+            """
+
+        @testset "Golden: N=2" begin
+            for s in [s_payoff, s_outcome]
+                g_read = parse_nfg(s)
+                @test g_read isa NormalFormGame{2,Int}
+                @test same_game(g_read, g)
+                @test same_game(read_nfg(IOBuffer(s)), g)
+            end
+            @test nfg_string(g) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 3 2 }\n\n3 2 0 6 2 1 1 3 4 0 5 4\n"
+            @test sprint(write_nfg, g) == nfg_string(g)
+
+            # A payoff vector of either layout
+            p_nfg = NFGPayoffVector((3, 2), [3, 2, 0, 6, 2, 1, 1, 3, 4, 0, 5, 4])
+            p_gam = GAMPayoffVector((3, 2), [3, 0, 2, 1, 4, 5, 2, 6, 1, 3, 0, 4])
+            @test nfg_string(p_nfg) == nfg_string(g)
+            @test nfg_string(p_gam) == nfg_string(g)
+        end
+
+        @testset "Variants" begin
+            variants = [
+                # D instead of R
+                replace(s_payoff, "NFG 1 R" => "NFG 1 D"),
+                # Names of the actions instead of their numbers
+                replace(s_payoff,
+                        "{ 3 2 }" => "{ { \"a\" \"b\" \"c\" } { \"x\" \"y\" } }"),
+                # Comment after the actions
+                replace(s_payoff, "{ 3 2 }" => "{ 3 2 } \"a comment\""),
+                # Escaped quote, braces, and a comma in the title
+                replace(s_payoff, "\"3x2 game\"" => "\"a \\\"3x2\\\" {game}, R\""),
+                # Backslash followed by a newline in the title
+                replace(s_payoff, "\"3x2 game\"" => "\"first\\\nsecond\""),
+                # Quote preceded by two backslashes in the title
+                replace(s_payoff, "\"3x2 game\"" => "\"a\\\\\"b\""),
+                # Numbers of actions in the outcome version, no comment
+                replace(s_outcome,
+                        "{ { \"1\" \"2\" \"3\" }\n{ \"1\" \"2\" }\n}\n\"\"" => "{ 3 2 }"),
+                # Commas absent
+                replace(s_outcome, "," => ""),
+                # CRLF
+                replace(s_outcome, "\n" => "\r\n"),
+            ]
+            for s in variants
+                @test same_game(parse_nfg(s), g)
+            end
+        end
+
+        @testset "Null outcome" begin
+            s = """
+                NFG 1 R "" { "1" "2" } { 2 2 }
+
+                {
+                { "" 1, 2 }
+                { "" 3/2, -4.5 }
+                }
+                1 0 2 0
+                """
+            g_read = parse_nfg(s)
+            @test g_read isa NormalFormGame{2,Float64}
+            @test g_read[1, 1] == [1.0, 2.0]
+            @test g_read[2, 1] == [0.0, 0.0]
+            @test g_read[1, 2] == [1.5, -4.5]
+            @test g_read[2, 2] == [0.0, 0.0]
+
+            # An empty list of outcomes
+            s_zero = "NFG 1 R \"\" { \"1\" \"2\" } { 2 2 } { } 0 0 0 0"
+            g_zero = parse_nfg(s_zero)
+            @test g_zero isa NormalFormGame{2,Int}
+            @test all(g_zero.players[i].payoff_array == zeros(Int, 2, 2)
+                      for i in 1:2)
+
+            # The null outcome takes the inferred element type
+            head = "NFG 1 R \"\" { \"Row\" \"Col\" } { 1 2 } "
+            g_big = parse_nfg(head * "{ { \"\" 0, 9223372036854775809 } } 1 0")
+            @test g_big isa NormalFormGame{2,BigInt}
+            @test g_big[1, 1] == [0, big(2)^63 + 1]
+            @test g_big[1, 2] == [0, 0]
+            g_rat = parse_nfg(head * "{ { \"\" 1/3, 2 } } 1 0")
+            @test g_rat isa NormalFormGame{2,Rational{BigInt}}
+            @test g_rat[1, 1] == [1//3, 2]
+            @test g_rat[1, 2] == [0, 0]
+        end
+
+        @testset "Floating-point boundaries: $name" for (name, to_string, from_string) in
+                [("gam", gam_string, parse_gam), ("nfg", nfg_string, parse_nfg)]
+            xs = [5.0e-324, floatmin(Float64), floatmax(Float64),
+                  -floatmax(Float64), prevfloat(1.0), nextfloat(1.0), 0.1,
+                  0.0, -0.0]
+            g_float = NormalFormGame(Player(reshape(xs, :, 1)),
+                                     Player(reshape(reverse(xs), 1, :)))
+            g_read = from_string(to_string(g_float))
+            @test g_read isa NormalFormGame{2,Float64}
+            # `isequal` distinguishes -0.0 from 0.0
+            @test all(isequal(g_read.players[i].payoff_array,
+                              g_float.players[i].payoff_array) for i in 1:2)
+        end
+
+        @testset "Element type" begin
+            @test parse_nfg(Float64, s_payoff) isa NormalFormGame{2,Float64}
+            @test parse_nfg(BigInt, s_outcome) isa NormalFormGame{2,BigInt}
+            @test same_game(parse_nfg(Float64, s_payoff),
+                            NormalFormGame(Float64, g))
+
+            # Rationals are part of the format
+            s_rat = replace(s_payoff, "3 2 0 6" => "1/3 2 0 6")
+            g_rat = parse_nfg(s_rat)
+            @test g_rat isa NormalFormGame{2,Rational{BigInt}}
+            @test g_rat[1, 1] == [1//3, 2]
+            @test nfg_string(g_rat) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 3 2 }\n\n1/3 2 0 6 2 1 1 3 4 0 5 4\n"
+            @test same_game(parse_nfg(nfg_string(g_rat)), g_rat)
+
+            # Bool payoffs are written as 0 and 1
+            g_bool = NormalFormGame(Player([true false; false true]),
+                                    Player([true false; false true]))
+            @test nfg_string(g_bool) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 2 2 }\n\n1 1 0 0 0 0 1 1\n"
+
+            # Payoffs are not rounded when the caller's context is compact
+            p_float = NFGPayoffVector((1, 1), [1.12341234, 2.0])
+            @test sprint(write_nfg, p_float; context=:compact => true) ==
+                  "NFG 1 R \"\" { \"1\" \"2\" } { 1 1 }\n\n1.12341234 2.0\n"
+
+            # An unsupported game is rejected before the file is opened
+            p = NFGPayoffVector((1, 1), fill(UnsupportedReal(), 2))
+            @test_throws MethodError write_nfg(IOBuffer(), p)
+            mktempdir() do dir
+                path = joinpath(dir, "game.nfg")
+                write(path, "old content\n")
+                @test_throws MethodError write_nfg(path, p)
+                @test read(path, String) == "old content\n"
+            end
+        end
+
+        @testset "Round trip: N=$(length(ns)), $S" for ns in [(4, 3), (2, 2, 3, 2)],
+                                                        S in [0:99, Float64]
+            rng = MersenneTwister(12345)
+            g_rand = random_game(rng, S, ns)
+
+            @test same_game(parse_nfg(nfg_string(g_rand)), g_rand)
+            # The same game as through .gam
+            @test same_game(parse_gam(gam_string(g_rand)),
+                            parse_nfg(nfg_string(g_rand)))
+
+            mktempdir() do dir
+                path = joinpath(dir, "game.nfg")
+                @test write_nfg(path, g_rand) === nothing
+                @test read(path, String) == nfg_string(g_rand)
+                @test same_game(read_nfg(path), g_rand)
+            end
+        end
+
+        @testset "Files shared with QuantEcon.py" begin
+            dir = joinpath(@__DIR__, "game_files")
+            @test same_game(read_nfg(joinpath(dir, "3x2_payoff.nfg")), g)
+
+            # The fifth action profile, (2, 2), has the null outcome in this file
+            g_expected = NormalFormGame(Player([3 1; 0 4; 2 5]),
+                                        Player([2 6 1; 3 0 4]))
+            g_expected[2, 2] = (0, 0)
+            @test same_game(read_nfg(joinpath(dir, "3x2_outcome.nfg")), g_expected)
+        end
+
+        @testset "Invalid inputs" begin
+            @test_throws ArgumentError parse_nfg("")
+            @test_throws ArgumentError parse_nfg("2\n3 2\n\n3 0 2 1 4 5 2 6 1 3 0 4")
+            # Outcomes with the wrong numbers of payoffs, whose total still
+            # fits the table
+            head = "NFG 1 R \"\" { \"Row\" \"Col\" } { 1 2 } "
+            @test_throws ArgumentError parse_nfg(
+                head * "{ { \"\" 1 } { \"\" 2, 3, 4 } } 1 2"
+            )
+            @test_throws ArgumentError parse_nfg(
+                head * "{ { \"\" 1, 2, 3 } { \"\" 4, 5, 6 } } 1 2"
+            )
+        end
+
+        @testset "Type inference" begin
+            @inferred write_nfg(IOBuffer(), g)
+            @inferred nfg_string(g)
         end
     end
 
