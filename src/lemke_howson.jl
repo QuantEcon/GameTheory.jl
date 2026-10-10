@@ -561,13 +561,23 @@ function _lemke_howson_tbl!(tableaux::NTuple{2,Matrix{T}},
     slack_starts = (m+1, 1)
 
     converged = false
+    breakdown = false
     num_iter  = 0
 
     while true
         @inbounds for pl in pls
             # Determine the leaving variable
-            _, row_min = _lex_min_ratio_test!(tableaux[pl], pivot,
-                                              slack_starts[pl], argmins)
+            found, row_min, resolved = _lex_min_ratio_test!(
+                tableaux[pl], pivot, slack_starts[pl], argmins
+            )
+            if !(found && resolved)
+                # Numerical breakdown: no positive entry in the pivot
+                # column, or lexicographic tie not broken, both
+                # impossible in exact arithmetic; stop with
+                # `converged = false`
+                breakdown = true
+                break
+            end
 
             # Pivoting step: modify tableau in place
             _pivoting!(tableaux[pl], pivot, row_min, col_bufs[pl])
@@ -586,7 +596,7 @@ function _lemke_howson_tbl!(tableaux::NTuple{2,Matrix{T}},
             end
         end
 
-        if converged || num_iter >= max_iter
+        if converged || num_iter >= max_iter || breakdown
             break
         end
     end
