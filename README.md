@@ -67,23 +67,23 @@ display(g)
  (3.0, 4.0, 4.0)  (0.0, 0.0, 0.0)
 ```
 
-`hc_solve` computes all isolated Nash equilibria of an N-player game by using
+`support_enumeration` computes all Nash equilibria of an N-player regular game by using
 [HomotopyContinuation.jl](https://github.com/JuliaHomotopyContinuation/HomotopyContinuation.jl):
 
 ```julia
-NEs = hc_solve(g)
+NEs = support_enumeration(g)
 ```
 ```
 9-element Vector{Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}}:
- ([2.63311e-36, 1.0], [0.333333, 0.666667], [0.333333, 0.666667])
- ([0.25, 0.75], [1.0, 0.0], [0.25, 0.75])
- ([0.0, 1.0], [0.0, 1.0], [1.0, 0.0])
- ([0.25, 0.75], [0.5, 0.5], [0.333333, 0.666667])
- ([0.5, 0.5], [0.5, 0.5], [1.0, 1.37753e-40])
+ ([1.0, 0.0], [1.0, 0.0], [1.0, 0.0])
  ([1.0, 0.0], [0.0, 1.0], [0.0, 1.0])
- ([0.5, 0.5], [0.333333, 0.666667], [0.25, 0.75])
- ([1.0, 0.0], [1.0, 9.40395e-38], [1.0, -9.40395e-38])
  ([0.0, 1.0], [1.0, 0.0], [0.0, 1.0])
+ ([0.0, 1.0], [0.0, 1.0], [1.0, 0.0])
+ ([0.0, 1.0], [0.333333, 0.666667], [0.333333, 0.666667])
+ ([0.25, 0.75], [1.0, 0.0], [0.25, 0.75])
+ ([0.5, 0.5], [0.5, 0.5], [1.0, 0.0])
+ ([0.25, 0.75], [0.5, 0.5], [0.333333, 0.666667])
+ ([0.5, 0.5], [0.333333, 0.666667], [0.25, 0.75])
 ```
 
 See the tutorials for further examples.
@@ -94,14 +94,15 @@ See the tutorials for further examples.
 
 * [`pure_nash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.pure_nash-Tuple{NormalFormGame}):
   Find all pure-action Nash equilibria of an N-player game (if any)
-* [`lemke_howson`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lemke_howson-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T)
-  Find one mixed-action Nash equilibrium of a two-player normal-form game
-* [`support_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.support_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
-  Find all mixed-action Nash equilibria of a two-player nondegenerate game
+* [`lemke_howson`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lemke_howson-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
+  Find one mixed-action Nash equilibrium of a two-player game
 * [`lrsnash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lrsnash-Tuple{NormalFormGame{2,%20%3C:Union{Integer,%20Rational}}}):
   Find all mixed-action Nash equilibria (or equilibrium components) of a two-player game
-* [`hc_solve`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.hc_solve-Union{Tuple{NormalFormGame{N}},%20Tuple{N}}%20where%20N):
-  Find all isolated mixed-action Nash equilibria of an N-player game
+* [`vertex_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.vertex_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
+  Find all mixed-action Nash equilibria of a two-player nondegenerate game
+* [`support_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.support_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
+  Find all mixed-action Nash equilibria of a two-player nondegenerate game, or
+  of an N-player regular game
 
 ### Learning/evolutionary dynamics
 
