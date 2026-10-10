@@ -128,6 +128,9 @@ using GameTheory: _initialize_tableaux!, _lemke_howson_tbl!
             g = NormalFormGame(Player(A), Player(B))
             NE, res = lemke_howson(g, full_output=Val(true))
             @test !res.converged
+            # Without capping, no other initial pivot is tried on breakdown
+            @test res.init == 1
+            @test res.num_iter == 0
         end
 
         # No positive entry in the column of the initial pivot: the
@@ -144,11 +147,13 @@ using GameTheory: _initialize_tableaux!, _lemke_howson_tbl!
         argmins = Vector{Int}(undef, max(m, n))
         init_pivot = 1
         tableaux[1][:, init_pivot] .= 0
-        converged, num_iter =
+        converged, num_iter, breakdown = @inferred(
             _lemke_howson_tbl!(tableaux, bases, init_pivot, 10,
                                col_bufs, argmins)
+        )
         @test !converged
         @test num_iter == 0
+        @test breakdown
     end
 
     @testset "Invalid init_pivot" begin
