@@ -154,6 +154,20 @@ using GameTheory: _initialize_tableaux!, _lemke_howson_tbl!
         @test !converged
         @test num_iter == 0
         @test breakdown
+
+        # With capping enabled, another initial pivot is tried after the
+        # breakdown, and the routine can recover
+        g = NormalFormGame(Player([3. 1.; 1. 3.]),
+                           Player([1e15 1.; 1e15 1e15]))
+        NE, res = lemke_howson(g; max_iter=100, full_output=Val(true))
+        @test !res.converged
+        @test res.init == 1
+        @test res.num_iter == 0
+        NE, res = lemke_howson(g; max_iter=100, capping=10,
+                               full_output=Val(true))
+        @test res.converged
+        @test res.init == 2
+        @test NE == ([0., 1.], [0., 1.])
     end
 
     @testset "Invalid init_pivot" begin

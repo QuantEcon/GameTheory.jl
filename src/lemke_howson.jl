@@ -311,8 +311,7 @@ Codenotti et al.
 
 # Returns
 
-- `converged::Bool`: Whether the pivoting terminated before `max_iter` was
-  reached.
+- `converged::Bool`: Whether the routine has converged.
 - `total_num_iter::Int`: Total number of pivoting steps performed across runs.
 - `init_pivot_curr::Int`: The initial pivot used in the final run.
 """
@@ -498,8 +497,7 @@ Perform the complementary pivoting. Modify `tableaux` and `bases` in place.
 
 # Returns
 
-- `converged::Bool`: Whether the pivoting terminated before `max_iter` was
-  reached.
+- `converged::Bool`: Whether the routine has converged.
 - `num_iter::Int`: Number of pivoting steps performed.
 - `breakdown::Bool`: Whether the pivoting stopped because of a numerical
   breakdown (no positive entry in the pivot column, or lexicographic tie not
