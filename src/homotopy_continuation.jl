@@ -8,7 +8,9 @@ game.
 
 This function solves a system of polynomial equations arising from the
 nonlinear complementarity problem representation of Nash eqiulibrium, by using
-`HomotopyContinuation.jl`.
+`HomotopyContinuation.jl`. For games with three or more players,
+`support_enumeration`, which solves one small system per support profile, is
+typically much faster.
 
 # Arguments
 
@@ -16,7 +18,8 @@ nonlinear complementarity problem representation of Nash eqiulibrium, by using
 - `ntofind=Inf`: Maximal number of Nash equilibria to find.
 - `options...`: Optional arguments to pass to `HomotopyContinuation.solve`. For
   example, the option `seed::UInt32` can set the random seed used during the
-  computations. See the
+  computations; by default, the global random number generator is used
+  without being reseeded. See the
   [documentation](https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
   for `HomotopyContinuation.solve` for details.
 
@@ -71,6 +74,9 @@ true
 """
 function hc_solve(g::NormalFormGame{N}; ntofind=Inf, options...) where N
     ntofind <= 0 && return NTuple{N,Vector{Float64}}[]
+
+    # Do not let HomotopyContinuation.solve reseed the global RNG by default
+    options = merge((seed=nothing,), NamedTuple(options))
 
     f = construct_hc_system(g)
 
@@ -148,3 +154,118 @@ function _get_action_profile(r::PathResult, nums_actions::NTuple{N}) where N
     end
     return out
 end
+
+
+# HCSolver for support_enumeration
+
+"""
+    HCSolver(; max_retries=2, options...)
+
+Solver for the systems of polynomial equations in `support_enumeration` for
+N-player games, using `HomotopyContinuation.solve` with the polyhedral
+homotopy.
+
+# Arguments
+
+- `max_retries::Integer=2`: Maximal number of times a system is solved again,
+  with fresh random numbers, when some solution paths fail to be tracked,
+  which happens with a small probability; a warning is issued if paths still
+  fail.
+- `options...`: Optional arguments to pass to `HomotopyContinuation.solve`.
+  For example, the option `seed::UInt32` can set the random seed used during
+  the computations; by default, the global random number generator is used
+  without being reseeded. The defaults `compile=false`,
+  `show_progress=false`, `threading=false`, and `catch_interrupt=false` are
+  used unless overridden; note that compilation is much slower than
+  interpreted evaluation for the small systems solved here, and that an
+  interrupt caught within a solve would not stop the enumeration. See the
+  [documentation](https://www.juliahomotopycontinuation.org/HomotopyContinuation.jl/stable/solve/)
+  for `HomotopyContinuation.solve` for details.
+
+The systems are solved in double precision: the payoffs are converted to
+`Float64` before the systems are constructed.
+
+# Examples
+
+```julia
+julia> g = NormalFormGame((2, 2, 2));
+
+julia> g[1, 1, 1] = [9, 8, 12];
+
+julia> g[2, 2, 1] = [9, 8, 2];
+
+julia> g[1, 2, 2] = [3, 4, 6];
+
+julia> g[2, 1, 2] = [3, 4, 4];
+
+julia> NEs = support_enumeration(g, GameTheory.HCSolver(seed=UInt32(1234)));
+
+julia> length(NEs)
+9
+```
+"""
+struct HCSolver{O<:NamedTuple} <: AbstractSupportEnumerationSolver
+    options::O
+    max_retries::Int
+end
+
+function HCSolver(; max_retries::Integer=2, options...)
+    defaults = (compile=false, show_progress=false, threading=false,
+                seed=nothing, catch_interrupt=false)
+    return HCSolver(merge(defaults, NamedTuple(options)), max_retries)
+end
+
+"""
+    _support_solutions(solver::HCSolver, g, supps, mixing_players)
+
+Return the real nonsingular solutions of the indifference system on the
+support profile `supps` (see `_support_equations`), computed by
+`HomotopyContinuation.solve`. An empty vector is returned if the start system
+cannot be computed because the system has zero mixed volume or an identically
+zero equation, in which case it has no isolated solution with all the free
+probabilities nonzero. The solve is retried if some solution paths fail; see
+`HCSolver`.
+"""
+function _support_solutions(solver::HCSolver, g::NormalFormGame{N},
+                            supps, mixing_players) where N
+    # HomotopyContinuation computes in double precision (and fails for
+    # BigFloat coefficients in some cases); no copy if already Float64
+    g = convert(NormalFormGame{N,Float64}, g)
+
+    vars = Vector{Vector{Variable}}(undef, N)
+    for i in mixing_players
+        vars[i] = [Variable(:x, i, a) for a in supps[i][1:end-1]]
+    end
+    eqs = _support_equations(Expression, g, supps, mixing_players, vars)
+    F = System(eqs,
+               variables=reduce(vcat, (vars[i] for i in mixing_players)))
+    res = try
+        _hc_solve(F, solver.options)
+    catch e
+        # "Cannot compute a start system" is thrown if there is no mixed
+        # cell, but also if their computation fails: confirm the former
+        e isa OverflowError || rethrow()
+        any(eq -> iszero(HomotopyContinuation.expand(eq)), eqs) ||
+            HomotopyContinuation.mixed_volume(F) == 0 || rethrow()
+        return Vector{Float64}[]
+    end
+
+    # Tracking a path fails with a small probability, which would lose the
+    # solution at its end: solve again with fresh random numbers, shifting an
+    # explicit seed, with which the same failure would be reproduced
+    for attempt in 1:solver.max_retries
+        nfailed(res) == 0 && break
+        seed = solver.options.seed
+        options = seed === nothing ? solver.options :
+                  merge(solver.options, (seed=UInt32(seed) + UInt32(attempt),))
+        res = _hc_solve(F, options)
+    end
+    nfailed(res) > 0 && @warn "$(nfailed(res)) of $(ntracked(res)) solution " *
+        "paths failed for the support profile $supps; Nash equilibria with " *
+        "this support profile may be missed"
+
+    return real_solutions(res, only_nonsingular=true)
+end
+
+_hc_solve(F::System, options::NamedTuple) =
+    HomotopyContinuation.solve(F; options...)::HomotopyContinuation.Result

@@ -1,3 +1,7 @@
+using Random
+using HomotopyContinuation: TrackerOptions
+using GameTheory: HCSolver
+
 @testset "Testing Support Enumeration" begin
 
     function NEs_approx_equal(NEs1::Vector{NTuple{2,Vector{T1}}},
@@ -87,6 +91,293 @@
         NEs_computed = @inferred(support_enumeration(g))
 
         NEs_approx_equal(NEs_computed, NEs)
+    end
+
+    @testset "N-player support enumeration" begin
+
+        @testset "2x2x2 game from McKelvey and McLennan" begin
+            g = NormalFormGame((2, 2, 2))
+            g[1, 1, 1] = 9, 8, 12
+            g[2, 2, 1] = 9, 8, 2
+            g[1, 2, 2] = 3, 4, 6
+            g[2, 1, 2] = 3, 4, 4
+            NEs = [
+                ([1, 0], [1, 0], [1, 0]),
+                ([0, 1], [0, 1], [1, 0]),
+                ([1, 0], [0, 1], [0, 1]),
+                ([0, 1], [1, 0], [0, 1]),
+                ([0//1, 1//1], [1//3, 2//3], [1//3, 2//3]),
+                ([1//4, 3//4], [1//1, 0//1], [1//4, 3//4]),
+                ([1//2, 1//2], [1//2, 1//2], [1//1, 0//1]),
+                ([1//4, 3//4], [1//2, 1//2], [1//3, 2//3]),
+                ([1//2, 1//2], [1//3, 2//3], [1//4, 3//4])
+            ]
+
+            NEs_computed = @inferred support_enumeration(g)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
+            # Explicit solver with options
+            NEs_computed =
+                @inferred support_enumeration(g, HCSolver(seed=UInt32(1234)))
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
+            ntofind = 1
+            NEs_computed = @inferred support_enumeration(g, ntofind=ntofind)
+            @test length(NEs_computed) == ntofind
+            for i in 1:ntofind
+                @test is_nash(g, NEs_computed[i])
+            end
+
+            NEs_computed = @inferred support_enumeration(g, ntofind=0)
+            @test isempty(NEs_computed)
+
+            # Reproducible under the global random number generator, which
+            # is used without being reseeded by default
+            Random.seed!(1234)
+            NEs_computed1 = support_enumeration(g)
+            Random.seed!(1234)
+            NEs_computed2 = support_enumeration(g)
+            @test NEs_computed1 == NEs_computed2
+
+            # The per-support solver must be inferrable for the driver loop
+            # to be; `@inferred support_enumeration` alone does not check
+            # this, as the return type is fixed by the declaration of `NEs`
+            supps = ntuple(i -> [1, 2], 3)
+            sols = @inferred GameTheory._support_solutions(HCSolver(), g,
+                                                          supps, [1, 2, 3])
+            @test sols isa Vector{Vector{Float64}}
+
+            @testset "retry on failed solution paths" begin
+                # Seeds with which one of the two solution paths of the
+                # full-support system fails to be tracked (with
+                # HomotopyContinuation v2.22.4), so that the totally mixed
+                # equilibrium is missed unless the solve is retried; every
+                # path leads to an equilibrium in this game, so a warning is
+                # issued iff one is missed
+                for seed in UInt32[9366, 22425, 23167]
+                    logs, NEs_noretry = Test.collect_test_logs() do
+                        support_enumeration(g, HCSolver(seed=seed,
+                                                        max_retries=0))
+                    end
+                    @test !isempty(logs) == (length(NEs_noretry) < length(NEs))
+                    NEs_computed =
+                        @test_logs support_enumeration(g, HCSolver(seed=seed))
+                    @test isapprox_vecs_act_profs(NEs_computed, NEs)
+                end
+
+                # With at most one step per path, every attempt fails: a
+                # warning is issued and only the pure equilibria are found
+                solver = HCSolver(tracker_options=TrackerOptions(max_steps=1))
+                NEs_computed = @test_logs((:warn, r"solution paths failed"),
+                                          match_mode=:any,
+                                          support_enumeration(g, solver))
+                @test isapprox_vecs_act_profs(NEs_computed, NEs[1:4])
+            end
+        end
+
+        @testset "2x2x2 game from Nau, Canovas, and Hansen" begin
+            payoff_profiles = [[3, 0, 2],
+                               [0, 1, 0],
+                               [0, 2, 0],
+                               [1, 0, 0],
+                               [1, 0, 0],
+                               [0, 3, 0],
+                               [0, 1, 0],
+                               [2, 0, 3]]
+            g = NormalFormGame(reshape(payoff_profiles, (2, 2, 2)))
+            q = (-13 + sqrt(601)) / 24
+            p = (9q - 1) / (7q + 2)
+            r = (-3q + 2) / (q + 1)
+            NEs = [([p, 1-p], [q, 1-q], [r, 1-r])]
+
+            NEs_computed = @inferred support_enumeration(g)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+        end
+
+        @testset "3x2 games with explicit solver" begin
+            # Non-degenerate game
+            g = NormalFormGame(Player([3 3; 2 5; 0 6]),
+                               Player([3 2 3; 2 6 1]))
+            NEs = support_enumeration(g)
+            NEs_computed = @inferred support_enumeration(g, HCSolver())
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
+            # Keyword arguments do not select the solver implicitly
+            g_rational = NormalFormGame(Rational{Int}, g)
+            @test support_enumeration(g_rational) isa
+                Vector{NTuple{2,Vector{Rational{Int}}}}
+            @test_throws ArgumentError support_enumeration(g_rational,
+                                                           tol=1e-8)
+            @test_throws ArgumentError support_enumeration(g_rational,
+                                                           ntofind=1)
+            NEs_computed =
+                @inferred support_enumeration(g_rational, HCSolver(), tol=1e-8)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
+            # Payoffs are converted to Float64
+            for T in (Rational{Int}, BigFloat)
+                g_T = NormalFormGame(T, g)
+                NEs_computed = @inferred support_enumeration(g_T, HCSolver())
+                @test NEs_computed isa Vector{NTuple{2,Vector{Float64}}}
+                @test isapprox_vecs_act_profs(NEs_computed, NEs)
+            end
+
+            # Degenerate game: player 2 is indifferent against action 1 of
+            # player 1, so that ([1, 0, 0], [q, 1-q]) with 2/3 <= q <= 1 are
+            # all Nash equilibria; only the pure one and the isolated mixed
+            # one are found
+            g = NormalFormGame(Player([3 3; 2 5; 0 6]),
+                               Player([3 2 3; 3 6 1]))
+            NEs = [([1//1, 0//1, 0//1], [1//1, 0//1]),
+                   ([0//1, 1//3, 2//3], [1//3, 2//3])]
+            NEs_computed = @inferred support_enumeration(g, HCSolver())
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+        end
+
+        @testset "pure equilibria with large integer payoffs" begin
+            # Payoffs 2^53 and 2^53 + 1 are not distinguished in Float64
+            g = NormalFormGame(Int, (2, 2, 2))
+            for a2 in 1:2, a3 in 1:2
+                g[1, a2, a3] = [2^53, 0, 0]
+                g[2, a2, a3] = [2^53 + 1, 0, 0]
+            end
+            NEs_computed = @inferred support_enumeration(g, tol=0)
+            @test length(NEs_computed) == length(pure_nash(g, tol=0)) == 4
+            for NE in NEs_computed
+                @test NE[1] == [0, 1]
+            end
+        end
+
+        @testset "dominance check with large integer payoffs" begin
+            # Matching pennies between players 1 and 2; player 3 has two
+            # actions with the same constant payoff c, where c + tol rounds
+            # below c in Float64
+            c = Int64(2)^53 + 1
+            g = NormalFormGame(Int, (2, 2, 2))
+            for a1 in 1:2, a2 in 1:2, a3 in 1:2
+                s = a1 == a2 ? 1 : -1
+                g[a1, a2, a3] = [s, -s, c]
+            end
+            NEs = [([1/2, 1/2], [1/2, 1/2], [1, 0]),
+                   ([1/2, 1/2], [1/2, 1/2], [0, 1])]
+            NEs_computed = @inferred support_enumeration(g)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+        end
+
+        @testset "OverflowError other than zero mixed volume" begin
+            # Only a start system failure due to zero mixed volume means
+            # that there is no solution; other errors must propagate
+            g = NormalFormGame(Player([1 -1; -1 1]), Player([-1 1; 1 -1]))
+            solver = HCSolver(stop_early_cb = _ -> throw(OverflowError("")))
+            @test_throws OverflowError GameTheory._support_solutions(
+                solver, g, ([1, 2], [1, 2]), [1, 2]
+            )
+        end
+
+        @testset "interrupt during a solve" begin
+            # An interrupt must not be caught within the solve, after which
+            # the enumeration would continue with the next support profile
+            g = NormalFormGame(Player([1 -1; -1 1]), Player([-1 1; 1 -1]))
+            solver = HCSolver(stop_early_cb = _ -> throw(InterruptException()))
+            @test_throws InterruptException GameTheory._support_solutions(
+                solver, g, ([1, 2], [1, 2]), [1, 2]
+            )
+            @test_throws InterruptException support_enumeration(g, solver)
+        end
+
+        @testset "degenerate game with all payoffs zero" begin
+            g = NormalFormGame((2, 2, 2))
+            NEs_computed = @inferred support_enumeration(g)
+            @test length(NEs_computed) == 8
+            for NE in NEs_computed
+                @test all(x -> all(in((0, 1)), x), NE)
+            end
+        end
+
+        @testset "random games" begin
+            seed = 1234
+            # Cross-check with hc_solve
+            g = random_game(MersenneTwister(seed), (2, 2, 2, 2))
+            NEs = hc_solve(g, show_progress=false, compile=false)
+            NEs_computed = @inferred support_enumeration(g)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
+            # Numbers of Nash equilibria verified against hc_solve
+            for (nums_actions, num_NEs) in [((2, 2, 2, 2, 2), 3),
+                                            ((3, 3, 2, 2), 5),
+                                            ((3, 3, 3), 3)]
+                g = random_game(MersenneTwister(seed), nums_actions)
+                NEs_computed = @inferred support_enumeration(g)
+                @test length(NEs_computed) == num_NEs
+                for NE in NEs_computed
+                    @test is_nash(g, NE)
+                end
+            end
+        end
+
+        @testset "all-pay auction" begin
+            # All-pay auction with full dissipation: prize r, bids 0, ..., c.
+            # Most support profiles contain a conditionally dominated action
+            function all_pay_auction(r, c, N)
+                nums_actions = ntuple(_ -> c+1, N)
+                payoff_array = Array{Float64}(undef, nums_actions)
+                for bids in CartesianIndices(nums_actions)
+                    payoff_array[bids] = -(bids[1] - 1)
+                    if all(bids[j] < bids[1] for j in 2:N)
+                        payoff_array[bids] += r
+                    end
+                end
+                return NormalFormGame(ntuple(_ -> Player(payoff_array), N))
+            end
+
+            g = all_pay_auction(8, 2, 3)
+            e = [1, 0, 0]
+            x = [1/8, 1/8, 3/4]
+            y, z = [1/2, 0, 1/2], [1/4, 1/4, 1/2]
+            w = [sqrt(2)/4, 1/2 - sqrt(2)/4, 1/2]
+            NEs = [(e, x, x), (x, e, x), (x, x, e),
+                   (y, z, z), (z, y, z), (z, z, y),
+                   (w, w, w)]
+            NEs_computed = support_enumeration(g)
+            @test isapprox_vecs_act_profs(NEs_computed, NEs)
+        end
+
+        @testset "_has_dominated_action" begin
+            # For player 1, neither action is dominated against both actions
+            # of player 2, while action 2 (1) is dominated against action 1
+            # (2) of player 2
+            g = NormalFormGame(Player([3 0; 2 1]), Player([1 0; 0 1]))
+            tol = 1e-8
+            @test !GameTheory._has_dominated_action(g, ([1, 2], [1, 2]), tol)
+            @test GameTheory._has_dominated_action(g, ([1, 2], [1]), tol)
+            @test GameTheory._has_dominated_action(g, ([1, 2], [2]), tol)
+            @test !GameTheory._has_dominated_action(g, ([1], [1]), tol)
+            # For player 2, action 2 is dominated against action 1 of player 1
+            @test GameTheory._has_dominated_action(g, ([1], [1, 2]), tol)
+        end
+
+        @testset "1-player game" begin
+            g = NormalFormGame([[1], [2], [3]])
+            @test_throws ArgumentError support_enumeration(g)
+            @test_throws ArgumentError support_enumeration(g, HCSolver())
+        end
+
+        @testset "_next_supports!" begin
+            for nums_actions in [(3, 2), (2, 3, 2)]
+                N = length(nums_actions)
+                visited = Set{NTuple{N,Vector{Int}}}()
+                for ks in Iterators.product((1:n for n in nums_actions)...)
+                    supps = ntuple(i -> collect(1:ks[i]), N)
+                    while true
+                        push!(visited, deepcopy(supps))
+                        GameTheory._next_supports!(supps, nums_actions) ||
+                            break
+                    end
+                end
+                @test length(visited) == prod(2 .^ nums_actions .- 1)
+            end
+        end
+
     end
 
 end

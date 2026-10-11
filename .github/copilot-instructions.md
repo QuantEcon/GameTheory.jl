@@ -47,11 +47,11 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 ### Core Modules (`src/`)
 - `normal_form_game.jl`: Main game representation and basic operations
 - `pure_nash.jl`: Pure strategy Nash equilibrium computation
-- `support_enumeration.jl`: Mixed strategy Nash equilibria via support enumeration
+- `support_enumeration.jl`: Mixed strategy Nash equilibria via support enumeration, for 2-player games (linear systems) and for N-player games (polynomial systems, solved by an `AbstractSupportEnumerationSolver`)
 - `vertex_enumeration.jl`: Mixed strategy Nash equilibria via vertex enumeration
 - `lemke_howson.jl`: A mixed strategy Nash equilibrium by the Lemke-Howson algorithm
 - `lrsnash.jl`: Nash equilibria using LRS library (vertex enumeration)
-- `homotopy_continuation.jl`: Nash equilibria using polynomial homotopy continuation
+- `homotopy_continuation.jl`: Nash equilibria using polynomial homotopy continuation (`hc_solve`), and `HCSolver`, the default solver for N-player `support_enumeration` (so this file is included after `support_enumeration.jl`)
 - `repeated_game.jl`: Tools for repeated games analysis
 - `random.jl`: Random game generation utilities
 - `game_converters.jl`: Readers and writers for the GameTracer `.gam` and Gambit `.nfg` formats
@@ -112,8 +112,13 @@ profile = (1, 2)  # Player 1 plays action 1, Player 2 plays action 2
 ```julia
 # Different methods for different game types
 pure_equilibria = pure_nash(game)
-mixed_equilibria = support_enumeration(game)  # 2-player only
-all_equilibria = lrsnash(game)  # Exact rational arithmetic
+mixed_equilibria = support_enumeration(game)  # 2-player: linear systems
+all_equilibria = lrsnash(game)  # 2-player only; exact rational arithmetic
+
+# With three or more players, support_enumeration solves a polynomial system
+# per support profile with HomotopyContinuation.jl and returns Float64 mixed
+# actions; hc_solve solves one large system and is typically much slower
+equilibria = support_enumeration(game_3players)
 ```
 
 ### Learning Dynamics

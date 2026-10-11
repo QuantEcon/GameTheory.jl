@@ -1,3 +1,5 @@
+using Random
+
 @testset "homotopy_continuation.jl" begin
 
     @testset "3x2 game" begin
@@ -32,6 +34,19 @@
 
         NEs_computed = @inferred hc_solve(g, show_progress=false,
                                           compile=false)
+        @test isapprox_vecs_act_profs(NEs_computed, NEs)
+
+        # Reproducible under the global random number generator, which is
+        # used without being reseeded by default
+        Random.seed!(1234)
+        NEs_computed1 = hc_solve(g, show_progress=false, compile=false)
+        Random.seed!(1234)
+        NEs_computed2 = hc_solve(g, show_progress=false, compile=false)
+        @test NEs_computed1 == NEs_computed2
+
+        # Explicit seed
+        NEs_computed = @inferred hc_solve(g, seed=UInt32(1234),
+                                          show_progress=false, compile=false)
         @test isapprox_vecs_act_profs(NEs_computed, NEs)
 
         ntofind = 1
