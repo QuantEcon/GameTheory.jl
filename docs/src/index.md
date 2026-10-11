@@ -91,6 +91,35 @@ vertex_enumeration(g)
 See [Computing Nash Equilibria](@ref computing_nash_equilibria) for the other
 solvers available.
 
+### Defining a game by its payoff function
+
+A game can also be defined by a function that computes the payoffs lazily,
+rather than by arrays that store them. Define a subtype of
+`AbstractNormalFormGame{N,T}`, for `N` players and payoffs of type `T`, and
+implement two functions for it: `GameTheory.nums_actions`, returning the
+numbers of actions of the players, and `GameTheory.payoff_profile`, returning
+the payoffs at an action profile. For Matching Pennies,
+
+```@example 1
+struct MatchingPennies <: AbstractNormalFormGame{2,Int} end
+GameTheory.nums_actions(::MatchingPennies) = (2, 2)
+GameTheory.payoff_profile(::MatchingPennies, a) = a[1] == a[2] ? (1, -1) : (-1, 1)
+mp = MatchingPennies()
+nothing # hide
+```
+
+Such a game is accepted wherever a `NormalFormGame` is:
+
+```@example 1
+support_enumeration(mp)
+```
+
+Its payoff arrays are obtained by tabulation when needed:
+
+```@example 1
+NormalFormGame(mp)
+```
+
 ## [Notebooks](@id notebooks)
 
 Some notebooks for demonstration are available:
