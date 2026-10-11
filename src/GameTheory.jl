@@ -7,6 +7,7 @@ using LinearAlgebra, Random
 using QuantEcon
 using Combinatorics
 using Distributions
+using StaticArrays: SVector
 
 # Optimization packages
 using MathOptInterface
@@ -86,7 +87,7 @@ include("logitdyn.jl")
 
 export
     # Types
-    Player, NormalFormGame,
+    Player, AbstractNormalFormGame, NormalFormGame,
 
     # Type aliases
     Action, MixedAction, PureAction,

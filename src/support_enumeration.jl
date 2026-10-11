@@ -125,6 +125,9 @@ julia> for NE in c
 ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 ```
 """
+support_enumeration_task(c::Channel, g::AbstractNormalFormGame{2}) =
+    support_enumeration_task(c, convert(NormalFormGame, g))
+
 function support_enumeration_task(c::Channel,
                                   g::NormalFormGame{2})
 
@@ -337,7 +340,7 @@ polynomial equations at once.
 
 # Arguments
 
-- `g::NormalFormGame{N}`: N-player NormalFormGame instance.
+- `g::AbstractNormalFormGame{N}`: N-player game.
 - `solver::AbstractSupportEnumerationSolver=HCSolver()`: Solver for the
   polynomial systems; see `HCSolver`.
 - `ntofind=Inf`: Maximal number of Nash equilibria to find.
@@ -460,6 +463,13 @@ function support_enumeration(g::NormalFormGame{N},
 
     return NEs
 end
+
+# A game defined by its rules is tabulated first
+support_enumeration(g::AbstractNormalFormGame; options...) =
+    support_enumeration(convert(NormalFormGame, g); options...)
+support_enumeration(g::AbstractNormalFormGame,
+                    solver::AbstractSupportEnumerationSolver; options...) =
+    support_enumeration(convert(NormalFormGame, g), solver; options...)
 
 """
     _next_supports!(supps, nums_actions)

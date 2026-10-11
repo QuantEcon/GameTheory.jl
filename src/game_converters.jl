@@ -133,8 +133,9 @@ where the layout `L` matters; no copy is made.
     PayoffVector{L}([T], g)
 
 Construct a `PayoffVector` of layout `L` (and of eltype `T` if specified) from
-a NormalFormGame `g`. `GAMPayoffVector([T], g)` and `NFGPayoffVector([T], g)`
-are the versions for the two layouts.
+a game `g`, a `NormalFormGame` or any `AbstractNormalFormGame`.
+`GAMPayoffVector([T], g)` and `NFGPayoffVector([T], g)` are the versions for
+the two layouts.
 
 # Examples
 
@@ -163,9 +164,9 @@ p.payoffs = [1, 7, 2, 8, 3, 9, 4, 10, 5, 11, 6, 12]
 function PayoffVector{L}(
     ::Type{T}, g::NormalFormGame{N}
 ) where {L<:PayoffLayout,N,T<:Real}
-    nums_actions = g.nums_actions
-    payoffs = Vector{T}(undef, prod(nums_actions)*N)
-    p = PayoffVector{L,N,T}(nums_actions, payoffs)
+    na = g.nums_actions
+    payoffs = Vector{T}(undef, prod(na)*N)
+    p = PayoffVector{L,N,T}(na, payoffs)
 
     ntuple(Val(N)) do i
         copyto!(
@@ -178,8 +179,33 @@ function PayoffVector{L}(
     return p
 end
 
-PayoffVector{L}(g::NormalFormGame{N,T}) where {L<:PayoffLayout,N,T<:Real} =
-    PayoffVector{L}(T, g)
+# A game defined by its rules: one call to `payoff_profile` per action
+# profile, written straight into the players' blocks, with no NormalFormGame
+# in between. `_player_block` handles the layout
+function PayoffVector{L}(
+    ::Type{T}, g::AbstractNormalFormGame{N}
+) where {L<:PayoffLayout,N,T<:Real}
+    na = nums_actions(g)
+    payoffs = Vector{T}(undef, prod(na)*N)
+    p = PayoffVector{L,N,T}(na, payoffs)
+    blocks = ntuple(i -> _player_block(p, i), Val(N))
+
+    # `a` ranges over the indices of every block and `i` over 1:N, so the
+    # stores are in bounds; checking them through the views costs more than
+    # the stores themselves
+    for a in CartesianIndices(na)
+        u = _payoff_profile(g, Tuple(a))
+        for i in 1:N
+            @inbounds blocks[i][a] = u[i]
+        end
+    end
+
+    return p
+end
+
+PayoffVector{L}(
+    g::AbstractNormalFormGame{N,T}
+) where {L<:PayoffLayout,N,T<:Real} = PayoffVector{L}(T, g)
 
 
 """
@@ -482,8 +508,9 @@ the element type of `g` must be an `Integer`, an `AbstractFloat`, or a
 - `io::IO` : Output stream.
 - `path::AbstractString` : Path to the file to write; an existing file is
   overwritten.
-- `g::Union{NormalFormGame,PayoffVector}` : Game to write. A `PayoffVector` of
-  any layout is accepted; one that is not player-major is converted first.
+- `g::Union{AbstractNormalFormGame,PayoffVector}` : Game to write. A
+  `PayoffVector` of any layout is accepted; one that is not player-major is
+  converted first.
 
 # Examples
 
@@ -519,14 +546,14 @@ write_gam(
     io::IO, p::PayoffVector{L,N,T}
 ) where {L<:PayoffLayout,N,T<:_PayoffNumber} = write_gam(io, GAMPayoffVector(p))
 
-write_gam(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
+write_gam(io::IO, g::AbstractNormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
     write_gam(io, GAMPayoffVector(g))
 
 # Same bound on the element type as the methods for `io`, so that an
 # unsupported game is rejected before the file is opened
 write_gam(
     path::AbstractString,
-    g::Union{NormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
+    g::Union{AbstractNormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
 ) where {N,T<:_PayoffNumber} = open(io -> write_gam(io, g), path, "w")
 
 """
@@ -537,7 +564,7 @@ Return the GameTracer .gam representation of the game `g` as a string. See
 
 # Arguments
 
-- `g::Union{NormalFormGame,PayoffVector}` : Game to write.
+- `g::Union{AbstractNormalFormGame,PayoffVector}` : Game to write.
 
 # Returns
 
@@ -558,7 +585,8 @@ julia> print(gam_string(g))
 3 0 2 1 4 5 2 6 1 3 0 4
 ```
 """
-gam_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_gam, g)
+gam_string(g::Union{AbstractNormalFormGame,PayoffVector}) =
+    sprint(write_gam, g)
 
 
 # .nfg reader and writer #
@@ -745,8 +773,9 @@ the element type of `g` must be an `Integer`, an `AbstractFloat`, or a
 - `io::IO` : Output stream.
 - `path::AbstractString` : Path to the file to write; an existing file is
   overwritten.
-- `g::Union{NormalFormGame,PayoffVector}` : Game to write. A `PayoffVector` of
-  any layout is accepted; one that is not profile-major is converted first.
+- `g::Union{AbstractNormalFormGame,PayoffVector}` : Game to write. A
+  `PayoffVector` of any layout is accepted; one that is not profile-major is
+  converted first.
 
 # Examples
 
@@ -783,14 +812,14 @@ write_nfg(
     io::IO, p::PayoffVector{L,N,T}
 ) where {L<:PayoffLayout,N,T<:_PayoffNumber} = write_nfg(io, NFGPayoffVector(p))
 
-write_nfg(io::IO, g::NormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
+write_nfg(io::IO, g::AbstractNormalFormGame{N,T}) where {N,T<:_PayoffNumber} =
     write_nfg(io, NFGPayoffVector(g))
 
 # Same bound on the element type as the methods for `io`, so that an
 # unsupported game is rejected before the file is opened
 write_nfg(
     path::AbstractString,
-    g::Union{NormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
+    g::Union{AbstractNormalFormGame{N,T},PayoffVector{<:PayoffLayout,N,T}}
 ) where {N,T<:_PayoffNumber} = open(io -> write_nfg(io, g), path, "w")
 
 """
@@ -801,7 +830,7 @@ Return the Gambit .nfg representation of the game `g` as a string. See
 
 # Arguments
 
-- `g::Union{NormalFormGame,PayoffVector}` : Game to write.
+- `g::Union{AbstractNormalFormGame,PayoffVector}` : Game to write.
 
 # Returns
 
@@ -818,4 +847,5 @@ NFG 1 R "" { "1" "2" } { 3 2 }
 3 2 0 6 2 1 1 3 4 0 5 4
 ```
 """
-nfg_string(g::Union{NormalFormGame,PayoffVector}) = sprint(write_nfg, g)
+nfg_string(g::Union{AbstractNormalFormGame,PayoffVector}) =
+    sprint(write_nfg, g)

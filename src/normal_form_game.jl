@@ -275,7 +275,9 @@ end
 # (t[i], t[i+1], ..., t[N], t[1], ..., t[i-1]). The length of the result is
 # known at compile time even though `i` is not, which keeps indexing with the
 # rotated tuple type stable and allocation free.
-_rotate(t::NTuple{N}, i) where {N} = ntuple(k -> t[mod1(k + i - 1, N)], Val(N))
+# `Tuple{Vararg{Any,N}}` rather than `NTuple{N}`, which is a homogeneous tuple
+_rotate(t::Tuple{Vararg{Any,N}}, i) where {N} =
+    ntuple(k -> t[mod1(k + i - 1, N)], Val(N))
 
 # _reduce_ith_opponent
 
@@ -373,10 +375,28 @@ Return all the best response actions to `opponents_actions`.
 function best_responses(player::Player,
                         opponents_actions::Union{Action,ActionProfile,Nothing};
                         tol::Real=1e-8)
-    payoffs = payoff_vector(player, opponents_actions)
-    payoff_max = maximum(payoffs)
-    best_responses = findall(x -> x >= payoff_max - tol, payoffs)
-    return best_responses
+    return _best_responses(payoff_vector(player, opponents_actions), tol)
+end
+
+# Indices of the entries of `payoff_vec` within `tol` of its maximum
+function _best_responses(payoff_vec, tol)
+    payoff_max = maximum(payoff_vec)
+    return findall(x -> x >= payoff_max - tol, payoff_vec)
+end
+
+# A best response given the payoff vector: the index of its maximum with
+# `tie_breaking=:smallest`, one of `_best_responses` at random with `:random`
+function _best_response(rng::AbstractRNG, payoff_vec, tie_breaking::Symbol,
+                        tol)
+    if tie_breaking == :smallest
+        return argmax(payoff_vec)
+    elseif tie_breaking == :random
+        return rand(rng, _best_responses(payoff_vec, tol))
+    else
+        throw(ArgumentError(
+            "tie_breaking must be one of `:smallest` or `:random`"
+        ))
+    end
 end
 
 """
@@ -404,17 +424,8 @@ function best_response(rng::AbstractRNG, player::Player,
                        opponents_actions::Union{Action,ActionProfile,Nothing};
                        tie_breaking::Symbol=:smallest,
                        tol::Real=1e-8)
-    if tie_breaking == :smallest
-        payoffs = payoff_vector(player, opponents_actions)
-        return argmax(payoffs)
-    elseif tie_breaking == :random
-        brs = best_responses(player, opponents_actions; tol=tol)
-        return rand(rng, brs)
-    else
-        throw(ArgumentError(
-            "tie_breaking must be one of `:smallest` or `:random`"
-        ))
-    end
+    return _best_response(rng, payoff_vector(player, opponents_actions),
+                          tie_breaking, tol)
 end
 
 best_response(player::Player,
@@ -482,6 +493,78 @@ function best_response(player::Player,
 end
 
 
+# AbstractNormalFormGame #
+
+"""
+    AbstractNormalFormGame{N,T}
+
+Abstract type for N-player normal form games with payoffs of type `T<:Real`.
+
+A subtype must implement the following two functions:
+
+- `nums_actions(g)` : Return the numbers of actions of the N players as an
+  `NTuple{N,Int}`.
+- `payoff_profile(g, action_profile)` : Return the payoffs to the N players
+  at the pure action profile `action_profile = (a_1, ..., a_N)`, as an
+  indexable collection of length N whose elements can be converted to `T`.
+
+The value returned by `payoff_profile` is converted to an `SVector{N,T}`
+before use, so it may be a tuple or a vector, with elements of any types
+convertible to `T`.
+
+# Examples
+
+```julia
+julia> struct MatchingPennies <: AbstractNormalFormGame{2,Int} end
+
+julia> GameTheory.nums_actions(::MatchingPennies) = (2, 2);
+
+julia> GameTheory.payoff_profile(::MatchingPennies, a) = a[1] == a[2] ? (1, -1) : (-1, 1);
+
+julia> g = NormalFormGame(MatchingPennies())
+2×2 NormalFormGame{2, Int64}:
+ (1, -1)  (-1, 1)
+ (-1, 1)  (1, -1)
+
+julia> pure_nash(MatchingPennies())
+Tuple{Int64, Int64}[]
+```
+"""
+abstract type AbstractNormalFormGame{N,T<:Real} end
+
+"""
+    nums_actions(g)
+
+Return the numbers of actions of the N players of `g`, as an `NTuple{N,Int}`.
+Part of the interface of [`AbstractNormalFormGame`](@ref).
+"""
+function nums_actions end
+
+"""
+    payoff_profile(g, action_profile)
+
+Return the payoffs to the N players of `g` at the pure action profile
+`action_profile = (a_1, ..., a_N)`, one for each player in the order of the
+players. Part of the interface of [`AbstractNormalFormGame`](@ref).
+"""
+function payoff_profile end
+
+num_players(::AbstractNormalFormGame{N}) where {N} = N
+
+# Payoff profile at `action_profile` as an `SVector{N,T}`. This is the one
+# place where the value returned by `payoff_profile` is checked for length
+# and converted to `T`. The generic code below calls this rather than
+# `payoff_profile`, so that it indexes a homogeneous `SVector` and stays
+# allocation free whatever kind of collection `payoff_profile` returns
+function _payoff_profile(g::AbstractNormalFormGame{N,T},
+                         action_profile) where {N,T}
+    u = payoff_profile(g, action_profile)
+    length(u) == N ||
+        throw(DimensionMismatch("payoff_profile must return $N values"))
+    return SVector{N,T}(u)
+end
+
+
 # NormalFormGame #
 
 """
@@ -502,12 +585,19 @@ indices are understood modulo `N`. That is, the `j`-th axis of player `i`'s
 - `nums_actions::NTuple{N,Int}` : Tuple of the numbers of actions, one for each
   player.
 """
-struct NormalFormGame{N,T<:Real}
+struct NormalFormGame{N,T<:Real} <: AbstractNormalFormGame{N,T}
     players::NTuple{N,Player{N,T}}
     nums_actions::NTuple{N,Int}
 end
 
-num_players(::NormalFormGame{N}) where {N} = N
+nums_actions(g::NormalFormGame) = g.nums_actions
+
+# Player i's payoff_array is indexed by (a_i, a_{i+1}, ..., a_{i+N-1})
+payoff_profile(g::NormalFormGame{N,T},
+               action_profile::NTuple{N,Integer}) where {N,T} =
+    SVector{N,T}(ntuple(i -> g.players[i].payoff_array[
+        _rotate(action_profile, i)...
+    ], Val(N)))
 
 function NormalFormGame(::Tuple{})  # To resolve definition ambiguity
     throw(ArgumentError("input tuple must not be empty"))
@@ -717,30 +807,47 @@ function NormalFormGame{N,T}(g::NormalFormGame{N,S}) where {N,T,S}
     return NormalFormGame(players_new)
 end
 
-Base.convert(::Type{T}, g::NormalFormGame) where {T<:NormalFormGame} =
+# Tabulate the payoffs of `g` by one call to `payoff_profile` per action profile
+function NormalFormGame{N,T}(g::AbstractNormalFormGame{N}) where {N,T}
+    na = nums_actions(g)
+    # Player i's payoff_array is indexed by (a_i, a_{i+1}, ..., a_{i+N-1})
+    payoff_arrays = ntuple(i -> Array{T}(undef, _rotate(na, i)), Val(N))
+    for a in CartesianIndices(na)
+        t = Tuple(a)
+        u = _payoff_profile(g, t)
+        for i in 1:N
+            payoff_arrays[i][_rotate(t, i)...] = u[i]
+        end
+    end
+    return NormalFormGame(ntuple(i -> Player(payoff_arrays[i]), Val(N)))
+end
+
+Base.convert(::Type{T}, g::AbstractNormalFormGame) where {T<:NormalFormGame} =
     g isa T ? g : T(g)
 
 """
-    NormalFormGame(T, g)
+    NormalFormGame([T], g)
 
-Convert `g` into a new `NormalFormGame` instance with eltype `T`.
+Construct a new `NormalFormGame` instance from `g`, with eltype `T` if
+specified. If `g` is a `NormalFormGame`, its payoff arrays are copied.
 
 # Arguments
 
-- `T::Type`
-- `g::NormalFormGame`
+- `T::Type` : Type of payoff values; defaults to the eltype of `g`.
+- `g::AbstractNormalFormGame`
 
 # Returns
 
 - `::NormalFormGame` : `NormalFormGame` instance with eltype `T`.
 """
-NormalFormGame(::Type{T}, g::NormalFormGame{N}) where {T<:Real,N} =
+NormalFormGame(::Type{T}, g::AbstractNormalFormGame{N}) where {T<:Real,N} =
     NormalFormGame{N,T}(g)
 
-NormalFormGame(g::NormalFormGame{N,T}) where {N,T} = NormalFormGame{N,T}(g)
+NormalFormGame(g::AbstractNormalFormGame{N,T}) where {N,T} =
+    NormalFormGame{N,T}(g)
 
-Base.summary(g::NormalFormGame) =
-    string(Base.dims2string(g.nums_actions),
+Base.summary(g::AbstractNormalFormGame) =
+    string(Base.dims2string(nums_actions(g)),
            " ",
            split(string(typeof(g)), ".")[end])
 
@@ -749,29 +856,21 @@ Base.summary(g::NormalFormGame) =
 """
     payoff_profile_array(g)
 
-Return an N-dimensional array of vectors, whose (a\\_1, ..., a\\_N)-entry
-contains a vector of N payoff values, one for each player, for the action profile
+Return an N-dimensional array of `SVector`s, whose (a\\_1, ..., a\\_N)-entry
+contains the N payoff values, one for each player, for the action profile
 (a\\_1, ..., a\\_N).
 
 # Arguments
 
-- `g::NormalFormGame` : N-player `NormalFormGame` instance.
+- `g::AbstractNormalFormGame` : N-player game.
 
 # Returns
 
-- `::Array{Vector,N}` : Array of payoff profiles.
+- `::Array{SVector{N,T},N}` : Array of payoff profiles.
 """
-function payoff_profile_array(g::NormalFormGame{N,T}) where {N,T}
-    payoff_profile_array =
-        map(index -> Vector{T}(undef, N), CartesianIndices(g.nums_actions))
-    for i in 1:N
-        for index in CartesianIndices(g.nums_actions)
-            payoff_profile_array[index][i] =
-                g.players[i].payoff_array[_rotate(index.I, i)...]
-        end
-    end
-    return payoff_profile_array
-end
+payoff_profile_array(g::AbstractNormalFormGame) =
+    map(index -> _payoff_profile(g, index.I),
+        CartesianIndices(nums_actions(g)))
 
 """
     LazyProfileArray
@@ -786,11 +885,8 @@ struct LazyProfileArray{N,T} <: AbstractArray{NTuple{N,T},N}
 end
 
 Base.size(a::LazyProfileArray) = a.g.nums_actions
-function Base.getindex(a::LazyProfileArray{N,T}, index::Vararg{Int,N}) where {N,T}
-    return ntuple(i -> a.g.players[i].payoff_array[
-        ntuple(k -> index[mod1(k + i - 1, N)], Val(N))...
-    ], Val(N))
-end
+Base.getindex(a::LazyProfileArray{N,T}, index::Vararg{Int,N}) where {N,T} =
+    Tuple(payoff_profile(a.g, index))
 Base.getindex(a::LazyProfileArray{1,T}, index::Int) where {T} = (a.g[index],)
 
 function Base.show(io::IO, g::NormalFormGame)
@@ -808,35 +904,43 @@ function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
     Base.print_array(io, X)
 end
 
-function Base.getindex(g::NormalFormGame{N,T},
-                       index::Integer...) where {N,T}
+# Return the payoff profile at `index` as an `SVector{N,T}`
+# Bounds check for the public indexing of a game defined by its payoff
+# function; a NormalFormGame is checked by its payoff arrays instead
+function _checkbounds(g::AbstractNormalFormGame{N}, index) where {N}
+    na = nums_actions(g)
+    all(ntuple(i -> 1 <= index[i] <= na[i], Val(N))) ||
+        throw(BoundsError(g, index))
+    return nothing
+end
+_checkbounds(::NormalFormGame, index) = nothing
+
+function Base.getindex(g::AbstractNormalFormGame{N},
+                       index::Integer...) where {N}
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
-
-    payoff_profile = Array{T}(undef, N)
-    for i in 1:N
-        payoff_profile[i] = g.players[i].payoff_array[_rotate(index, i)...]
-    end
-    return payoff_profile
+    _checkbounds(g, index)
+    return _payoff_profile(g, index)
 end
 
 # Trivial game with 1 player
-function Base.getindex(g::NormalFormGame{1}, index::Integer)
-    return g.players[1].payoff_array[index]
+function Base.getindex(g::AbstractNormalFormGame{1}, index::Integer)
+    _checkbounds(g, (index,))
+    return _payoff_profile(g, (index,))[1]
 end
 
 function Base.setindex!(g::NormalFormGame{N},
-                        payoff_profile::AbstractVector{<:Real},
+                        v::AbstractVector{<:Real},
                         index::Integer...) where N
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
-    length(payoff_profile) != N &&
+    length(v) != N &&
         throw(DimensionMismatch("assignment must be of $N-array"))
 
     for i in 1:N
-        g.players[i].payoff_array[_rotate(index, i)...] = payoff_profile[i]
+        g.players[i].payoff_array[_rotate(index, i)...] = v[i]
     end
-    return payoff_profile
+    return v
 end
 
 # Trivial game with 1 player
@@ -848,14 +952,14 @@ function Base.setindex!(g::NormalFormGame{1},
 end
 
 Base.setindex!(g::NormalFormGame{N},
-               payoff_profile::NTuple{N}, index::Integer...) where N =
-    setindex!(g, collect(payoff_profile), index...)
+               v::NTuple{N}, index::Integer...) where N =
+    setindex!(g, collect(v), index...)
 
 # Indexing with CartesianIndices
-Base.getindex(g::NormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
-    g[to_indices(g, (ci,))...]
+Base.getindex(g::AbstractNormalFormGame{N}, ci::CartesianIndex{N}) where {N} =
+    g[Tuple(ci)...]
 Base.setindex!(g::NormalFormGame{N}, v, ci::CartesianIndex{N}) where {N} =
-    g[to_indices(g, (ci,))...] = v
+    g[Tuple(ci)...] = v
 
 # delete_action
 
@@ -928,7 +1032,7 @@ Return true if `action_profile` is a Nash equilibrium.
 
 # Arguments
 
-- `g::NormalFormGame` : Instance of N-player NormalFormGame.
+- `g::AbstractNormalFormGame` : N-player game.
 - `action_profile::ActionProfile` : Tuple of N integers (pure actions) or N
   vectors of reals (mixed actions).
 - `tol::Real` : Tolerance to be used to determine best response actions.
@@ -939,6 +1043,112 @@ Return true if `action_profile` is a Nash equilibrium.
 """ is_nash
 
 # Trivial game with 1 player
+is_nash(g::NormalFormGame{1}, action::Action; tol::Real=1e-8) =
+    is_best_response(g.players[1], action, nothing, tol=tol)
+
+is_nash(g::NormalFormGame{1}, action_profile::ActionProfile;
+        tol::Real=1e-8) = is_nash(g, action_profile..., tol=tol)
+
+# _payoff_vector: the payoff vector of one player of an AbstractNormalFormGame,
+# for `_payoff_vectors` below and the algorithms that run on the interface.
+# The opponents' actions are always given as a tuple, in the order
+# (i+1, ..., i+N-1) mod N, which is empty for N = 1; a best response to the
+# vector is then computed by `_best_responses` or `_best_response` above, or
+# `_is_best_response` below, as for a `Player`
+
+# Full action profile with `a_i` as player `i`'s action and `opp[k]` as the
+# action of player `i+k` (mod N), `k = 1, ..., N-1`
+_insert_own_action(::Val{N}, i, a_i, opp) where {N} =
+    ntuple(k -> k == i ? a_i : opp[mod1(k - i, N)], Val(N))
+
+# Given the opponents' pure actions; `n_i` calls to `_payoff_profile`
+function _payoff_vector(g::AbstractNormalFormGame{N,T}, i,
+                        opp::NTuple{M,<:Integer}) where {N,T,M}
+    n_i = nums_actions(g)[i]
+    return T[_payoff_profile(g, _insert_own_action(Val(N), i, a_i, opp))[i]
+             for a_i in 1:n_i]
+end
+
+# Given the opponents' mixed actions: the expected payoffs, by one pass over
+# the opponents' action profiles of positive probability
+function _payoff_vector(g::AbstractNormalFormGame{N,T}, i,
+                        opp::NTuple{M,MixedAction{S}}) where {N,T,M,S}
+    na = nums_actions(g)
+    R = promote_type(T, S)
+    v = zeros(R, na[i])
+    na_opp = ntuple(k -> na[mod1(i + k, N)], Val(M))
+    for b in CartesianIndices(na_opp)
+        w = prod(k -> convert(R, opp[k][b[k]]), 1:M; init=one(R))
+        iszero(w) && continue
+        for a_i in 1:na[i]
+            u = _payoff_profile(g, _insert_own_action(Val(N), i, a_i, Tuple(b)))
+            v[a_i] += w * u[i]
+        end
+    end
+    return v
+end
+
+# To resolve the ambiguity between the pure and mixed methods; the case N = 1
+_payoff_vector(g::AbstractNormalFormGame{N,T}, i, ::Tuple{}) where {N,T} =
+    T[_payoff_profile(g, (a_i,))[i] for a_i in 1:nums_actions(g)[i]]
+
+# For a NormalFormGame, the lookup in the player's payoff array
+_payoff_vector(g::NormalFormGame, i, opp::NTuple{M,<:Integer}) where {M} =
+    payoff_vector(g.players[i], opp)
+_payoff_vector(g::NormalFormGame, i,
+               opp::NTuple{M,MixedAction{S}}) where {M,S} =
+    payoff_vector(g.players[i], opp)
+_payoff_vector(g::NormalFormGame, i, ::Tuple{}) =
+    payoff_vector(g.players[i], nothing)
+
+# To resolve the ambiguity between the pure and mixed profile methods
+_payoff_vectors(::AbstractNormalFormGame{N,T}, ::Tuple{}) where {N,T} =
+    throw(ArgumentError("action profile must not be empty"))
+
+# Payoff vectors of the N players, one entry per own action, when the other
+# players play their pure actions in `a`; n_i calls to `payoff_profile` for
+# player i
+_payoff_vectors(g::AbstractNormalFormGame{N,T}, a::PureActionProfile) where {N,T} =
+    ntuple(i -> _payoff_vector(g, i, get_opponents_actions(a, i)), Val(N))
+
+# Expected payoff vectors of the N players when the other players play their
+# mixed actions in `x`; one pass over the action profiles, one call to
+# `payoff_profile` per profile of positive probability for some player
+function _payoff_vectors(g::AbstractNormalFormGame{N,T},
+                         x::MixedActionProfile{M,S}) where {N,T,M,S}
+    na = nums_actions(g)
+    R = promote_type(T, S)
+    vs = ntuple(i -> zeros(R, na[i]), Val(N))
+    for a in CartesianIndices(na)
+        # w[i]: probability of the others' actions in `a`
+        # The factors are converted to R before multiplying, as in the
+        # contraction of a payoff array, so that the product does not underflow
+        # in S
+        w = ntuple(Val(N)) do i
+            prod(k -> k == i ? one(R) : convert(R, x[k][a[k]]), 1:N)
+        end
+        all(iszero, w) && continue
+        u = _payoff_profile(g, Tuple(a))
+        for i in 1:N
+            vs[i][a[i]] += w[i] * u[i]
+        end
+    end
+    return vs
+end
+
+_is_best_response(payoff_vec, own_action::PureAction, tol) =
+    payoff_vec[own_action] >= maximum(payoff_vec) - tol
+_is_best_response(payoff_vec, own_action::MixedAction, tol) =
+    dot(own_action, payoff_vec) >= maximum(payoff_vec) - tol
+
+function is_nash(g::AbstractNormalFormGame{N}, action_profile::ActionProfile;
+                 tol::Real=1e-8) where N
+    length(action_profile) == N ||
+        throw(ArgumentError("length of action_profile must be $N"))
+    vs = _payoff_vectors(g, action_profile)
+    return all(i -> _is_best_response(vs[i], action_profile[i], tol), 1:N)
+end
+
 """
     is_nash(g, action; tol=1e-8)
 
@@ -946,19 +1156,16 @@ Return true if `action` is a Nash equilibrium of a trivial game with 1 player.
 
 # Arguments
 
-- `g::NormalFormGame{1}` : Instance of 1-player NormalFormGame.
+- `g::AbstractNormalFormGame{1}` : 1-player game.
 - `action::Action` : Integer (pure action) or vector of reals (mixed action).
-- `tol::Float64` : Tolerance to be used to determine best response actions.
+- `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
 
 - `::Bool`
 """
-is_nash(g::NormalFormGame{1}, action::Action; tol::Real=1e-8) =
-    is_best_response(g.players[1], action, nothing, tol=tol)
-
-is_nash(g::NormalFormGame{1}, action_profile::ActionProfile;
-        tol::Real=1e-8) = is_nash(g, action_profile..., tol=tol)
+is_nash(g::AbstractNormalFormGame{1}, action::Action; tol::Real=1e-8) =
+    is_nash(g, (action,), tol=tol)
 
 # Utility functions
 
@@ -999,12 +1206,13 @@ end
 
 for (f, op) = ((:is_pareto_efficient, pareto_inferior_to),
                (:is_pareto_dominant, not_pareto_superior_to))
-    @eval function $(f)(g::NormalFormGame,
+    @eval function $(f)(g::AbstractNormalFormGame,
                         action_profile::PureActionProfile)
-        payoff_profile0 = g[action_profile...]
-        for profile in CartesianIndices(g.nums_actions)
+        u0 = _payoff_profile(g, action_profile)
+        for profile in CartesianIndices(nums_actions(g))
             if CartesianIndex(action_profile) != profile
-                if ($(op)(payoff_profile0, g[profile]))
+                u = _payoff_profile(g, Tuple(profile))
+                if ($(op)(u0, u))
                     return false
                 end
             end
@@ -1020,7 +1228,7 @@ Return true if `action_profile` is Pareto efficient for game `g`.
 
 # Arguments
 
-- `g::NormalFormGame` : Instance of N-player NormalFormGame.
+- `g::AbstractNormalFormGame` : N-player game.
 - `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
 
 # Returns
@@ -1035,7 +1243,7 @@ Return true if `action_profile` is Pareto dominant for game `g`.
 
 # Arguments
 
-- `g::NormalFormGame` : Instance of N-player NormalFormGame.
+- `g::AbstractNormalFormGame` : N-player game.
 - `action_profile::PureActionProfile` : Tuple of N integers (pure actions).
 
 # Returns

@@ -67,6 +67,11 @@ Construct a `LocalInteraction` instance.
 
 - `::LocalInteraction` : The local interaction model.
 """
+LocalInteraction(g::AbstractNormalFormGame{2},
+                 adj_matrix::AbstractMatrix{<:Real},
+                 revision::AbstractRevision=SimultaneousRevision()) =
+    LocalInteraction(convert(NormalFormGame, g), adj_matrix, revision)
+
 function LocalInteraction(g::NormalFormGame{2,T},
                           adj_matrix::AbstractMatrix{S},
                           revision::AbstractRevision=SimultaneousRevision()

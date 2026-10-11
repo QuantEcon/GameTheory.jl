@@ -59,6 +59,10 @@ julia> pure_nash(g)
  (2, 2, 2, 2)
 ```
 """
+pure_nash(nfg::AbstractNormalFormGame; ntofind=prod(nums_actions(nfg)),
+          tol::Real=1e-8) =
+    pure_nash(convert(NormalFormGame, nfg), ntofind=ntofind, tol=tol)
+
 function pure_nash(nfg::NormalFormGame; ntofind=prod(nfg.nums_actions),
                    tol::Real=1e-8)
     # Get number of players and their actions
