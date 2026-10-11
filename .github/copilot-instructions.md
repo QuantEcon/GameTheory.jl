@@ -30,7 +30,8 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 
 ### Core Types
 - `Player{N,T}`: Represents a player with an N-dimensional payoff array of type T
-- `NormalFormGame{N,T}`: Represents an N-player normal form game
+- `AbstractNormalFormGame{N,T}`: Interface for N-player games with payoffs of type T, implemented by `GameTheory.nums_actions(g)` (an `NTuple{N,Int}`) and `GameTheory.payoff_profile(g, a)` (the N payoffs at the pure action profile `a`, a tuple of N integers); neither is exported
+- `NormalFormGame{N,T}`: Represents an N-player normal form game by payoff arrays; a subtype of `AbstractNormalFormGame{N,T}`. `g[a...]` returns the payoff profile as an `SVector{N,T}`
 - `RepeatedGame`: For repeated games analysis
 
 ### Type Aliases
@@ -45,7 +46,7 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 ## Code Organization
 
 ### Core Modules (`src/`)
-- `normal_form_game.jl`: Main game representation and basic operations
+- `normal_form_game.jl`: `AbstractNormalFormGame` and its interface, `Player`, `NormalFormGame`, and basic operations
 - `pure_nash.jl`: Pure strategy Nash equilibrium computation
 - `support_enumeration.jl`: Mixed strategy Nash equilibria via support enumeration, for 2-player games (linear systems) and for N-player games (polynomial systems, solved by an `AbstractSupportEnumerationSolver`)
 - `vertex_enumeration.jl`: Mixed strategy Nash equilibria via vertex enumeration
@@ -75,9 +76,18 @@ GameTheory.jl is a Julia package that implements algorithms and data structures 
 - Check non-aliasing with `Base.mightalias` among caller-supplied arrays that the algorithm overwrites before reading others (e.g. `argmins` vs `bases` in `lemke_howson!`), and between the members of same-shaped array pairs
 - In allocation tests, do not assert `@allocated ... == 0` or hard-code byte counts: older Julia versions heap-allocate returned non-isbits immutable objects that newer versions elide; bound the measurement by a baseline measured in the same escape pattern (see `test/test_lemke_howson.jl`), and scope "allocation-free" claims to machine-float element types
 
+### Functions on `AbstractNormalFormGame`
+- Numbers of actions: `nums_actions(g)`. Number of players: `N` of `g::AbstractNormalFormGame{N}` in the signature; `num_players(g)` returns the same `N`. Build tuples with `ntuple(f, Val(N))`, not `ntuple(f, N)`, which is not inferred above ten players.
+- A function that works on `Player` objects or on payoff arrays does `g = convert(NormalFormGame, g)` first: the identity on a `NormalFormGame`, a one-pass tabulation otherwise. `NormalFormGame(g)` always constructs a new object.
+- A function that works on payoffs at action profiles uses `_payoff_profile(g, a)` (private) or `g[a...]` (public), both returning an `SVector{N,T}`; `_payoff_profile` is the single point that checks the length and converts the value of `payoff_profile`. Never index that value directly in generic code: its type is the implementer's choice, and a run-time index into a tuple of mixed element types boxes.
+- A function that works on one player's payoff vector against the opponents' actions uses `_payoff_vector(g, i, opp)` (private), with `opp` a tuple in the order of players `i+1, ..., i+N-1`; it specializes to `payoff_vector(g.players[i], opp)` on a `NormalFormGame`.
+- Spell the first argument identically across the methods of one function, `AbstractNormalFormGame{N,T}` throughout: Julia does not rank `AbstractNormalFormGame{N}` against `AbstractNormalFormGame{N,T}`, and Aqua then reports an ambiguity against the `Tuple{}` methods that resolve the pure/mixed profile ambiguity.
+- `NTuple{N}` and `PureActionProfile{N}` are homogeneous tuples; `NTuple{N,Integer}` accepts mixed integer types.
+
 ### Testing
 - Most source files have a corresponding test file (e.g., `src/normal_form_game.jl` → `test/test_normal_form_game.jl`), included from `test/runtests.jl`; the tests for `src/generators/` are in `test/generators/` and are included from `test/generators/runtests.jl`. Add new test files to the respective `runtests.jl`.
 - Each test file loads the packages it uses, other than `GameTheory` and `Test`, with its own `using` statements, so that it does not depend on the files included before it.
+- A change to the `AbstractNormalFormGame` interface or to a function accepting it is tested in `test/test_abstract_normal_form_game.jl` by comparing the call on a rules-defined game with the same call on its tabulation. The rules-defined fixtures are defined at the top of that file; `CountingRules` pins the number of `payoff_profile` calls an operation makes.
 
 ## Common Patterns and Idioms
 
@@ -94,6 +104,12 @@ game = NormalFormGame([(3, 3) (0, 0); (5, 5) (1, 1)])
 
 # Note: there is no NormalFormGame(matrix1, matrix2) constructor; a single
 # square matrix NormalFormGame(A) constructs a *symmetric* 2-player game
+
+# Or define the game by its rules, as a subtype of AbstractNormalFormGame
+struct MatchingPennies <: AbstractNormalFormGame{2,Int} end
+GameTheory.nums_actions(::MatchingPennies) = (2, 2)
+GameTheory.payoff_profile(::MatchingPennies, a) = a[1] == a[2] ? (1, -1) : (-1, 1)
+game = NormalFormGame(MatchingPennies())  # tabulates; most functions accept MatchingPennies() directly
 ```
 
 ### Action Handling
