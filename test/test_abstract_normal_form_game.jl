@@ -289,6 +289,8 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
 
         @test RepeatedGame(mp, 0.5).sg.players[1].payoff_array ==
             g_mp.players[1].payoff_array
+        @test_throws MethodError RepeatedGame(mp, "0.5")
+        @test_throws MethodError RepeatedGame(g_mp, "0.5")
 
         @test GameTheory.GAMPayoffVector(mp).payoffs ==
             GameTheory.GAMPayoffVector(g_mp).payoffs

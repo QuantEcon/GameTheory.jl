@@ -56,7 +56,9 @@ Helper constructor that builds a repeated game for two players.
 RepeatedGame(p1::Player, p2::Player, delta::TD) where TD =
     RepeatedGame(NormalFormGame((p1, p2)), delta)
 
-RepeatedGame(g::AbstractNormalFormGame, delta) =
+# `delta::Real` as in the struct, so that an invalid `delta` is a MethodError
+# rather than a recursion through `convert` on the NormalFormGame
+RepeatedGame(g::AbstractNormalFormGame, delta::Real) =
     RepeatedGame(convert(NormalFormGame, g), delta)
 
 """
