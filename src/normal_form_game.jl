@@ -905,16 +905,29 @@ function Base.show(io::IO, ::MIME"text/plain", g::NormalFormGame)
 end
 
 # Return the payoff profile at `index` as an `SVector{N,T}`
+# Bounds check for the public indexing of a game defined by its payoff
+# function; a NormalFormGame is checked by its payoff arrays instead
+function _checkbounds(g::AbstractNormalFormGame{N}, index) where {N}
+    na = nums_actions(g)
+    all(ntuple(i -> 1 <= index[i] <= na[i], Val(N))) ||
+        throw(BoundsError(g, index))
+    return nothing
+end
+_checkbounds(::NormalFormGame, index) = nothing
+
 function Base.getindex(g::AbstractNormalFormGame{N},
                        index::Integer...) where {N}
     length(index) != N &&
         throw(DimensionMismatch("index must be of length $N"))
+    _checkbounds(g, index)
     return _payoff_profile(g, index)
 end
 
 # Trivial game with 1 player
-Base.getindex(g::AbstractNormalFormGame{1}, index::Integer) =
-    _payoff_profile(g, (index,))[1]
+function Base.getindex(g::AbstractNormalFormGame{1}, index::Integer)
+    _checkbounds(g, (index,))
+    return _payoff_profile(g, (index,))[1]
+end
 
 function Base.setindex!(g::NormalFormGame{N},
                         v::AbstractVector{<:Real},

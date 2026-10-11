@@ -129,6 +129,10 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
         @test_throws DimensionMismatch mp[1]
         @test_throws DimensionMismatch mp[1, 2, 3]
         @test_throws DimensionMismatch tp[1, 2]
+        @test_throws BoundsError mp[3, 3]
+        @test_throws BoundsError mp[0, 1]
+        @test_throws BoundsError tp[CartesianIndex(3, 1, 1)]
+        @test_throws BoundsError OnePlayerRules()[4]
         @test summary(mp) == "2×2 MatchingPenniesRules"
         @test summary(tp) == "2×3×4 ThreePlayerRules"
         @test summary(OnePlayerRules()) == "3-element OnePlayerRules"
