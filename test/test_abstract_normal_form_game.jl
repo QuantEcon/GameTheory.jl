@@ -301,6 +301,12 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
         adj = [0 1; 1 0]
         @test LocalInteraction(mp, adj).players[1].payoff_array ==
             LocalInteraction(g_mp, adj).players[1].payoff_array
+        adj_bad = ComplexF64[0 1; 1 0]
+        for g in (mp, g_mp)
+            @test_throws MethodError LocalInteraction(g, adj_bad)
+            @test_throws MethodError LocalInteraction(g, adj_bad,
+                                                      AsynchronousRevision())
+        end
         @test LogitDynamics(mp, 1.0).players[1].payoff_array ==
             LogitDynamics(g_mp, 1.0).players[1].payoff_array
 
