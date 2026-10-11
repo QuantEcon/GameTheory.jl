@@ -1065,7 +1065,7 @@ function _payoff_vector(g::AbstractNormalFormGame{N,T}, i,
     v = zeros(R, na[i])
     na_opp = ntuple(k -> na[mod1(i + k, N)], Val(M))
     for b in CartesianIndices(na_opp)
-        w = prod(k -> opp[k][b[k]], 1:M; init=one(S))
+        w = prod(k -> convert(R, opp[k][b[k]]), 1:M; init=one(R))
         iszero(w) && continue
         for a_i in 1:na[i]
             u = _payoff_profile(g, _insert_own_action(Val(N), i, a_i, Tuple(b)))
@@ -1108,8 +1108,11 @@ function _payoff_vectors(g::AbstractNormalFormGame{N,T},
     vs = ntuple(i -> zeros(R, na[i]), Val(N))
     for a in CartesianIndices(na)
         # w[i]: probability of the others' actions in `a`
+        # The factors are converted to R before multiplying, as in the
+        # contraction of a payoff array, so that the product does not underflow
+        # in S
         w = ntuple(Val(N)) do i
-            prod(k -> k == i ? one(S) : x[k][a[k]], 1:N)
+            prod(k -> k == i ? one(R) : convert(R, x[k][a[k]]), 1:N)
         end
         all(iszero, w) && continue
         u = _payoff_profile(g, Tuple(a))

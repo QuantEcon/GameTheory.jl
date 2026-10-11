@@ -46,6 +46,14 @@ GameTheory.nums_actions(::OnePlayerRules) = (3,)
 GameTheory.payoff_profile(::OnePlayerRules, a) = (a[1]^2,)
 
 # `payoff_profile` of the wrong length
+# Payoffs of a wider type than the mixed actions: a Float64 payoff at one
+# profile, reached with Float16 probabilities whose product underflows in
+# Float16
+struct RarePayoffRules <: AbstractNormalFormGame{4,Float64} end
+GameTheory.nums_actions(::RarePayoffRules) = (2, 2, 2, 2)
+GameTheory.payoff_profile(::RarePayoffRules, a) =
+    (a == (2, 2, 2, 2) ? 2.0^20 : 0.0, 0.0, 0.0, 0.0)
+
 struct BadRules <: AbstractNormalFormGame{2,Int} end
 GameTheory.nums_actions(::BadRules) = (2, 2)
 GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
@@ -223,6 +231,15 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
         one = OnePlayerRules()
         @test _payoff_vector(one, 1, ()) == [1, 4, 9]
         @test _payoff_vector(NormalFormGame(one), 1, ()) == [1, 4, 9]
+
+        # Probabilities of a narrower type than the payoffs
+        rare = RarePayoffRules()
+        p = Float16(2.0^-11)
+        q = Float16[1 - p, p]
+        @test _payoff_vector(rare, 1, (q, q, q)) == [0.0, 2.0^-13]
+        xs = (Float16[1, 0], q, q, q)
+        @test !is_nash(rare, xs)
+        @test !is_nash(NormalFormGame(rare), xs)
     end
 
     @testset "no tabulation in the functions on the interface" begin
