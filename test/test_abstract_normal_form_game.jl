@@ -5,6 +5,7 @@
 using Distributions: Normal
 using StaticArrays: SVector
 using GameTheory: nums_actions, payoff_profile, _payoff_profile, _payoff_vector
+using GameTheory: HCSolver
 
 # Games defined by their rules, at top level since types must be defined there
 
@@ -258,6 +259,16 @@ GameTheory.payoff_profile(::BadRules, a) = (1, 2, 3)
             pure_nash(NormalFormGame(ThreePlayerRules()))
         @test lemke_howson(mp) == lemke_howson(g_mp)
         @test support_enumeration(mp) == support_enumeration(g_mp)
+        @test_throws ArgumentError support_enumeration(mp, tol=1e-8)
+        @test support_enumeration(mp, HCSolver(seed=UInt32(1234)), tol=1e-8) ==
+            support_enumeration(g_mp, HCSolver(seed=UInt32(1234)), tol=1e-8)
+        tp = ThreePlayerRules()
+        g3 = NormalFormGame(tp)
+        @test support_enumeration(tp) == support_enumeration(g3)
+        @test support_enumeration(tp, ntofind=1) ==
+            support_enumeration(g3, ntofind=1)
+        @test support_enumeration(tp, HCSolver(seed=UInt32(1234))) ==
+            support_enumeration(g3, HCSolver(seed=UInt32(1234)))
         @test vertex_enumeration(mp) == vertex_enumeration(g_mp)
         @test lrsnash(mp) == lrsnash(g_mp)
         NEs = hc_solve(mp, show_progress=false)
