@@ -108,8 +108,7 @@ mp = MatchingPennies()
 nothing # hide
 ```
 
-Such a game is accepted wherever a `NormalFormGame` is (except by functions
-that modify a game):
+Such a game is accepted by most functions that take a `NormalFormGame`:
 
 ```@example 1
 support_enumeration(mp)
