@@ -275,7 +275,9 @@ end
 # (t[i], t[i+1], ..., t[N], t[1], ..., t[i-1]). The length of the result is
 # known at compile time even though `i` is not, which keeps indexing with the
 # rotated tuple type stable and allocation free.
-_rotate(t::NTuple{N}, i) where {N} = ntuple(k -> t[mod1(k + i - 1, N)], Val(N))
+# `Tuple{Vararg{Any,N}}` rather than `NTuple{N}`, which is a homogeneous tuple
+_rotate(t::Tuple{Vararg{Any,N}}, i) where {N} =
+    ntuple(k -> t[mod1(k + i - 1, N)], Val(N))
 
 # _reduce_ith_opponent
 
@@ -592,7 +594,7 @@ nums_actions(g::NormalFormGame) = g.nums_actions
 
 # Player i's payoff_array is indexed by (a_i, a_{i+1}, ..., a_{i+N-1})
 payoff_profile(g::NormalFormGame{N,T},
-               action_profile::PureActionProfile{N}) where {N,T} =
+               action_profile::NTuple{N,Integer}) where {N,T} =
     SVector{N,T}(ntuple(i -> g.players[i].payoff_array[
         _rotate(action_profile, i)...
     ], Val(N)))

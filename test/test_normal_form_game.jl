@@ -832,6 +832,10 @@ using StaticArrays: SVector
         @test g3[2, 3, 4] isa SVector{3,Float64}
         @test g3[2, 3, 4] == [1.0, 2.0, 3.0]
         @test g3[CartesianIndex(2, 3, 4)] == g3[2, 3, 4]
+        # Mixed integer index types
+        @test g3[Int8(2), 3, UInt(4)] == g3[2, 3, 4]
+        g3[Int8(2), 3, UInt(4)] = [4.0, 5.0, 6.0]
+        @test g3[2, 3, 4] == [4.0, 5.0, 6.0]
     end
 
 end
