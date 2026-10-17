@@ -10,9 +10,9 @@ will change in the future.
 
 # Arguments
 
-- `nfg::NormalFormGame`: Instance of N-player NormalFormGame.
-- `ntofind::Inf`: Maximal number of pure action Nash equilibria to be
-  found; default is `prod(nfg.nums_actions)`.
+- `nfg::AbstractNormalFormGame`: N-player normal form game.
+- `ntofind`: Maximal number of pure action Nash equilibria to be
+  found; default is the number of all action profiles.
 - `tol::Real` : Tolerance to be used to determine best response actions.
 
 # Returns
@@ -59,18 +59,13 @@ julia> pure_nash(g)
  (2, 2, 2, 2)
 ```
 """
-pure_nash(nfg::AbstractNormalFormGame; ntofind=prod(nums_actions(nfg)),
-          tol::Real=1e-8) =
-    pure_nash(convert(NormalFormGame, nfg), ntofind=ntofind, tol=tol)
-
-function pure_nash(nfg::NormalFormGame; ntofind=prod(nfg.nums_actions),
-                   tol::Real=1e-8)
-    # Get number of players and their actions
-    np = num_players(nfg)
-    na = nfg.nums_actions
+function pure_nash(nfg::AbstractNormalFormGame{N};
+                   ntofind=prod(nums_actions(nfg)), tol::Real=1e-8) where {N}
+    nfg = convert(NormalFormGame, nfg)
+    na = nums_actions(nfg)
 
     # Holder for all NE
-    ne = Array{PureActionProfile{np,Int}}(undef, 0)
+    ne = Array{PureActionProfile{N,Int}}(undef, 0)
 
     # Create counter for how many to find
     nfound = 0
