@@ -17,13 +17,32 @@ Type representing an N-player repeated game.
 # Fields
 
 - `sg::NormalFormGame{N, T}` : The stage game used to create the repeated game.
-- `delta::TD` : The common discount rate at which all players discount the
-  future.
+- `delta::TD` : The common discount factor at which all players discount the
+  future, where `TD<:Real`.
 """
 struct RepeatedGame{N, T<:Real, TD<:Real}
     sg::NormalFormGame{N, T}
     delta::TD
 end
+
+"""
+    RepeatedGame(g, delta)
+
+Construct a `RepeatedGame` instance from a normal form game.
+
+# Arguments
+
+- `g::AbstractNormalFormGame` : N-player normal form game.
+- `delta::TD` : The common discount factor at which all players discount the
+  future.
+
+# Returns
+
+- `::RepeatedGame` : The repeated game.
+
+"""
+RepeatedGame(g::AbstractNormalFormGame{N,T}, delta::TD) where {N,T,TD<:Real} =
+    RepeatedGame{N,T,TD}(convert(NormalFormGame, g), delta)
 
 # Type alias for 2 player game
 """
@@ -46,7 +65,7 @@ Helper constructor that builds a repeated game for two players.
 
 - `p1::Player` : The first player.
 - `p2::Player` : The second player.
-- `delta::TD` : The common discount rate at which all players discount the
+- `delta::TD` : The common discount factor at which all players discount the
   future.
 
 # Returns
@@ -55,11 +74,6 @@ Helper constructor that builds a repeated game for two players.
 """
 RepeatedGame(p1::Player, p2::Player, delta::TD) where TD =
     RepeatedGame(NormalFormGame((p1, p2)), delta)
-
-# `delta::Real` as in the struct, so that an invalid `delta` is a MethodError
-# rather than a recursion through `convert` on the NormalFormGame
-RepeatedGame(g::AbstractNormalFormGame, delta::Real) =
-    RepeatedGame(convert(NormalFormGame, g), delta)
 
 """
     unpack(rpd)
