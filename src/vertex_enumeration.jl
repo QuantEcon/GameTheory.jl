@@ -127,7 +127,7 @@ to find a completely labeled pair.
 
 # Arguments
 
-- `g::NormalFormGame{2,T}`: 2-player NormalFormGame instance.
+- `g::AbstractNormalFormGame{2,T}`: 2-player normal form game.
 - `plib::Polyhedra.Library`: Allows to choose a particular package for
   polyhedral computation.
 
@@ -159,11 +159,7 @@ julia> vertex_enumeration(g)
  ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 ```
 """
-vertex_enumeration(g::AbstractNormalFormGame{2};
-                   plib::Polyhedra.Library=CDDLib.Library()) =
-    vertex_enumeration(convert(NormalFormGame, g), plib=plib)
-
-function vertex_enumeration(g::NormalFormGame{2,T};
+function vertex_enumeration(g::AbstractNormalFormGame{2,T};
                             plib::Polyhedra.Library=CDDLib.Library()) where T
     S = _coeftype(T)
     c = Channel{Tuple{Vector{S},Vector{S}}}(0)
@@ -184,7 +180,7 @@ Task version of `vertex_enumeration`.
 # Arguments
 
 - `c::Channel`: Channel to be bound to the vertex enumeration task.
-- `g::NormalFormGame{2}`: 2-player NormalFormGame instance.
+- `g::AbstractNormalFormGame{2}`: 2-player normal form game.
 - `plib::Polyhedra.Library`: Allows to choose a particular package for
   polyhedral computation.
 
@@ -221,13 +217,10 @@ julia> for NE in c
 ([0.0, 0.333333, 0.666667], [0.333333, 0.666667])
 ```
 """
-vertex_enumeration_task(c::Channel, g::AbstractNormalFormGame{2};
-                        plib::Polyhedra.Library=CDDLib.Library()) =
-    vertex_enumeration_task(c, convert(NormalFormGame, g), plib=plib)
-
 function vertex_enumeration_task(c::Channel,
-                                 g::NormalFormGame{2};
+                                 g::AbstractNormalFormGame{2};
                                  plib::Polyhedra.Library=CDDLib.Library())
+    g = convert(NormalFormGame, g)
     brps = ntuple(
         i -> BestResponsePolytope(g.players[3-i], idx=i, plib=plib), 2
     )
