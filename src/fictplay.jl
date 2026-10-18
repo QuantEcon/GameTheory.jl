@@ -63,11 +63,11 @@ end
 """
     FictitiousPlay(g[, gain=DecreasingGain()])
 
-Construct a `FictitiousPlay` instance from `NormalFormGame`.
+Construct a `FictitiousPlay` instance from a normal form game.
 
 # Arguments
 
-- `g::NormalFormGame` : `NormalFormGame` instance.
+- `g::AbstractNormalFormGame` : N-player normal form game.
 - `gain::AbstractGain` : Argument to specify the gain or step size;
   `DecreasingGain()` or `ConstantGain(size)`.
 
@@ -75,11 +75,11 @@ Construct a `FictitiousPlay` instance from `NormalFormGame`.
 
 - `::FictitiousPlay` : The fictitious play model.
 """
-FictitiousPlay(g::NormalFormGame, gain::AbstractGain=DecreasingGain()) =
-    FictitiousPlay(g.players, g.nums_actions, gain)
-
-FictitiousPlay(g::AbstractNormalFormGame, gain::AbstractGain=DecreasingGain()) =
-    FictitiousPlay(convert(NormalFormGame, g), gain)
+function FictitiousPlay(g::AbstractNormalFormGame,
+                        gain::AbstractGain=DecreasingGain())
+    g = convert(NormalFormGame, g)
+    return FictitiousPlay(g.players, g.nums_actions, gain)
+end
 
 """
     FictitiousPlay(fp[, gain=fp.gain])
