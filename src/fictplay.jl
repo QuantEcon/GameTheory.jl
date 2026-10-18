@@ -127,7 +127,7 @@ Construct a `StochasticFictitiousPlay` instance.
 
 # Arguments
 
-- `g::NormalFormGame` : `NormalFormGame` instance.
+- `g::AbstractNormalFormGame` : N-player normal form game.
 - `d::Distributions.Distribution` : `Distribution` instance from which payoff
   perturbations are drawn.
 - `gain::AbstractGain` : Argument to specify the gain or step size;
@@ -137,13 +137,11 @@ Construct a `StochasticFictitiousPlay` instance.
 
 - `::StochasticFictitiousPlay` : The stochastic fictitious play model.
 """
-StochasticFictitiousPlay(g::NormalFormGame, d::Distribution,
-                         gain::AbstractGain=DecreasingGain()) =
-    StochasticFictitiousPlay(g.players, g.nums_actions, d, gain)
-
-StochasticFictitiousPlay(g::AbstractNormalFormGame, d::Distribution,
-                         gain::AbstractGain=DecreasingGain()) =
-    StochasticFictitiousPlay(convert(NormalFormGame, g), d, gain)
+function StochasticFictitiousPlay(g::AbstractNormalFormGame, d::Distribution,
+                                  gain::AbstractGain=DecreasingGain())
+    g = convert(NormalFormGame, g)
+    return StochasticFictitiousPlay(g.players, g.nums_actions, d, gain)
+end
 
 """
     StochasticFictitiousPlay(fp[, d=fp.d, gain=fp.gain])
