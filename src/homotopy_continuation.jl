@@ -14,7 +14,7 @@ typically much faster.
 
 # Arguments
 
-- `g::NormalFormGame`: N-player NormalFormGame instance.
+- `g::AbstractNormalFormGame`: N-player normal form game.
 - `ntofind=Inf`: Maximal number of Nash equilibria to find.
 - `options...`: Optional arguments to pass to `HomotopyContinuation.solve`. For
   example, the option `seed::UInt32` can set the random seed used during the
@@ -72,10 +72,9 @@ julia> all([is_nash(g, NE) for NE in NEs])
 true
 ```
 """
-hc_solve(g::AbstractNormalFormGame; ntofind=Inf, options...) =
-    hc_solve(convert(NormalFormGame, g); ntofind=ntofind, options...)
-
-function hc_solve(g::NormalFormGame{N}; ntofind=Inf, options...) where N
+function hc_solve(g::AbstractNormalFormGame{N};
+                  ntofind=Inf, options...) where N
+    g = convert(NormalFormGame, g)
     ntofind <= 0 && return NTuple{N,Vector{Float64}}[]
 
     # Do not let HomotopyContinuation.solve reseed the global RNG by default
@@ -97,7 +96,7 @@ function hc_solve(g::NormalFormGame{N}; ntofind=Inf, options...) where N
     return NEs
 end
 
-function hc_solve(g::NormalFormGame{1}; args...)
+function hc_solve(g::AbstractNormalFormGame{1}; args...)
     throw(ArgumentError("not implemented for 1-player games"))
 end
 
