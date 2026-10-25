@@ -93,16 +93,20 @@ See the tutorials for further examples.
 ### Nash equilibrium computation
 
 * [`pure_nash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.pure_nash-Tuple{NormalFormGame}):
-  Find all pure-action Nash equilibria of an N-player game (if any)
+  Find all pure-action Nash equilibria of an N-player game (if any) by brute force
 * [`lemke_howson`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lemke_howson-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
-  Find one mixed-action Nash equilibrium of a two-player game
-* [`lrsnash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lrsnash-Tuple{NormalFormGame{2,%20%3C:Union{Integer,%20Rational}}}):
-  Find all mixed-action Nash equilibria (or equilibrium components) of a two-player game
+  Find one mixed-action Nash equilibrium of a two-player game by the Lemke-Howson algorithm
 * [`vertex_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.vertex_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
-  Find all mixed-action Nash equilibria of a two-player nondegenerate game
+  Find all mixed-action Nash equilibria of a two-player nondegenerate game by vertex enumeration
+  of the best response polytopes
+* [`lrsnash`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.lrsnash-Tuple{NormalFormGame{2,%20%3C:Union{Integer,%20Rational}}}):
+  Find all extreme mixed-action Nash equilibria of a two-player game in exact arithmetic
+  by the lexicographic reverse search vertex enumeration algorithm
 * [`support_enumeration`](https://quantecon.github.io/GameTheory.jl/stable/lib/computing_nash_equilibria.html#GameTheory.support_enumeration-Union{Tuple{NormalFormGame{2,%20T}},%20Tuple{T}}%20where%20T):
   Find all mixed-action Nash equilibria of a two-player nondegenerate game, or
-  of an N-player regular game
+  of an N-player regular game, by support enumeration;
+  for N >= 3, the indifference equations on each support profile are solved
+  by polynomial homotopy continuation
 
 ### Learning/evolutionary dynamics
 
@@ -131,11 +135,19 @@ See the tutorials for further examples.
 ## Solvers from external packages
 
 * [`ipa_solve`](https://quantecon.github.io/GameTracer.jl/stable/#GameTracer.ipa_solve):
-  Find one mixed-action approximate Nash equilibrium of an N-player game using iterated polymatrix approximation (IPA)
-  ([`GameTracer.jl`](https://github.com/QuantEcon/GameTracer.jl))
+  Find one mixed-action approximate Nash equilibrium of an N-player game by iterated polymatrix approximation (IPA)
+  ([GameTracer.jl](https://github.com/QuantEcon/GameTracer.jl))
 * [`gnm_solve`](https://quantecon.github.io/GameTracer.jl/stable/#GameTracer.gnm_solve):
-  Find mixed-action Nash equilibria of an N-player using the global Newton method (GNM)
-  ([`GameTracer.jl`](https://github.com/QuantEcon/GameTracer.jl))
+  Find mixed-action Nash equilibria of an N-player game by the global Newton method (GNM)
+  ([GameTracer.jl](https://github.com/QuantEcon/GameTracer.jl))
+* [`nash_cp`](https://sylvaticus.github.io/StrategicGames.jl/stable/ext.html#StrategicGames.nash_cp-Tuple{AbstractNormalFormGame}):
+  Find one mixed-action Nash equilibrium of an N-player game by solving the complementarity problem formulation
+  as a nonlinear program
+  ([StrategicGames.jl](https://github.com/sylvaticus/StrategicGames.jl))
+* [`nash_se`](https://sylvaticus.github.io/StrategicGames.jl/stable/ext.html#StrategicGames.nash_se-Tuple{AbstractNormalFormGame}):
+  Find mixed-action Nash equilibria of an N-player game by support enumeration,
+  solving the indifference conditions on each support profile with linear or nonlinear programming
+  ([StrategicGames.jl](https://github.com/sylvaticus/StrategicGames.jl))
 
 ## Tutorials
 
