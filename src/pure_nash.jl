@@ -1,5 +1,5 @@
 """
-    pure_nash(nfg; ntofind=Inf, tol=1e-8)
+    pure_nash(nfg; ntofind=prod(nums_actions(nfg)), tol=1e-8)
 
 Finds all pure action Nash equilibria for a normal form
 game. It returns an empty array if there is no pure
