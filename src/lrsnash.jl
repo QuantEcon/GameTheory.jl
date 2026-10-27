@@ -11,7 +11,7 @@ function calls the Nash equilibrium computation routine in `lrslib`
 
 # Arguments
 
-- `g::NormalFormGame{2,<:RatOrInt}`: 2-player NormalFormGame instance
+- `g::AbstractNormalFormGame{2,<:RatOrInt}`: 2-player normal form game
   with Integer or Rational payoffs.
 
 # Returns
@@ -51,10 +51,8 @@ two outputs.
 - D. Avis, G. Rosenberg, R. Savani, and B. von Stengel, "Enumeration of
   Nash Equilibria for Two-Player Games," Economic Theory (2010), 9-37.
 """
-lrsnash(g::AbstractNormalFormGame{2,<:RatOrInt}) =
-    lrsnash(convert(NormalFormGame, g))
-
-function lrsnash(g::NormalFormGame{2,<:RatOrInt})
+function lrsnash(g::AbstractNormalFormGame{2,<:RatOrInt})
+    g = convert(NormalFormGame, g)
     hrs = [buildrep(i, g.players[3-i].payoff_array) for i in 1:2]
     NEs = solve_nash(hrs...)
     return NEs

@@ -49,7 +49,7 @@ the Lemke–Howson algorithm (Lemke and Howson, 1964), implemented with
 
 # Arguments
 
-- `g::NormalFormGame{2,T}`: 2-player NormalFormGame instance.
+- `g::AbstractNormalFormGame{2,T}`: 2-player normal form game.
 - `init_pivot::Int`: Initial pivot, an integer `k` such that `1 <= k <= m+n`,
   where integers `1, ..., m`, and `m+1, ..., m+n` correspond to the actions
   of players 1 and 2, respectively.
@@ -143,14 +143,12 @@ julia> res.num_iter  # Number of pivoting steps performed
   and Extensive Form," Chapter 3, N. Nisan, T. Roughgarden, E. Tardos, and
   V. Vazirani eds., Algorithmic Game Theory, 2007.
 """
-lemke_howson(g::AbstractNormalFormGame{2}; kwargs...) =
-    lemke_howson(convert(NormalFormGame, g); kwargs...)
-
-function lemke_howson(g::NormalFormGame{2,T};
+function lemke_howson(g::AbstractNormalFormGame{2,T};
                       init_pivot::Int=1,
                       max_iter::Int=10^6,
                       capping::Union{Int,Nothing} = nothing,
                       full_output::Union{Val{true},Val{false}}=Val(false)) where T
+    g = convert(NormalFormGame, g)
     nums_actions = g.nums_actions
     total_num = sum(nums_actions)
     _check_init_pivot(init_pivot, total_num)

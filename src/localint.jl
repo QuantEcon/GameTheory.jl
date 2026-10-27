@@ -58,7 +58,7 @@ Construct a `LocalInteraction` instance.
 
 # Arguments
 
-- `g::NormalFormGame` : The game used in the model.
+- `g::AbstractNormalFormGame{2}` : The 2-player game used in the model.
 - `adj_matrix::AbstractMatrix` : Adjacency matrix of the graph in the model.
 - `revision::AbstractRevision` : Arguments to specify the revision method;
   `SimultaneousRevision()` or `AsynchronousRevision()`.
@@ -67,15 +67,11 @@ Construct a `LocalInteraction` instance.
 
 - `::LocalInteraction` : The local interaction model.
 """
-LocalInteraction(g::AbstractNormalFormGame{2},
-                 adj_matrix::AbstractMatrix{<:Real},
-                 revision::AbstractRevision=SimultaneousRevision()) =
-    LocalInteraction(convert(NormalFormGame, g), adj_matrix, revision)
-
-function LocalInteraction(g::NormalFormGame{2,T},
+function LocalInteraction(g::AbstractNormalFormGame{2,T},
                           adj_matrix::AbstractMatrix{S},
                           revision::AbstractRevision=SimultaneousRevision()
                           ) where {T<:Real,S<:Real}
+    g = convert(NormalFormGame, g)
     if size(adj_matrix, 1) != size(adj_matrix, 2)
         throw(ArgumentError("Adjacency matrix must be square"))
     end
