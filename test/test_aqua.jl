@@ -12,8 +12,5 @@ using Aqua
         # of players leave `T` unbound only for `N = 0`, which cannot occur;
         # the check cannot know that and reports them
         unbound_args=false,
-        # TreeViews, a dependency of HomotopyContinuation, ships without a
-        # Project.toml, which this check cannot handle
-        persistent_tasks=false,
     )
 end
